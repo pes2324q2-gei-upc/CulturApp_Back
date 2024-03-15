@@ -79,9 +79,10 @@ app.get('/activitats/agenda/json', async (req, res) => {
     }
 });
 
-app.get('/activitats/infantil', async (req, res) => {
+app.get('/activitats/categoria', async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', ['infantil']);
+        var cats = req.params.categorias;
+        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', cats);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -92,6 +93,22 @@ app.get('/activitats/infantil', async (req, res) => {
         res.send(error);
     }
 });
+
+app.get('/activitats/date', async (req, res) => {
+    try {
+        var date = req.params.data;
+        const activityRef = db.collection("actividades").where('data_inici', '==', date);
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 
 /*app.post('/update', async(req, res) => {
     try {
