@@ -148,6 +148,21 @@ app.get('/activitats/date', async (req, res) => {
     }
 });
 
+app.get('/activitats/user/:id', async (req, res) => {
+    try {
+        const activityRef = db.collection("actividades").limit(20);
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
+
 
 /*app.post('/update', async(req, res) => {
     try {
