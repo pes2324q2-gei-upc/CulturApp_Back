@@ -150,7 +150,6 @@ app.get('/activitats/date', async (req, res) => {
 });
 
 app.get('/user/exists', async (req, res) => {
-    console.log("received!");
     try {
         var uid = req.query.uid;
 
@@ -187,7 +186,6 @@ app.get('/activitats/user/:id', async (req, res) => {
 
 app.post('/users/create', async(req, res) => {
     try {
-        console.log("Hola!");
         console.log(req.body);
 
         const { uid, username, email, favcategories } = req.body;
