@@ -168,6 +168,8 @@ app.get('/user/exists', async (req, res) => {
             res.send(error);
         });
     } catch (error) {
+    }
+});
 
 app.get('/activitats/user/:id', async (req, res) => {
     try {
@@ -237,6 +239,3 @@ app.listen(PORT, async () => {
     await updateDataCacheAndFireStore();
     console.log(`Server is working on PORT ${PORT}`);
 });
-
-
-
