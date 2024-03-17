@@ -168,6 +168,17 @@ app.get('/user/exists', async (req, res) => {
             res.send(error);
         });
     } catch (error) {
+
+app.get('/activitats/user/:id', async (req, res) => {
+    try {
+        const activityRef = db.collection("actividades").limit(20);
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
         res.send(error);
     }
 });
