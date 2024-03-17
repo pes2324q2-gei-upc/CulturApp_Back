@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 
+
 const NodeCache = require("node-cache");
 
 const admin = require("firebase-admin");
@@ -148,6 +149,52 @@ app.get('/activitats/date', async (req, res) => {
     }
 });
 
+app.get('/user/exists', async (req, res) => {
+    console.log("received!");
+    try {
+        var uid = req.query.uid;
+
+        const docRef = db.collection('users').doc(uid);
+
+        docRef.get()
+        .then(doc => {
+            if (doc.exists) {
+                res.status(200).send("exists");
+            } else {
+                res.status(200).send("notexists");
+            }
+        })
+        .catch(error => {
+            res.send(error);
+        });
+    } catch (error) {
+        res.send(error);
+    }
+});
+
+app.post('/users/create', async(req, res) => {
+    try {
+        console.log("Hola!");
+        console.log(req.body);
+
+        const { uid, username, email, favcategories } = req.body;
+
+        const categories = JSON.parse(favcategories);
+
+        const usersCollection = admin.firestore().collection('users');
+
+        await usersCollection.doc(uid).set({
+          'email': email,
+          'username': username,
+          'favcategories': categories
+        });
+
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
 
 /*app.post('/update', async(req, res) => {
     try {
