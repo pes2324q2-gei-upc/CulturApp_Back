@@ -186,7 +186,6 @@ app.get('/activitats/user/:id', async (req, res) => {
 
 app.post('/users/create', async(req, res) => {
     try {
-        console.log(req.body);
 
         const { uid, username, email, favcategories } = req.body;
 
@@ -203,6 +202,70 @@ app.post('/users/create', async(req, res) => {
         res.status(200).send('OK');
     }
     catch (error){
+        res.send(error);
+    }
+});
+
+app.post('/activitats/signup', async(req, res) => {
+    try {
+        const { uid, activityId } = req.body;
+        const userRef = db.collection('users').doc(uid);
+        const userSnapshot = await userRef.get();
+    
+        if (userSnapshot.exists) {
+          const activities = userSnapshot.data().activities || [];
+    
+          if (!activities.includes(activityId)) {
+            activities.push(activityId);
+            await userRef.update({ activities: activities });
+          }
+        } else {
+            res.send("El usuario no existe");
+        }
+        res.status(200).send("Ok");
+      } catch (error) {
+        res.send(error);
+    }
+});
+
+app.post('/activitats/signout', async(req, res) => {
+    try {
+        const { uid, activityId } = req.body;
+        const userRef = db.collection('users').doc(uid);
+        const userSnapshot = await userRef.get();
+    
+        if (userSnapshot.exists) {
+          const activities = userSnapshot.data().activities || [];
+    
+          const index = activities.indexOf(activityId);
+          if (index !== -1) activities.splice(index, 1);
+          await userRef.update({ activities: activities });
+        }
+        res.status(200).send("Ok");
+      } catch (error) {
+        res.send(error);
+    }
+});
+
+app.get('/activitats/isuserin', async (req, res) => {
+    try {
+        var uid = req.query.uid;
+        var activityId = req.query.activityId;
+        const userRef = db.collection('users').doc(uid);
+        const userSnapshot = await userRef.get();
+    
+        if (userSnapshot.exists) {
+          const activities = userSnapshot.data().activities || [];
+    
+          if (activities.includes(activityId)) {
+            res.status(200).send("yes");
+          } else {
+            res.status(200).send("no");
+          }
+        } else {
+            res.status(200).send("no");
+        }
+    } catch (error){
         res.send(error);
     }
 });
