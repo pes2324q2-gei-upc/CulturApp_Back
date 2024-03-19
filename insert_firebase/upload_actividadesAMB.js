@@ -46,7 +46,7 @@ if (data && Array.isArray(data.items)) {
 
                 // Verificar si el documento ya existe en la colección antes de agregarlo
                 firestore.collection(collectionKey).doc(doc._id).get().then((existingDoc) => {
-                    if (!existingDoc.exists) {
+                    if (!existingDoc.exists && newData.data_inici >= new Date().toISOString().replace('Z', '') && newData.data_inici != "No disponible") {
                         firestore.collection(collectionKey).doc(doc._id).set(newData).then(() => {
                             console.log("Documento " + doc._id + " escrito correctamente!");
                         }).catch((error) => {

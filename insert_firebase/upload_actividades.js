@@ -36,10 +36,17 @@ if (data && Array.isArray(data)) {
             visualitzacions: 0
         };
 
-        firestore.collection(collectionKey).doc(doc.codi).set(newData).then((res) => {
-            console.log("Document " + doc.codi + " successfully written!");
-        }).catch((error) => {
-            console.error("Error writing document: ", error);
-        });
+        const twoNextYear = new Date();
+
+        // Add one year to the current date
+        twoNextYear.setFullYear(twoNextYear.getFullYear() + 2)
+
+        if(newData.data_inici != "No disponible" && newData.data_inici != "9999-09-09T00:00:00.000" && twoNextYear.toISOString().replace('Z', '') > newData.data_inici && newData.data_inici >= new Date().toISOString().replace('Z', '')) {
+            firestore.collection(collectionKey).doc(doc.codi).set(newData).then((res) => {
+                console.log("Document " + doc.codi + " successfully written!");
+            }).catch((error) => {
+                console.error("Error writing document: ", error);
+            });
+        }
     });
 }
