@@ -27,19 +27,25 @@ const myCache = new NodeCache({ stdTTL: 86400, checkperiod: 8700 });
 async function updateDataCacheAndFireStore() {
     try {
         // Realizar la solicitud GET a la API utilizando axios
-        const response = await axios.get('https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json');
+        //const response = await axios.get('https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json');
         // Verificar si la respuesta fue exitosa (código de respuesta 200)
-        if (response.status === 200) {
+        const activityRef = db.collection("actividades").limit(100);
+        const response = await activityRef.get();
+        //if (response.status === 200) {
             // Obtener los datos JSON de la respuesta
-            const data = response.data;
+            //const data = response.data;
             // Actualizar la caché con los nuevos datos
-            myCache.set("actividades", data);
+            let responseArr = [];
+            response.forEach(doc => {
+            responseArr.push(doc.data());
+            });
+            myCache.set("actividades", responseArr);
             
-            await updateFireStore(response.data);
+            await updateFireStore(responseArr);
 
-        } else {
-            console.error(`Error al obtener datos desde la API. Código de respuesta: ${response.status}`);
-        }
+        //} else {
+            //console.error(`Error al obtener datos desde la API. Código de respuesta: ${response.status}`);
+        //}
     } catch (error) {
         console.error('Error al obtener datos desde la API:', error.message);
     }
@@ -71,7 +77,7 @@ app.post('/create', async (req, res) => {
 
 app.get('/read/all', async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(20);
+        const activityRef = db.collection("actividades").limit(100);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
