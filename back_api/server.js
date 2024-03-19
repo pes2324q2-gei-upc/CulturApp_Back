@@ -96,8 +96,25 @@ app.get('/read/:id', async (req, res) => {
 
 app.get('/activitats/agenda/json', async (req, res) => {
     try {
+
+        var url = 'https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json';
+        /*const today = new Date();
+        var d = today.getFullYear();
+        if (today.getMonth() < 10) {
+            d += '0' + (today.getMonth() - 1);
+        } else { 
+            d += '-' + (today.getMonth() - 1);
+        }
+        if (today.getDay() < 10) {
+            d += '0' + today.getDay();
+        } else { 
+            d += '' + today.getDay();
+        }
+        d += '000';
+        const where = '?$where=codi>=' + d.toString();
+        url += where;*/
         // Realizar la solicitud GET a la API utilizando axios
-        const response = await axios.get('https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json');
+        const response = await axios.get(url);
 
         // Verificar si la respuesta fue exitosa (código de respuesta 200)
         if (response.status === 200) {
@@ -134,10 +151,28 @@ app.get('/activitats/categoria', async (req, res) => {
     }
 });
 
-app.get('/activitats/date', async (req, res) => {
+app.get('/activitats/date/:date', async (req, res) => {
     try {
-        var date = req.params.data;
-        const activityRef = db.collection("actividades").where('data_inici', '==', date);
+        var date = req.params.date;
+        date = date.slice(0, -4);
+        date = date.replace(' ', 'T');
+        const activityRef = db.collection("actividades").where('data_inici', '>=', date)
+                            .where('data_inici', '!=', 'No disponible')//.where('data_inici', '!=', '9999-09-09T00:00:00.000');
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
+app.get('/activitats/name/:name', async (req, res) => {
+    try {
+        var nomAct = req.params.name;
+        const activityRef = db.collection("actividades").where('denominaci', '==', nomAct);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -300,3 +335,4 @@ app.listen(PORT, async () => {
     await updateDataCacheAndFireStore();
     console.log(`Server is working on PORT ${PORT}`);
 });
+
