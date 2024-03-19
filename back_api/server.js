@@ -98,6 +98,7 @@ app.get('/activitats/agenda/json', async (req, res) => {
     try {
 
         var url = 'https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json';
+        
         /*const today = new Date();
         var d = today.getFullYear();
         if (today.getMonth() < 10) {
