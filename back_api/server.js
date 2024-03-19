@@ -212,14 +212,39 @@ app.get('/user/exists', async (req, res) => {
     }
 });
 
-app.get('/activitats/user/:id', async (req, res) => {
+app.get('/user/activitats/:id', async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(20);
-        const response = await activityRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
+        var id = req.params.id;
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+
+        /*
+        for(let i = 0; i < response.data().activities.lenght; ++i) {
+            const activityRef = db.collection("actividades").doc(response.data().activities[i]);
+            const responseAct = await activityRef.get();
+            responseArr.push(responseAct.data())
+            console.log(responseArr)
+        }
+        */
+
+
+        /*
+        response.data().activities.forEach(async activity => {
+            const activityRef = db.collection("actividades").doc(activity);
+            const responseAct = await activityRef.get();
+            responseArr.push(responseAct.data())
+            console.log(responseArr)
+        })
+        */
+
+        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+            const activityRef = db.collection("actividades").doc(activity);
+            const responseAct = await activityRef.get();
+            return responseAct.data();
+        }));
+        
+
+        console.log(responseArr)
         res.status(200).send(responseArr);
     } catch (error){
         res.send(error);
