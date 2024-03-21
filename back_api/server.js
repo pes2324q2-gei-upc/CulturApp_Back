@@ -185,6 +185,36 @@ app.get('/activitats/name/:name', async (req, res) => {
     }
 });
 
+app.get('/activitats/search/:name/:category?/:date?', async (req, res) => {
+    try {
+        var nomAct = req.params.name;
+        var date = req.params.date;
+        var category = req.params.category;
+
+        const activityRef = db.collection("actividades").where('denominaci', '==', nomAct);
+        
+        if (category) {
+            //si categoria està plena
+            activityRef = activityRef.where('tags_categor_es', 'array-contains-any', cats);
+        }
+
+        if (date) {
+            //si data esta "plena"
+            activityRef = activityRef.where('data_inici', '>=', date)
+            .where('data_inici', '!=', 'No disponible'); 
+        }
+        
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 app.get('/user/exists', async (req, res) => {
     try {
         var uid = req.query.uid;
