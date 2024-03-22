@@ -185,6 +185,37 @@ app.get('/activitats/name/:name', async (req, res) => {
     }
 });
 
+app.get('/user/activitats/:id/search/:name', async (req, res) => {
+    try {
+        var id = req.params.id;
+        var name = req.params.name;
+
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+
+        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+            const activityRef = db.collection("actividades").doc(activity);
+            const responseAct = await activityRef.get();
+            let activityData = responseAct.data();
+
+            // Check if the activity has the specified name
+            if (activityData.denominaci === name) {
+                return activityData;
+            } else {
+                return null; // If activity doesn't match the name, return null
+            }
+        }));
+
+        // Filter out null values (activities that don't match the name)
+        responseArr = responseArr.filter(activity => activity !== null);
+        
+        console.log(responseArr)
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 app.get('/user/exists', async (req, res) => {
     try {
         var uid = req.query.uid;
