@@ -35,15 +35,10 @@ const myCache = new NodeCache({ stdTTL: 86400, checkperiod: 8700 });
 // Función para obtener datos de la API y actualizar Firestore
 async function updateDataCacheAndFireStore() {
     try {
-        // Realizar la solicitud GET a la API utilizando axios
-        //const response = await axios.get('https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json');
-        // Verificar si la respuesta fue exitosa (código de respuesta 200)
+
         const activityRef = db.collection("actividades").limit(100);
         const response = await activityRef.get();
-        //if (response.status === 200) {
-            // Obtener los datos JSON de la respuesta
-            //const data = response.data;
-            // Actualizar la caché con los nuevos datos
+
             let responseArr = [];
             response.forEach(doc => {
             responseArr.push(doc.data());
@@ -51,17 +46,9 @@ async function updateDataCacheAndFireStore() {
             myCache.set("actividades", responseArr);
             
             await updateFireStore(responseArr);
-
-        //} else {
-            //console.error(`Error al obtener datos desde la API. Código de respuesta: ${response.status}`);
-        //}
     } catch (error) {
         console.error('Error al obtener datos desde la API:', error.message);
     }
-}
-
-async function updateFireStore() {
-    //logica actualizar FireStore con el JSON obtenido.
 }
 
 // Evento que se dispara cuando un elemento de la caché expira
@@ -243,25 +230,6 @@ app.get('/user/activitats/:id', async (req, res) => {
         const docRef = db.collection('users').doc(id);
         const response = await docRef.get();
 
-        /*
-        for(let i = 0; i < response.data().activities.lenght; ++i) {
-            const activityRef = db.collection("actividades").doc(response.data().activities[i]);
-            const responseAct = await activityRef.get();
-            responseArr.push(responseAct.data())
-            console.log(responseArr)
-        }
-        */
-
-
-        /*
-        response.data().activities.forEach(async activity => {
-            const activityRef = db.collection("actividades").doc(activity);
-            const responseAct = await activityRef.get();
-            responseArr.push(responseAct.data())
-            console.log(responseArr)
-        })
-        */
-
         let responseArr = await Promise.all(response.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
@@ -288,13 +256,33 @@ app.post('/users/create', async(req, res) => {
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
-          'favcategories': categories
+          'favcategories': categories,
+          'activities': []
         });
 
         res.status(200).send('OK');
     }
     catch (error){
         res.send(error);
+    }
+});
+
+app.get('/users/:uid/favcategories', async (req, res) => {
+    try {
+        const uid = req.params.uid;
+        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        const userData = userDoc.data();
+        const favCategories = userData.favcategories;
+
+        res.status(200).json(favCategories);
+    } catch (error) {
+        console.error('Error al obtener las categorías favoritas del usuario:', error);
+        res.status(500).send('Error interno del servidor');
     }
 });
 
@@ -362,34 +350,12 @@ app.get('/activitats/isuserin', async (req, res) => {
     }
 });
 
-/*app.post('/update', async(req, res) => {
-    try {
-        const id = req.body.id;
-        const newData = "newDATA!"
-        const activityRef = await db.collection("actividades").doc(id)
-        .update({
-            data: newData
-        });
-        res.send(response.data());
-    }
-    catch (error){
-        res.send(error);
-    }
-});*/
-
-/*app.delete('/delete/:id', async(req, res) => {
-    try {
-        const response = await db.collection("actividades").doc(req.params.id).delete();
-        res.send(response.data());
-    }
-    catch (error){
-        res.send(error);
-    }
-});*/
 
 app.listen(PORT, async () => {
     // Inicializar la caché con datos por primera vez
     await updateDataCacheAndFireStore();
     console.log(`Server is working on PORT ${PORT}`);
 });
+
+
 
