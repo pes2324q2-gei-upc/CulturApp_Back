@@ -253,11 +253,13 @@ app.post('/users/create', async(req, res) => {
 
         const usersCollection = admin.firestore().collection('users');
 
+        const activities = [];
+
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
           'favcategories': categories,
-          'activities': []
+          'activities': activities
         });
 
         res.status(200).send('OK');
@@ -350,6 +352,23 @@ app.get('/activitats/isuserin', async (req, res) => {
     }
 });
 
+app.get('/user/uniqueUsername', async (req, res) => {
+    try {
+        var username = req.query.username;
+
+        const usersRef = db.collection('users');
+        
+        const querySnapshot = await usersRef.where('username', '==', username).get();
+
+        if (!querySnapshot.empty) {
+            res.status(200).send("notunique");
+        } else {
+            res.status(200).send("unique");
+        }
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+});
 
 app.listen(PORT, async () => {
     // Inicializar la caché con datos por primera vez
