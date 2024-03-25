@@ -1,31 +1,18 @@
-const express = require('express');
-const app = express();
+
+const app = require('./app');
 const axios = require('axios');
 
 const NodeCache = require("node-cache");
 const admin = require("firebase-admin");
 require('dotenv').config();
 
-admin.initializeApp({
-    credential: admin.credential.cert({
-        type: process.env.TYPE,
-        project_id: process.env.PROJECT_ID,
-        private_key_id: process.env.PRIVATE_KEY_ID,
-        private_key: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
-        client_email: process.env.CLIENT_EMAIL,
-        client_id: process.env.CLIENT_ID,
-        auth_uri: process.env.AUTH_URI,
-        token_uri: process.env.TOKEN_URI,
-        auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
-        client_x509_cert_url: process.env.CLIENT_X509_CERT_URL
-    })
-});
+const{db, auth} = require('./firebaseConfig');
 
-app.use(express.json());
+//app.use(express.json());
 
-app.use(express.urlencoded({extended: true}));
+//app.use(express.urlencoded({extended: true}));
 
-const db = admin.firestore();
+
 
 const PORT = process.env.PORT || 8080;
 
@@ -57,7 +44,7 @@ myCache.on("expired", function(key, value) {
     updateDataCacheAndFireStore();
 });
 
-app.post('/create', async (req, res) => {
+/*app.post('/create', async (req, res) => {
     try{
         const id = req.body.name;
         const activityJson = {
@@ -69,108 +56,20 @@ app.post('/create', async (req, res) => {
     } catch (error) {
         res.send(error);
     }
-});
+});*/
 
-app.get('/read/all', async (req, res) => {
-    try {
 
-        const activityRef = db.collection("actividades").limit(100);
-        const response = await activityRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    } catch (error){
-        res.send(error);
-    }
-});
 
 //Obtener 1 documento
-app.get('/read/:id', async (req, res) => {
-    try {
-        const activityRef = db.collection("actividades").doc(req.params.id);
-        const response = await activityRef.get();
-        res.send(response.data());
-    } catch (error){
-        res.send(error);
-    }
-});
-
-app.get('/activitats/agenda/json', async (req, res) => {
-    try {
-
-        var url = 'https://analisi.transparenciacatalunya.cat/resource/rhpv-yr4f.json';
-        // Realizar la solicitud GET a la API utilizando axios
-        const response = await axios.get(url);
-
-        // Verificar si la respuesta fue exitosa (código de respuesta 200)
-        if (response.status === 200) {
-            // Obtener los datos JSON de la respuesta/read/all
-            res.send(response.data);
-        } else {
-            // Si la solicitud no fue exitosa, mostrar mensaje de error
-            console.error(`Error al obtener datos desde la API. Código de respuesta: ${response.status}`);
-            return null;
-        }
-    } catch (error) {
-        // Manejar cualquier error que ocurra durante la solicitud
-        console.error('Error al obtener datos desde la API:', error.message);
-        return null;
-    }
-});
-
 app.get('/activitats/cache', async (req,  res) => {
     res.status(200).send(myCache.get("actividades"));
 });
 
-app.get('/activitats/categoria', async (req, res) => {
-    try {
-        var cats = req.params.categorias;
-        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', cats);
-        const response = await activityRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    } catch (error){
-        res.send(error);
-    }
-});
 
-app.get('/activitats/date/:date', async (req, res) => {
-    try {
-        var date = req.params.date;
-        date = date.slice(0, -4);
-        date = date.replace(' ', 'T');
-        const activityRef = db.collection("actividades").where('data_inici', '>=', date)
-                            .where('data_inici', '!=', 'No disponible')//.where('data_inici', '!=', '9999-09-09T00:00:00.000');
-        const response = await activityRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    } catch (error){
-        res.send(error);
-    }
-});
 
-app.get('/activitats/name/:name', async (req, res) => {
-    try {
-        var nomAct = req.params.name;
-        const activityRef = db.collection("actividades").where('denominaci', '==', nomAct);
-        const response = await activityRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    } catch (error){
-        res.send(error);
-    }
-});
+
+
+
 
 app.get('/user/activitats/:id/search/:name', async (req, res) => {
     try {
@@ -235,9 +134,6 @@ app.get('/user/activitats/:id', async (req, res) => {
             const responseAct = await activityRef.get();
             return responseAct.data();
         }));
-        
-
-        console.log(responseArr)
         res.status(200).send(responseArr);
     } catch (error){
         res.send(error);
