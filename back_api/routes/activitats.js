@@ -18,9 +18,9 @@ router.get('/read/all', async (req, res) => {
     }
 });
 
-app.get('/categoria', async (req, res) => {
+router.get('/categoria/:categoria', async (req, res) => {
     try {
-        var cats = req.params.categorias;
+        var cats = req.params.categoria.split(',');
         const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', cats);
         const response = await activityRef.get();
         let responseArr = [];
@@ -33,7 +33,7 @@ app.get('/categoria', async (req, res) => {
     }
 });
 
-app.get('/date/:date', async (req, res) => {
+router.get('/date/:date', async (req, res) => {
     try {
         var date = req.params.date;
         date = date.slice(0, -4);
@@ -51,7 +51,7 @@ app.get('/date/:date', async (req, res) => {
     }
 });
 
-app.get('/name/:name', async (req, res) => {
+router.get('/name/:name', async (req, res) => {
     try {
         var nomAct = req.params.name;
         const activityRef = db.collection("actividades").where('denominaci', '==', nomAct);
@@ -66,7 +66,7 @@ app.get('/name/:name', async (req, res) => {
     }
 });
 
-app.get('/read/:id', async (req, res) => {
+router.get('/read/:id', async (req, res) => {
     try {
         const activityRef = db.collection("actividades").doc(req.params.id);
         const response = await activityRef.get();
