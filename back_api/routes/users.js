@@ -30,7 +30,7 @@ router.post('/create', async(req, res) => {
     }
 });
 
-router.get('/activitats/:id', async (req, res) => {
+router.get('/:id/activitats', async (req, res) => {
     try {
         var id = req.params.id;
         const docRef = db.collection('users').doc(id);
