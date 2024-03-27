@@ -39,9 +39,14 @@ router.get('/activitats/:id', async (req, res) => {
         let responseArr = await Promise.all(response.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
-            return responseAct.data();
+            if(responseAct.exists) {
+                return responseAct.data();
+            }
+            else return null;
         }));
-        res.status(200).send(responseArr);
+        const filteredActivities = responseArr.filter(activity => activity !== null);
+        res.status(200).send(filteredActivities);
+        
     } catch (error){
         res.send(error);
     }
