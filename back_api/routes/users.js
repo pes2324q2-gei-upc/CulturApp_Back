@@ -205,4 +205,52 @@ router.get('/uniqueUsername', async (req, res) => {
     }
 });
 
+router.get('/:id/categories/:categories', async (req, res) => {
+    try {
+        var id = req.params.id;
+        const codiActivitats =  db.collection('users').doc(id);
+        const response = await codiActivitats.get();
+        var categories = req.params.categories.split(",");
+        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+            const activityRef = db.collection("actividades").doc(activity)//.where('tags_categor_es', 'array-contains-any', categories);
+            const responseAct = await activityRef.get();
+            if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
+                return responseAct.data();
+            } else {
+                return null
+            }
+        }));
+        const filteredActivities = responseArr.filter(activity => activity !== null);
+       res.status(200).send(filteredActivities);
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+})
+
+router.get('/:id/data/:data', async (req, res) => {
+    try {
+        var id = req.params.id;
+        const codiActivitats =  db.collection('users').doc(id);
+        const response = await codiActivitats.get();
+        var date = req.params.data;
+        date = date.slice(0, -4);
+        date = date.replace(' ', 'T');
+        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+            const activityRef = db.collection("actividades").doc(activity)
+            const response = await activityRef.get();
+            if (response.exists && response.data().data_inici >= date) {
+                return response.data();
+            }
+            else {
+                return null;
+            }
+        }));
+        const filteredActivities = responseArr.filter(activity => activity !== null);
+       res.status(200).send(filteredActivities);
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+})
+
+
 module.exports = router
