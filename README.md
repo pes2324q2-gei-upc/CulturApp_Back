@@ -1,1 +1,3 @@
-# CulturApp_Back
+# Culturapp_Back
+### Executar servidor en local:
+- node .
