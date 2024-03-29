@@ -429,9 +429,64 @@ app.post('/foros/create', async(req, res) => {
     }
 });
 
-//publica un post
-app.post('/activitats/', async(req, res) => {
+app.get('/foros/:foroId/posts', async (req, res) => {
+    try {
+        const foroId = req.params.foroId;
+        
+        // Obtener los posts del foro con el foroId especificado
+        const postsRef = db.collection('foros').doc(foroId).collection('posts');
+        const snapshot = await postsRef.get();
 
+        if (snapshot.empty) {
+            console.log('No hay posts encontrados para el foro con el ID:', foroId);
+            res.status(404).send('No hay posts encontrados para el foro');
+            return;
+        }
+
+        let posts = [];
+        snapshot.forEach(doc => {
+            posts.push(doc.data());
+        });
+
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error al obtener los posts del foro:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
+
+//publica un post
+// Ruta para agregar un nuevo post a un foro existente
+app.post('/foros/:foroId/posts', async (req, res) => {
+    print("intenta crear un post")
+    try {
+        const { id, username, mensaje, fecha, numero_likes } = req.body;
+        const foroId = req.params.foroId;
+
+        // Verificar si el foro existe
+        const foroRef = db.collection('foros').doc(foroId);
+        const foroSnapshot = await foroRef.get();
+
+        if (!foroSnapshot.exists) {
+            res.status(404).send("Foro no encontrado");
+            return;
+        }
+
+        // Agregar el nuevo post al foro
+        await foroRef.collection('posts').add({
+            id: id,
+            username: username,
+            mensaje: mensaje,
+            fecha: fecha,
+            numero_likes: numero_likes
+        });
+
+        res.status(201).send("Post agregado exitosamente al foro");
+    } catch (error) {
+        console.error("Error al agregar post al foro:", error);
+        res.status(500).send("Error interno del servidor");
+    }
 });
 
 //edita un post
