@@ -1,7 +1,12 @@
+const express = require('express')
+const router = express.Router()
+
+const { db } = require('../firebaseConfig');
+
 //funciones para el foro
 
 //foro existe?
-app.get('/foros/exists', async (req, res) => {
+router.get('/exists', async (req, res) => {
     try {
         console.log("Solicitud recibida en la ruta '/foros/exists'");
         
@@ -32,7 +37,7 @@ app.get('/foros/exists', async (req, res) => {
 });
 
 //crear foro
-app.post('/foros/create', async(req, res) => {
+router.post('/create', async(req, res) => {
     try {
         console.log("Solicitud recibida en la ruta '/foros/create'");
 
@@ -54,7 +59,7 @@ app.post('/foros/create', async(req, res) => {
     }
 });
 
-app.get('/foros/:foroId/posts', async (req, res) => {
+router.get('/:foroId/posts', async (req, res) => {
     try {
         const foroId = req.params.foroId;
         
@@ -83,8 +88,8 @@ app.get('/foros/:foroId/posts', async (req, res) => {
 
 //publica un post
 // Ruta para agregar un nuevo post a un foro existente
-app.post('/foros/:foroId/posts', async (req, res) => {
-    print("intenta crear un post")
+router.post('/:foroId/posts', async (req, res) => {
+    console.log("intenta crear un post")
     try {
         const { id, username, mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
@@ -115,11 +120,12 @@ app.post('/foros/:foroId/posts', async (req, res) => {
 });
 
 //edita un post
-app.put('/activitats', async(req, res) => {
+router.put('/:foroId/posts/:postId', async(req, res) => {
 
 });
 
 //elimina un post
-app.delete('/activitats', async(req, res) => {
-
+router.delete('/:foroId/posts/:postId', async(req, res) => {
 });
+
+module.exports = router
