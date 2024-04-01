@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 
+router.use(express.json());
+
 const { db } = require('../firebaseConfig');
 
 router.get('/read/all', async (req, res) => {
