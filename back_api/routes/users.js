@@ -55,13 +55,9 @@ router.get('/:id/activitats', async (req, res) => {
 });
 
 router.get('/activitats/isuserin', async (req, res) => {
-    console.log('-1')
     try {
-        console.log('0');
         var uid = req.query.uid;
-        console.log(uid);
         var activityId = req.query.activityId;
-        console.log(activityId);
         const userRef = db.collection('users').doc(uid);
         const userSnapshot = await userRef.get();
     
@@ -185,8 +181,6 @@ router.get('/activitats/:id/search/:name', async (req, res) => {
 
         // Filter out null values (activities that don't match the name)
         responseArr = responseArr.filter(activity => activity !== null);
-        
-        console.log(responseArr)
         res.status(200).send(responseArr);
     } catch (error){
         res.send(error);
