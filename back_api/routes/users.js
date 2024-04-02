@@ -1,3 +1,4 @@
+const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
 
@@ -133,6 +134,25 @@ router.get('/:uid/favcategories', async (req, res) => {
         res.status(200).json(favCategories);
     } catch (error) {
         console.error('Error al obtener las categorías favoritas del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
+router.get('/:uid/username', async (req, res) => {
+    try {
+        const uid = req.params.uid;
+        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        const userData = userDoc.data();
+        const usname = userData.username;
+
+        res.status(200).json(usname);
+    } catch (error) {
+        console.error('Error al obtener username del usuario:', error);
         res.status(500).send('Error interno del servidor');
     }
 });
