@@ -7,6 +7,20 @@ router.use(express.json());
 const { db } = require('../firebaseConfig');
 
 
+router.get('/read/users', async (req, res) => {
+    try {
+
+        const usersRef = db.collection("users");
+        const response = await usersRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
 
 router.post('/create', async(req, res) => {
     try {
