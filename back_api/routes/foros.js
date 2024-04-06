@@ -5,8 +5,6 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-//funciones para el foro
-
 //foro existe?
 router.get('/exists', async (req, res) => {
     try {
@@ -45,12 +43,11 @@ router.post('/create', async(req, res) => {
 
         const { activitat_code} = req.body;
 
-        const posts = [];
+        //const posts = [];
  
         const docRef = await db.collection('foros').add({
-            'num_comentaris': 0,
             'activitat_code': activitat_code,
-            'posts': posts
+            //'posts': posts
         });
 
         res.status(201).send({ message: "Foro creado exitosamente", id: docRef.id });
@@ -93,7 +90,7 @@ router.get('/:foroId/posts', async (req, res) => {
 router.post('/:foroId/posts', async (req, res) => {
     console.log("intenta crear un post")
     try {
-        const { id, username, mensaje, fecha, numero_likes } = req.body;
+        const { username, mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
 
         // Verificar si el foro existe
@@ -107,7 +104,6 @@ router.post('/:foroId/posts', async (req, res) => {
 
         // Agregar el nuevo post al foro
         await foroRef.collection('posts').add({
-            id: id,
             username: username,
             mensaje: mensaje,
             fecha: fecha,
