@@ -1,4 +1,3 @@
-Prueba para implemetar API
-
-- Hossam Zeoruali
-- Pablo Aparici
+# Culturapp_Back
+### Executar servidor en local:
+- node .
