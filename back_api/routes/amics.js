@@ -42,9 +42,25 @@ router.get('/:id/following', async (req, res) => {
         response.forEach(doc => {
             responseArr.push(doc.data());
         });
-        console.log(responseArr);
         res.status(200).send(responseArr);
     } catch (error){
+        res.send(error);
+    }
+});
+
+router.get('/:id/followers', async (req, res) => {
+    
+    try {
+        const id = req.params.id;
+        const followersRef = db.collection('following').where('friend', '==', id);
+        const response = await followersRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    }
+    catch (error){
         res.send(error);
     }
 });
