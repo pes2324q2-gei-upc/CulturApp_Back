@@ -96,7 +96,7 @@ router.put('/rebutjar/:id', async(req, res) =>{
     }
 });
 
-router.get('/amics/pendents/:id', async(req, res) => { 
+router.get('/pendents/:id', async(req, res) => { 
     try {
         const id = req.params.id;
         const amicsRef = db.collection('following').where('friend', '==', id).where('pendent', '==', true);
