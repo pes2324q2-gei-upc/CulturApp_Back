@@ -33,6 +33,10 @@ router.post('/create', async(req, res) => {
     
 });
 
+/*primera idea:
+    los amigos a los que sigues son los que tienen tu id en la columna user i acceptat a true
+    los amigos que te siguen son los que tienen tu id en la columna friend i acceptat a true
+*/
 router.get('/:id/following', async (req, res) => {
     try {
         var id = req.params.id;
@@ -66,6 +70,7 @@ router.get('/:id/followers', async (req, res) => {
         res.send(error);
     }
 });
+
 
 router.put('/accept/:id', async(req, res) =>{
     try {
