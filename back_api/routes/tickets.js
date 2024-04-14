@@ -244,7 +244,7 @@ router.get('/read/solicitudsOrganitzador/pendents', async(req, res) => {
 
 router.get('/read/solicitudsOrganitzador/otorgades', async(req, res) => {
     try {
-        const solicitudsRef = db.collection('solicitudsOrganitzador').where('otorgat', '==', true);
+        const solicitudsRef = db.collection('solicitudsOrganitzador').where('atorgat', '==', true);
         const response = await solicitudsRef.get();
         let responsArr = [];
         response.forEach(doc => {
