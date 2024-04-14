@@ -37,7 +37,7 @@ router.get('/:id/following', async (req, res) => {
     try {
         var id = req.params.id;
         console.log(id);
-        const docRef = db.collection('following').where('user', '==', id);
+        const docRef = db.collection('following').where('user', '==', id).where('acceptat', '==', true);
         const response = await docRef.get();
         let responseArr = [];
         
@@ -54,7 +54,7 @@ router.get('/:id/followers', async (req, res) => {
     
     try {
         const id = req.params.id;
-        const followersRef = db.collection('following').where('friend', '==', id);
+        const followersRef = db.collection('following').where('friend', '==', id).where('acceptat', '==', true);
         const response = await followersRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -82,6 +82,20 @@ router.put('/accept/:id', async(req, res) =>{
     }
 });
 
+router.put('/rebutjar/:id', async(req, res) =>{
+    try {
+        var id = req.params.id;
+        const amicsRef = db.collection('following').doc(id);
+        await amicsRef.update({
+            'pendent': false
+        });
+        res.status(200).send('OK');
+    }
+    catch (error) {
+        res.send(error);
+    }
+});
+
 router.get('/amics/pendents/:id', async(req, res) => { 
     try {
         const id = req.params.id;
@@ -98,18 +112,6 @@ router.get('/amics/pendents/:id', async(req, res) => {
     }
 });
 
-router.put('/rebutjar/:id', async(req, res) =>{
-    try {
-        var id = req.params.id;
-        const amicsRef = db.collection('following').doc(id);
-        await amicsRef.update({
-            'pendent': false
-        });
-        res.status(200).send('OK');
-    }
-    catch (error) {
-        res.send(error);
-    }
-});
+
 
 module.exports = router
