@@ -16,7 +16,9 @@ router.post('/create', async(req, res) => {
             console.log(2)
             await followingCollection.add({
                 'user': uid,
-                'friend': friend 
+                'friend': friend,
+                'acceptat': false,
+                'pendent': true
             });
             console.log(3)
             res.status(200).send('OK');
@@ -61,6 +63,51 @@ router.get('/:id/followers', async (req, res) => {
         res.status(200).send(responseArr);
     }
     catch (error){
+        res.send(error);
+    }
+});
+
+router.put('/accept/:id', async(req, res) =>{
+    try {
+        const id  = req.params.id;
+        const followingRef = db.collection('following').doc(id);
+        await followingRef.update({
+            'acceptat': true,
+            'pendent': false
+        });
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.get('/amics/pendents/:id', async(req, res) => { 
+    try {
+        const id = req.params.id;
+        const amicsRef = db.collection('following').where('friend', '==', id).where('pendent', '==', true);
+        const response = await amicsRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.put('/rebutjar/:id', async(req, res) =>{
+    try {
+        var id = req.params.id;
+        const amicsRef = db.collection('following').doc(id);
+        await amicsRef.update({
+            'pendent': false
+        });
+        res.status(200).send('OK');
+    }
+    catch (error) {
         res.send(error);
     }
 });
