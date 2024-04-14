@@ -17,7 +17,8 @@ router.post('/create/reportUsuari', async(req, res) => {
             'user': uid,
             'motiuReport': report,
             'usuariReportat': usuariReportat,
-            'solucionat': false
+            'solucionat': false,
+            'administrador': ''
         })
         res.status(200).send('OK')
     }
@@ -70,12 +71,29 @@ router.get('/read/repostsUsuaris/solucionats', async(req, res) => {
     }
 });
 
+router.get('/repotsUsuari/solucionat/admin/:id', async(req, res) => {
+    try {
+        const id = req.params.id;
+        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true).where('administrador', '==', id);   
+        const response = await reportsRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
 router.put('/solucionat/reportUsuari/:id', async(req, res) => {
     try {
         const id  = req.params.id;
+        const idAdmin = req.body.idAdmin;
         const reportRef = db.collection('reportsUsuaris').doc(id);
         await reportRef.update({
-            'solucionat': true
+            'solucionat': true,
+            'administrador': idAdmin
         });
         res.status(200).send('OK');
     } catch (error){
@@ -104,7 +122,8 @@ router.post('/create/reportBug', async(req, res) => {
         await reportsCollection.add({
             'user': uid,
             'errorApp': report,
-            'solucionat': false
+            'solucionat': false,
+            'administrador': ''
         })
         res.status(200).send('OK')
     }
@@ -160,9 +179,11 @@ router.get('/read/reportsBugs/solucionats', async(req, res) => {
 router.put('/solucionat/reportBug/:id', async(req, res) =>{
     try {
         const id  = req.params.id;
+        const idAdmin = req.body.idAdmin;
         const reportRef = db.collection('reportsBugs').doc(id);
         await reportRef.update({
-            'solucionat':true
+            'solucionat':true,
+            'administrador': idAdmin
         })
         res.status(200).send('OK')
     }
@@ -185,17 +206,19 @@ router.delete('/delete/reportBug', async(req, res) => {
 //Operacions de sol·licituds d'organitzador
 router.post('/create/solicitudOrganitzador', async(req, res) => {
     try {
-        const { uid, email, idActivitat } = req.body;
+        const { uid, idActivitat, motiu } = req.body;
         const solictudRef = db.collection('solicitudsOrganitzador');
-        const activitatRef = db.collection('actividades').doc(idActivitat);
+        const activitatRef = db.collection('users').doc(uid);
         const doc = await activitatRef.get()
-        const dataFi = doc.data().data_fi;
+        const email = doc.data().email;
         await solictudRef.add({
             'userSolicitant': uid,
             'email': email,
             'idActivitat': idActivitat,
-            'dataFi': dataFi,
-            'atorgat': false
+            'motiu': motiu, 
+            'atorgat': false,
+            'pendent': true,
+            'administrador': ''
         })
         res.status(200).send('OK');
     }
@@ -206,7 +229,7 @@ router.post('/create/solicitudOrganitzador', async(req, res) => {
 
 router.get('/read/solicitudsOrganitzador/pendents', async(req, res) => {
     try {
-        const solicitudsRef = db.collection('solicitudsOrganitzador').where('otorgat', '==', false);
+        const solicitudsRef = db.collection('solicitudsOrganitzador').where('pendent', '==', true);
         const response = await solicitudsRef.get();
         let responsArr = [];
         response.forEach(doc => {
@@ -255,6 +278,7 @@ router.get('/read/solicitudsOrganitzador/caducades', async(req, res) => {
 router.put('/acceptar/solicitudOrganitzador/:id', async(req, res) => {
     try {
         const id = req.params.id;
+        const adminid = req.body.adminid;
         const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
         /*
         Depenent de com volguem tenir les collections d'organitzadors, activitats i usauris es posarà com calgui
@@ -267,7 +291,25 @@ router.put('/acceptar/solicitudOrganitzador/:id', async(req, res) => {
         });
         */
         await solicitudRef.update({
-            'atorgat': true
+            'atorgat': true,
+            'pendent': false,
+            'administrador': adminid
+        })
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.put('/rebutjar/solicitudOrganitzador/:id', async(req, res) => {
+    try {
+        const id = req.params.id;
+        const adminid = req.body.adminid;
+        const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
+        await solicitudRef.update({
+            'pendent': false,
+            'administrador': adminid
         })
         res.status(200).send('OK');
     }
