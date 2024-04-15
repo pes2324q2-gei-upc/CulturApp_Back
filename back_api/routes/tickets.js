@@ -41,7 +41,7 @@ router.get('/read/reportsUsuari/all', async (req, res) => {
     }
 });
 
-router.get('/read/repostsUsuaris/pendents', async(req, res) => {
+router.get('/read/reportsUsuaris/pendents', async(req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', false);
         const response = await reportsRef.get();
@@ -56,7 +56,7 @@ router.get('/read/repostsUsuaris/pendents', async(req, res) => {
     }
 });
 
-router.get('/read/repostsUsuaris/solucionats', async(req, res) => {
+router.get('/read/reportsUsuaris/solucionats', async(req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true)
         const response = await reportsRef.get();
@@ -71,7 +71,7 @@ router.get('/read/repostsUsuaris/solucionats', async(req, res) => {
     }
 });
 
-router.get('/repotsUsuari/solucionat/admin/:id', async(req, res) => {
+router.get('/reportsUsuari/solucionat/admin/:id', async(req, res) => {
     try {
         const id = req.params.id;
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true).where('administrador', '==', id);   
@@ -80,6 +80,7 @@ router.get('/repotsUsuari/solucionat/admin/:id', async(req, res) => {
         response.forEach(doc => {
             responseArr.push(doc.data());
         });
+        res.status(200).send(responseArr);
     }
     catch (error){
         res.send(error);
