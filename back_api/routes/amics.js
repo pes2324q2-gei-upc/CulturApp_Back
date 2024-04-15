@@ -9,20 +9,20 @@ router.post('/create', async(req, res) => {
    
     try{
         const { uid, friend } = req.body;
-        console.log(0)
         if(uid != friend){
-            console.log(1)
             const followingCollection = db.collection('following');
-            console.log(2)
             await followingCollection.add({
                 'user': uid,
                 'friend': friend,
                 'acceptat': false,
                 'pendent': true
             });
-            console.log(3)
             res.status(200).send('OK');
         }
+        /* 
+            esto de aquí podemos tener el control aquí o en front, depende de como pongamos lo de
+            solicitar amistad
+        */
         else {
             res.status(400).send('No pots afegir-te a tu mateix com a amic');
         }
@@ -87,13 +87,11 @@ router.put('/accept/:id', async(req, res) =>{
     }
 });
 
-router.put('/rebutjar/:id', async(req, res) =>{
+router.delete('/rebutjar/:id', async(req, res) =>{
     try {
         var id = req.params.id;
         const amicsRef = db.collection('following').doc(id);
-        await amicsRef.update({
-            'pendent': false
-        });
+        await amicsRef.delete()
         res.status(200).send('OK');
     }
     catch (error) {
