@@ -287,5 +287,46 @@ router.get('/:id/data/:data', async (req, res) => {
     }
 })
 
+router.get('/username', async (req, res) => {
+    try {
+        var uid = req.query.uid;
+
+        const usersRef = db.collection('users').doc(uid);
+
+        const querySnapshot = await usersRef.get();
+
+        if (!querySnapshot.empty) {
+            res.status(200).send(querySnapshot.data().username);
+        } else {
+            res.status(300).send("Error");
+        }
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+});
+
+router.post('/edit', async(req, res) => {
+    try {
+
+        const { uid, username, favcategories } = req.body;
+
+        const categories = JSON.parse(favcategories);
+
+        const usersCollection = admin.firestore().collection('users');
+        
+        const activities = [];
+
+        await usersCollection.doc(uid).update({
+          'username': username,
+          'favcategories': categories,
+        });
+
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
 
 module.exports = router
