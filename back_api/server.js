@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const{db, auth} = require('./firebaseConfig');
 
-const PORT = process.env.PORT;
+const PORT = 8080 ;
 
 
 app.listen(PORT, async () => {
