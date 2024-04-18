@@ -22,9 +22,10 @@ router.post('/create', async(req, res) => {
     }
 });
 
-router.get('/login', async(req, res) => {  
+router.post('/login', async(req, res) => {  
     try {
         const { username, password } = req.body;
+        console.log("goes in with" + username + " " + password)
         const adminRef = db.collection('administradors');
         const response = await adminRef.where('username', '==', username).get()
         if (response.empty) {
