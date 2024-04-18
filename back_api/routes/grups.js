@@ -41,7 +41,6 @@ router.post('/:grupId/mensajes', async (req, res) => {
         const grupRef = db.collection('grups').doc(grupId);
         const grupSnapshot = await grupRef.get();
 
-        //si no existe crear?
         if (!grupSnapshot.exists) {
             res.status(404).send("Grup no encontrado");
             return;
