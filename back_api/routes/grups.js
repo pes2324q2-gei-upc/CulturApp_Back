@@ -10,13 +10,14 @@ router.post('/create', async(req, res) => {
     try {
         console.log("Solicitud recibida en la ruta '/grups/create'");
 
-        const { name, admin, imatge, members } = req.body;
+        const { name, descr, /*admin,*/ imatge, members } = req.body;
  
         const docRef = await db.collection('grups').add({
             'id': " ",
             'nom': name,
+            'descripcio': descr,
             'imatge': imatge,
-            'creador': admin,
+            //'creador': admin,
             'members': members
         });
 
