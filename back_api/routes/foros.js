@@ -177,7 +177,7 @@ router.get('/:foroId/posts/:postId/reply', async (req, res) => {
         const snapshot = await postsRef.get();
 
         if (snapshot.empty) {
-            console.log('No hay replies encontrados para el post con el ID:', foroId);
+            console.log('No hay replies encontrados para el post con el ID:', postId);
             res.status(404).send('No hay replies encontrados para el post');
             return;
         }
