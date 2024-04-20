@@ -17,7 +17,10 @@ admin.initializeApp({
     })
 });
 
-const db = admin.firestore();
+const db = process.env.NODE_ENV === 'test'
+    ? admin.firestore().settings({ host: 'localhost:8080', ssl: false })
+    : admin.firestore();
+    
 const auth = admin.auth();
 
 module.exports = { db, auth };

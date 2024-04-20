@@ -1,11 +1,7 @@
 const app = require('./app');
-
-const NodeCache = require("node-cache");
 require('dotenv').config();
 
-const{db, auth} = require('./firebaseConfig');
-
-const PORT = 8080//process.env.PORT;
+const PORT = 8000;
 
 
 app.listen(PORT, async () => {

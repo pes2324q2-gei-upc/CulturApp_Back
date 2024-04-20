@@ -4,7 +4,7 @@ const router = express.Router()
 
 router.use(express.json());
 
-const { db } = require('../firebaseConfig');
+const db = admin.firestore();
 
 //Operacions de reports d'usuari
 router.post('/create/reportUsuari', async(req, res) => {
