@@ -11,7 +11,7 @@ beforeAll(async () => {
 afterAll(async () => {
   console.log('Deleting all documents');
   
-  const collections = ['reportsUsuaris']; // Agrega aquí todas las colecciones que quieras borrar
+  const collections = ['reportsUsuaris']; // Agregar aquí todas las colecciones que se quieran borrar
 
   for (const collection of collections) {
     const snapshot = await db.collection(collection).get();
