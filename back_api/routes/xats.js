@@ -60,4 +60,31 @@ router.post('/:xatId/mensajes', async (req, res) => {
     }
 });
 
+//get mensajes
+router.get('/:xatId/mensajes', async (req, res) => {
+    try {
+        const xatId = req.params.xatId;
+        
+        //Obtener los mensajes del xat con el xatId especificado
+        const mensajesRef = db.collection('xats').doc(xatId).collection('mensajes');
+        const snapshot = await mensajesRef.get();
+
+        if (snapshot.empty) {
+            console.log('No hay mensajes encontrados para el xat con el ID:', xatId);
+            res.status(404).send('No hay mensajes encontrados para el xat');
+            return;
+        }
+
+        let mensajes = [];
+        snapshot.forEach(doc => {
+            mensajes.push(doc.data());
+        });
+
+        res.status(200).json(mensajes);
+    } catch (error) {
+        console.error('Error al obtener los mensajes del xat:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
 module.exports = router

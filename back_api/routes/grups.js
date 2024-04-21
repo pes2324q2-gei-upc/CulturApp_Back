@@ -61,4 +61,31 @@ router.post('/:grupId/mensajes', async (req, res) => {
     }
 });
 
+//get mensajes
+router.get('/:grupId/mensajes', async (req, res) => {
+    try {
+        const grupId = req.params.grupId;
+        
+        //Obtener los mensajes del xat con el grupId especificado
+        const mensajesRef = db.collection('grups').doc(grupId).collection('mensajes');
+        const snapshot = await mensajesRef.get();
+
+        if (snapshot.empty) {
+            console.log('No hay mensajes encontrados para el grupo con el ID:', grupId);
+            res.status(404).send('No hay mensajes encontrados para el grupo');
+            return;
+        }
+
+        let mensajes = [];
+        snapshot.forEach(doc => {
+            mensajes.push(doc.data());
+        });
+
+        res.status(200).json(mensajes);
+    } catch (error) {
+        console.error('Error al obtener los mensajes del grupo:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
 module.exports = router
