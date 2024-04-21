@@ -41,6 +41,21 @@ router.get('/read/reportsUsuari/all', async (req, res) => {
     }
 });
 
+router.get('/read/reportsUsuari/:id', async(req, res) => {
+    try {
+        const id = req.params.id;
+        const reportsRef = db.collection('reportsUsuaris').doc(id);
+        const response = await reportsRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.get('/read/repostsUsuaris/pendents', async(req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', false);
@@ -146,6 +161,21 @@ router.get('/read/reportsBug/all', async (req, res) => {
     }
 });
 
+router.get('/read/reportsBug/:id', async(req, res) => {
+    try {
+        const id = req.params.id;
+        const reportsRef = db.collection('reportsBugs').doc(id);
+        const response = await reportsRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.get('/read/reportsBugs/pendents', async(req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').where('solucionat', '==', false);
@@ -224,6 +254,22 @@ router.post('/create/solicitudOrganitzador', async(req, res) => {
     }
     catch (error){
         res.send(error)
+    }
+});
+
+router.get('/read/solicitudsOrganitzador/:id', async(req, res) => {
+    try {
+        const id = req.params.id;
+        const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
+        const response = await solicitudRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    }
+    catch (error){
+        res.send(error);
     }
 });
 
