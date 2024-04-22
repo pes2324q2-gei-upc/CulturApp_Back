@@ -30,10 +30,11 @@ jobs:
     - name: Install dependencies
       run: cd back_api && npm ci
 
+    - name: Install Firebase CLI
+      uses: npm install -g firebase-tools
+
     - name: Install Firestore Emulator
-      uses: FirebaseExtended/action-setup-firestore-emulator@v0
-      with:
-        version: '1.11.9'
+      run: firebase setup:emulators:firestore
 
     - name: Start Firestore Emulator
       run: firebase emulators:start --only firestore & # El & para que se ejecute en otra terminal y permita ejecutar los tests.
