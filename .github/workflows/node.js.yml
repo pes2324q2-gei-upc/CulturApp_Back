@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "97_testing" ]
+    branches: [ 97_testing ]
   pull_request:
-    branches: [ "97_testing" ]
+    branches: [ 97_testing ]
 
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
-      run: npm ci
+      run: cd back_api && npm ci
 
     - name: Install Firestore Emulator
       uses: FirebaseExtended/action-setup-firestore-emulator@v0
