@@ -49,8 +49,10 @@ describe('GET /tickets/read/reportsUsuari/all', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveLength(testReports.length);
 
-    for (let i = 0; i < testReports.length; i++) {
-      expect(res.body[i]).toEqual(testReports[i]);
+    for (const report of testReports) {
+      expect(res.body).toContainEqual(report);
     }
   });
 });
+
+//Crear indice de ordenación en la base de datos porque si no lo devuelve como le da la gana
