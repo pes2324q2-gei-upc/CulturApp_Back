@@ -1,8 +1,7 @@
 const app = require('./app');
 require('dotenv').config();
 
-const PORT = 8000;
-
+const PORT = process.env.PORT;
 
 app.listen(PORT, async () => {
     console.log(`Server is working on PORT ${PORT}`);
