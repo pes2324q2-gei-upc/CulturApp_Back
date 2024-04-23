@@ -1,5 +1,8 @@
+const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
+
+router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 

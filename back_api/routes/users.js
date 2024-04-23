@@ -1,9 +1,26 @@
+const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
+
+router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
 
+router.get('/read/users', async (req, res) => {
+    try {
+
+        const usersRef = db.collection("users");
+        const response = await usersRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(error);
+    }
+});
 
 router.post('/create', async(req, res) => {
     try {
@@ -53,13 +70,9 @@ router.get('/:id/activitats', async (req, res) => {
 });
 
 router.get('/activitats/isuserin', async (req, res) => {
-    console.log('-1')
     try {
-        console.log('0');
         var uid = req.query.uid;
-        console.log(uid);
         var activityId = req.query.activityId;
-        console.log(activityId);
         const userRef = db.collection('users').doc(uid);
         const userSnapshot = await userRef.get();
     
@@ -139,6 +152,25 @@ router.get('/:uid/favcategories', async (req, res) => {
     }
 });
 
+router.get('/:uid/username', async (req, res) => {
+    try {
+        const uid = req.params.uid;
+        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        const userData = userDoc.data();
+        const usname = userData.username;
+
+        res.status(200).json(usname);
+    } catch (error) {
+        console.error('Error al obtener username del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
 router.get('/exists', async (req, res) => {
     try {
         var uid = req.query.uid;
@@ -183,8 +215,6 @@ router.get('/activitats/:id/search/:name', async (req, res) => {
 
         // Filter out null values (activities that don't match the name)
         responseArr = responseArr.filter(activity => activity !== null);
-        
-        console.log(responseArr)
         res.status(200).send(responseArr);
     } catch (error){
         res.send(error);
@@ -256,6 +286,47 @@ router.get('/:id/data/:data', async (req, res) => {
         res.status(500).send(error); 
     }
 })
+
+router.get('/username', async (req, res) => {
+    try {
+        var uid = req.query.uid;
+
+        const usersRef = db.collection('users').doc(uid);
+
+        const querySnapshot = await usersRef.get();
+
+        if (!querySnapshot.empty) {
+            res.status(200).send(querySnapshot.data().username);
+        } else {
+            res.status(300).send("Error");
+        }
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+});
+
+router.post('/edit', async(req, res) => {
+    try {
+
+        const { uid, username, favcategories } = req.body;
+
+        const categories = JSON.parse(favcategories);
+
+        const usersCollection = admin.firestore().collection('users');
+        
+        const activities = [];
+
+        await usersCollection.doc(uid).update({
+          'username': username,
+          'favcategories': categories,
+        });
+
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
 
 
 module.exports = router
