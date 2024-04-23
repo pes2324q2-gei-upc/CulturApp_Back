@@ -9,7 +9,7 @@ const { db } = require('../firebaseConfig');
 //crear xat
 router.post('/create', async(req, res) => {
     try {
-        console.log("Solicitud recibida en la ruta '/xats/create'");
+        //console.log("Solicitud recibida en la ruta '/xats/create'");
 
         const { senderId, receiverId } = req.body;
  
@@ -23,14 +23,14 @@ router.post('/create', async(req, res) => {
         res.status(201).send({ message: "Xat creado exitosamente", id: docRef.id });
     }
     catch (error){
-        console.error("Error al crear el xat:", error);
+        //console.error("Error al crear el xat:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
 
 //post de mensajes 
 router.post('/:xatId/mensajes', async (req, res) => {
-    console.log("intenta crear un missatge")
+    //actualizar el last_msg y last_time de la info del grupo
     try {
         const { senderId, receiverId, mensaje, fecha } = req.body;
         const xatId = req.params.xatId;
@@ -55,7 +55,7 @@ router.post('/:xatId/mensajes', async (req, res) => {
 
         res.status(201).send("Mensaje agregado exitosamente al xat");
     } catch (error) {
-        console.error("Error al agregar mensaje al xat:", error);
+        //console.error("Error al agregar mensaje al xat:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
@@ -70,7 +70,7 @@ router.get('/:xatId/mensajes', async (req, res) => {
         const snapshot = await mensajesRef.get();
 
         if (snapshot.empty) {
-            console.log('No hay mensajes encontrados para el xat con el ID:', xatId);
+            //console.log('No hay mensajes encontrados para el xat con el ID:', xatId);
             res.status(404).send('No hay mensajes encontrados para el xat');
             return;
         }
@@ -82,7 +82,7 @@ router.get('/:xatId/mensajes', async (req, res) => {
 
         res.status(200).json(mensajes);
     } catch (error) {
-        console.error('Error al obtener los mensajes del xat:', error);
+        //console.error('Error al obtener los mensajes del xat:', error);
         res.status(500).send('Error interno del servidor');
     }
 });
