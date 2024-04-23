@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ 97_testing ]
+    branches: [ dev ]
   pull_request:
-    branches: [ 97_testing ]
+    branches: [ dev ]
 
 jobs:
   emulator_test:
