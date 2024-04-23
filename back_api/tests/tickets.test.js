@@ -52,6 +52,7 @@ describe('GET /tickets/read/reportsUsuari/all', () => {
     for (const report of testReports) {
       expect(res.body).toContainEqual(report);
     }
+    expect(4).toBe(5);
   });
 });
 
