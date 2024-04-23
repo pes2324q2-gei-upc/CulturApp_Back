@@ -31,37 +31,6 @@ router.post('/create', async(req, res) => {
     }
 });
 
-//post de mensajes 
-router.post('/:grupId/mensajes', async (req, res) => {
-    //actualizar el last_msg y last_time de la info del grupo
-    try {
-        const { senderId, receiverId, mensaje, fecha } = req.body;
-        const grupId = req.params.grupId;
-
-        // Verificar si el xat existe
-        const grupRef = db.collection('grups').doc(grupId);
-        const grupSnapshot = await grupRef.get();
-
-        if (!grupSnapshot.exists) {
-            res.status(404).send("Grup no encontrado");
-            return;
-        }
-
-        // Agregar el nuevo mensaje al xat
-        await grupRef.collection('mensajes').add({
-            senderId: senderId,
-            receiverId: receiverId,
-            mensaje: mensaje,
-            fecha: fecha
-        });
-
-        res.status(201).send("Mensaje agregado exitosamente al grup");
-    } catch (error) {
-        console.error("Error al agregar mensaje al grup:", error);
-        res.status(500).send("Error interno del servidor");
-    }
-});
-
 //get grup info 
 router.get('/:grupId', async (req, res) => {
     try {
@@ -99,6 +68,42 @@ router.get('/users/:userId', async (req, res) => {
         return res.status(200).json(userGroups);
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+//post de mensajes 
+router.post('/:grupId/mensajes', async (req, res) => {
+    try {
+        const { senderId, receiverId, mensaje, fecha } = req.body;
+        const grupId = req.params.grupId;
+
+        // Verificar si el xat existe
+        const grupRef = db.collection('grups').doc(grupId);
+        const grupSnapshot = await grupRef.get();
+
+        if (!grupSnapshot.exists) {
+            res.status(404).send("Grup no encontrado");
+            return;
+        }
+
+        // Agregar el nuevo mensaje al grup
+        await grupRef.collection('mensajes').add({
+            senderId: senderId,
+            receiverId: receiverId,
+            mensaje: mensaje,
+            fecha: fecha
+        });
+
+        // Actualitzar l'ultim missatge i data al grup
+        await grupRef.update({
+            last_msg: mensaje,
+            last_time: fecha
+        });
+
+        res.status(201).send("Mensaje agregado exitosamente al grup");
+    } catch (error) {
+        //console.error("Error al agregar mensaje al grup:", error);
+        res.status(500).send("Error interno del servidor");
     }
 });
 

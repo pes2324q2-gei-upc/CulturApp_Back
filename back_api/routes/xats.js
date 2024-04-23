@@ -30,7 +30,6 @@ router.post('/create', async(req, res) => {
 
 //post de mensajes 
 router.post('/:xatId/mensajes', async (req, res) => {
-    //actualizar el last_msg y last_time de la info del grupo
     try {
         const { senderId, receiverId, mensaje, fecha } = req.body;
         const xatId = req.params.xatId;
@@ -53,6 +52,12 @@ router.post('/:xatId/mensajes', async (req, res) => {
             fecha: fecha
         });
 
+        // Actualitzar l'ultim missatge i data al xat
+        await xatRef.update({
+            last_msg: mensaje,
+            last_time: fecha
+        });
+        
         res.status(201).send("Mensaje agregado exitosamente al xat");
     } catch (error) {
         //console.error("Error al agregar mensaje al xat:", error);
