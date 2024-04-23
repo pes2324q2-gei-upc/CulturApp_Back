@@ -33,3 +33,5 @@ jobs:
       env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
           
+
+#Habría que actualizar dependencias en el package.json para que al hacer npm install se actualice todo correctamente

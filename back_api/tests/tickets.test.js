@@ -52,8 +52,10 @@ describe('GET /tickets/read/reportsUsuari/all', () => {
     for (const report of testReports) {
       expect(res.body).toContainEqual(report);
     }
-    expect(4).toBe(5);
   });
 });
+
+
+
 
 //Crear indice de ordenación en la base de datos porque si no lo devuelve como le da la gana
