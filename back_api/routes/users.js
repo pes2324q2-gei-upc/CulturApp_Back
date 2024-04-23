@@ -4,8 +4,6 @@ const router = express.Router()
 
 router.use(express.json());
 
-const { db } = require('../firebaseConfig');
-
 
 router.get('/read/users', async (req, res) => {
     try {
