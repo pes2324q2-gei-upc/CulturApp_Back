@@ -10,40 +10,26 @@ on:
     branches: [ 97_testing ]
 
 jobs:
-  build:
-
+  emulator_test:
+    name: Run all tests usign Firebase Emulator Suite
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: cd back_api && npm install
+        node-version: "20"
 
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
+      working-directory: back_api
 
-    - name: Install Firestore Emulator
-      run: firebase setup:emulators:firestore
+    - name: Install dependencies
+      run: npm install
+      working-directory: back_api
 
-    - name: Start Firestore Emulator
-      run: firebase emulators:start --only firestore & # El & para que se ejecute en otra terminal y permita ejecutar los tests.
-
-    - name: Run tests  
-      run: npm run test
+    - name: Start Firestore Emulator and run all the tests
+      run: firebase emulators:exec --project ${{ secrets.PROJECT_ID }} 'npm test'
+      working-directory: back_api
       env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          FIRESTORE_EMULATOR_HOST: localhost:8080 #Para asegurar que las bibliotecas cliente de firestore vayan a 8080 y no aotro lado.
           
-    - name: Stop Firestore Emulator
-      run: firebase emulators:stop
