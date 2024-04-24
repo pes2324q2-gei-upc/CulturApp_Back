@@ -21,9 +21,13 @@ if(process.env.NODE_ENV !== 'test') { //Si no estamos en modo test, inicializamo
         })
     });
 
-    db =  admin.firestore(); //La redirección que había antes se podía usar solo si usaramos el emulador para ejecutar en local 
-                             //y no para las pruebas. Probar cosas ejecutando al server y solo actualizaría la base de datos local.
+    db =  admin.firestore(); 
     auth = admin.auth();
+} else {
+    // Estamos en un entorno de test, por lo que db debería ser la instancia de test
+    const firebase = require('@firebase/testing');
+    const app = firebase.initializeTestApp({ projectId: 'your-project-id' });
+    db = app.firestore();
 }
 
 module.exports = { db, auth };
