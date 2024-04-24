@@ -4,7 +4,6 @@ const router = express.Router()
 
 router.use(express.json());
 
-
 router.get('/read/users', async (req, res) => {
     try {
 
@@ -22,12 +21,11 @@ router.get('/read/users', async (req, res) => {
 
 router.post('/create', async(req, res) => {
     try {
-
         const { uid, username, email, favcategories } = req.body;
 
         const categories = JSON.parse(favcategories);
 
-        const usersCollection = admin.firestore().collection('users');
+        const usersCollection = db.collection('users');
         
         const activities = [];
 
@@ -37,7 +35,6 @@ router.post('/create', async(req, res) => {
           'favcategories': categories,
           'activities': activities
         });
-
         res.status(200).send('OK');
     }
     catch (error){
@@ -103,7 +100,7 @@ router.post('/activitats/signout', async(req, res) => {
           if (index !== -1) activities.splice(index, 1);
           await userRef.update({ activities: activities });
         }
-        res.status(200).send("Ok");
+        res.status(200).send("OK");
       } catch (error) {
         res.send(error);
     }
@@ -125,7 +122,7 @@ router.post('/activitats/signup', async(req, res) => {
         } else {
             res.send("El usuario no existe");
         }
-        res.status(200).send("Ok");
+        res.status(200).send("OK");
       } catch (error) {
         res.send(error);
     }

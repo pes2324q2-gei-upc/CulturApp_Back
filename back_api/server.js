@@ -1,7 +1,7 @@
 const app = require('./app');
 require('dotenv').config();
 
-const PORT = 8000;
+const PORT = 8080;
 
 
 app.listen(PORT, async () => {
