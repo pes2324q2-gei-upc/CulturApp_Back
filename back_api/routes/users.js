@@ -4,6 +4,7 @@ const router = express.Router()
 
 router.use(express.json());
 
+const { db } = require('../firebaseConfig');
 
 router.get('/read/users', async (req, res) => {
     try {
@@ -22,7 +23,6 @@ router.get('/read/users', async (req, res) => {
 
 router.post('/create', async(req, res) => {
     try {
-
         const { uid, username, email, favcategories } = req.body;
 
         const categories = JSON.parse(favcategories);

@@ -4,6 +4,8 @@ const router = express.Router()
 
 router.use(express.json());
 
+const { db } = require('../firebaseConfig');
+
 router.post('/create', async(req, res) => {
     try {
         const { username, email, password } = req.body
