@@ -18,7 +18,7 @@ router.post('/create', async(req, res) => {
             'descripcio': descr,
             'imatge': imatge,
             //'creador': admin,
-            'members': members,
+            'participants': members,
             'last_msg': ' ',
             'last_time': ' '
         });
@@ -31,7 +31,6 @@ router.post('/create', async(req, res) => {
         });
     }
     catch (error){
-        //console.error("Error al crear el grupo:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
@@ -79,7 +78,7 @@ router.get('/users/:userId', async (req, res) => {
 //post de mensajes 
 router.post('/:grupId/mensajes', async (req, res) => {
     try {
-        const { senderId, receiverId, mensaje, fecha } = req.body;
+        const { senderId, mensaje, fecha } = req.body;
         const grupId = req.params.grupId;
 
         // Verificar si el xat existe
@@ -94,7 +93,6 @@ router.post('/:grupId/mensajes', async (req, res) => {
         // Agregar el nuevo mensaje al grup
         await grupRef.collection('mensajes').add({
             senderId: senderId,
-            receiverId: receiverId,
             mensaje: mensaje,
             fecha: fecha
         });
