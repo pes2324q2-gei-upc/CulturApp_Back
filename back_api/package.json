@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "NODE_ENV=test jest --verbose",
-    "test:coverage": "NODE_ENV=test jest --coverage"
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
