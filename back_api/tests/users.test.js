@@ -181,3 +181,36 @@ describe('GET /users/uniqueUsername', () => {
     expect(res2.text).toBe('unique');
   });
 });
+
+describe('POST /users/edit', () => {
+  it('should edit a user', async () => {
+    const res = await request(app)
+      .post('/users/create')
+      .send({
+        uid: 'testUid',
+        username: 'testUser',
+        email: 'testEmail',
+        favcategories: JSON.stringify(['circ', 'cinema'])
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('OK');
+
+    const res2 = await request(app)
+      .post('/users/edit')
+      .send({
+        uid: 'testUid',
+        username: 'newUsername',
+        favcategories: JSON.stringify(['festa', 'cinema'])
+      });
+
+    expect(res2.statusCode).toEqual(200);
+    expect(res2.text).toBe('OK');
+
+    const doc = await db.collection('users').doc('testUid').get();
+    expect(doc.exists).toBeTruthy();
+    expect(doc.data().username).toBe('newUsername');
+    expect(doc.data().favcategories).toEqual(['festa', 'cinema']);
+  });
+});
+
