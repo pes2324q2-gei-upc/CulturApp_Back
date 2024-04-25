@@ -10,13 +10,13 @@ describe('POST /users/create', () => {
         uid: 'testUid',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: ['festa', 'cinema']
+        favcategories: JSON.stringify(['festa', 'cinema'])
       });
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('OK');
 
-    const docs = await db.collection('users').where('uid', '==', 'testUid').get();
+    const docs = await db.collection('users').doc('testUid').get();
     expect(docs.empty).toBeFalsy();
   });
 });
@@ -181,4 +181,3 @@ describe('GET /users/uniqueUsername', () => {
     expect(res2.text).toBe('unique');
   });
 });
-
