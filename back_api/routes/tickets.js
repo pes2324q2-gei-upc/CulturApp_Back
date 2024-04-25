@@ -6,18 +6,53 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-//Operacions de reports d'usuari
+const crypto = require('crypto');
+const algorithm = 'aes-256-cbc';
+const key = crypto.randomBytes(32);
+
+function decrypt(text) {
+    let iv = Buffer.from(text.iv, 'hex');
+    let encryptedText = Buffer.from(text.encryptedData, 'hex');
+    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+}
+
 router.post('/create/reportUsuari', async(req, res) => {
-    
     try {
         const { uid, report, usuariReportat } = req.body;
+
+        // Desencriptar el uid
+        const decryptedUid = decrypt(uid);
+
+        // Comprobar que decryptedUid es el id de un documento de la colección 'usuaris'
+        const userRef = db.collection('usuaris').doc(decryptedUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+
+        // Buscar el documento con el atributo 'username' igual a 'usuariReportat'
+        const userSnapshot = await db.collection('usuaris').where('username', '==', usuariReportat).get();
+
+        // Si no se encontró el usuario, enviar un error
+        if (userSnapshot.empty) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+
+        // Obtener el id del primer (y único) documento encontrado
+        const reportedUserId = userSnapshot.docs[0].id;
 
         const reportsCollection = db.collection('reportsUsuaris');
 
         await reportsCollection.add({
-            'user': uid,
+            'user': decryptedUid,
             'motiuReport': report,
-            'usuariReportat': usuariReportat,
+            'usuariReportat': reportedUserId,
             'solucionat': false,
             'administrador': ''
         })
