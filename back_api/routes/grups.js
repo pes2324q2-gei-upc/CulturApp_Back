@@ -24,6 +24,11 @@ router.post('/create', async(req, res) => {
         });
 
         res.status(201).send({ message: "Grup creado exitosamente", id: docRef.id });
+
+        // Actualitzar l'ultim missatge i data al grup
+        await docRef.update({
+            id: docRef.id
+        });
     }
     catch (error){
         //console.error("Error al crear el grupo:", error);
