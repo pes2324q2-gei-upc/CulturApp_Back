@@ -8,7 +8,7 @@ const { db } = require('../firebaseConfig');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
-const key = crypto.randomBytes(32);
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
 
 function decrypt(text) {
     let iv = Buffer.from(text.iv, 'hex');
@@ -19,32 +19,47 @@ function decrypt(text) {
     return decrypted.toString();
 }
 
+function isHexadecimal(str) {
+    return /^[0-9A-Fa-f]+$/.test(str.iv);
+}
+
 router.post('/create/reportUsuari', async(req, res) => {
     try {
-        const { uid, report, usuariReportat } = req.body;
+        const { token, report, usuariReportat } = req.body;
 
-        // Desencriptar el uid
-        const decryptedUid = decrypt(uid);
 
-        // Comprobar que decryptedUid es el id de un documento de la colección 'usuaris'
+        if (!token || !report || !usuariReportat) {
+            res.status(400).send('Faltan atributos');
+            return;
+        }
+
+        if(!isHexadecimal(token)){
+            res.status(401).send('El token no es hexadecimal');
+            return;
+        }
+
+        const decryptedUid = decrypt(token);
+        console.log("He desencriptado");
+        console.log(decryptedUid);
+
         const userRef = db.collection('usuaris').doc(decryptedUid);
         const userDoc = await userRef.get();
 
         if (!userDoc.exists) {
-            res.status(404).send('Usuario no encontrado');
+            console.log('Usuario reportador no encontrado');
+            res.status(404).send('Usuario reportador no encontrado');
             return;
         }
 
-        // Buscar el documento con el atributo 'username' igual a 'usuariReportat'
+
         const userSnapshot = await db.collection('usuaris').where('username', '==', usuariReportat).get();
 
-        // Si no se encontró el usuario, enviar un error
         if (userSnapshot.empty) {
-            res.status(404).send('Usuario no encontrado');
+            console.log('Usuario reportado no encontrado');
+            res.status(404).send('Usuario reportado no encontrado');
             return;
         }
 
-        // Obtener el id del primer (y único) documento encontrado
         const reportedUserId = userSnapshot.docs[0].id;
 
         const reportsCollection = db.collection('reportsUsuaris');
@@ -57,9 +72,8 @@ router.post('/create/reportUsuari', async(req, res) => {
             'administrador': ''
         })
         res.status(200).send('OK')
-    }
-    catch (error){
-        res.send(error);
+    } catch (error){
+        res.status(404).send(error);
     }
 });
 

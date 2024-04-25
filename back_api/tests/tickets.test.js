@@ -4,8 +4,8 @@ const app = require('../app');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
-const key = crypto.randomBytes(32);
-const iv = crypto.randomBytes(16);
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
 
 function encrypt(text) {
   let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
@@ -27,16 +27,33 @@ describe('POST /tickets/create/reportUsuari', () => {
     },
   ];
 
-    it('should create a user report', async () => {
+    it('deberia enviar 400 porque faltan atributos', async () => {
 
       for (const usuari of testUsers) {
-        await db.collection('usuaris').add(usuari);
+        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+      }
+
+      const res = await request(app)
+      .post('/tickets/create/reportUsuari')
+      .send({
+        token: encrypt('testUid1'),
+        report: 'testReport',
+      });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.text).toBe('Faltan atributos');
+    });
+
+    it('deberia crear un reporte de usuario', async () => {
+
+      for (const usuari of testUsers) {
+        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
       }
 
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          uid: encrypt('testUid1'),
+          token: encrypt('testUid1'),
           report: 'testReport',
           usuariReportat: 'testUsername2',
         });
@@ -48,39 +65,60 @@ describe('POST /tickets/create/reportUsuari', () => {
       expect(docs.empty).toBeFalsy();
     });
 
-    it("should send 404 code when the user reporting doesn't exist", async () => {
+    it("deberia enviar un 401 porque el token no es hexadecimal", async () => {
+     
       for (const usuari of testUsers) {
-        await db.collection('usuaris').add(usuari);
+        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
       }
 
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          uid: 'testUid1',
+          token: 'testUid1',
+          report: 'testReport',
+          usuariReportat: 'testUsername2',
+        });
+  
+      expect(res.statusCode).toEqual(401);
+      expect(res.text).toBe('El token no es hexadecimal');
+    });
+
+    it("deberia enviar un 404 porque el token enviado no pertenece a ningun usuario", async () => {
+      
+      for (const usuari of testUsers) {
+        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+      }
+
+      const res = await request(app)
+        .post('/tickets/create/reportUsuari')
+        .send({
+          token: encrypt('testUid3'),
           report: 'testReport',
           usuariReportat: 'testUsername2',
         });
   
       expect(res.statusCode).toEqual(404);
-      expect(res.text).toBe('Usuari no trobat');
+      expect(res.text).toBe('Usuario reportador no encontrado');
     });
 
-    it("should send 404 code when the user reported doesn't exist", async () => {
+    it("deberia enviar un 404 porque el username enviado no pertenece a ningun usuario", async () => {
+     
       for (const usuari of testUsers) {
-        await db.collection('usuaris').add(usuari);
+        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
       }
 
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          uid: 'testUid1',
+          token: encrypt('testUid1'),
           report: 'testReport',
           usuariReportat: 'testUsername3',
         });
   
       expect(res.statusCode).toEqual(404);
-      expect(res.text).toBe('Usuari reportat no trobat');
+      expect(res.text).toBe('Usuario reportado no encontrado');
     });
+
 });
 
 describe('GET /tickets/read/reportsUsuari/all', () => {
