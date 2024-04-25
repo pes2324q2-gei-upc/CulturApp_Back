@@ -6,30 +6,80 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
+const crypto = require('crypto');
+const algorithm = 'aes-256-cbc';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+
+function decrypt(text) {
+    let iv = Buffer.from(text.iv, 'hex');
+    let encryptedText = Buffer.from(text.encryptedData, 'hex');
+    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+}
+
+function isHexadecimal(str) {
+    return /^[0-9A-Fa-f]+$/.test(str.iv);
+}
+
 router.post('/create', async(req, res) => {
-   
     try{
-        const { uid, friend } = req.body;
-        if(uid != friend){
-            const followingCollection = db.collection('following');
-            await followingCollection.add({
-                'user': uid,
-                'friend': friend,
-                'acceptat': false,
-                'pendent': true
-            });
-            res.status(200).send('OK');
+        const { token, friend } = req.body;
+
+        if (!token || !friend) {
+            res.status(400).send('Faltan atributos');
+            return;
         }
-        /* 
-            esto de aquí podemos tener el control aquí o en front, depende de como pongamos lo de
-            solicitar amistad
-        */
-        else {
-            res.status(400).send('No pots afegir-te a tu mateix com a amic');
+
+        if(!isHexadecimal(token)){
+            res.status(401).send('El token no es hexadecimal');
+            return;
         }
+
+        const decryptedUid = decrypt(token);
+
+        const userRef = db.collection('usuaris').doc(decryptedUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            res.status(404).send('Usuario que hace la solicitud no encontrado');
+            return;
+        }
+
+        const userSnapshot = await db.collection('usuaris').where('username', '==', friend).get();
+
+        if (userSnapshot.empty) {
+            res.status(404).send('Usuario que recibe la solicitud no encontrado');
+            return;
+        }
+
+        const friendUid = userSnapshot.docs[0].id;
+
+        if(decryptedUid == friendUid){
+            res.status(400).send('No puedes seguirte a ti mismo');
+            return;
+        }
+
+        const followingCollection = db.collection('following');
+        const existingRequest = await followingCollection.where('user', '==', decryptedUid).where('friend', '==', friendUid).get();
+
+        if (!existingRequest.empty) {
+            res.status(409).send('La solicitud ya ha sido enviada');
+            return;
+        }
+
+        await followingCollection.add({
+            'user': decryptedUid,
+            'friend': friendUid,
+            'acceptat': false,
+            'pendent': true
+        });
+        res.status(200).send('OK');            
+        
     }   
     catch(error){
-        res.send(error);
+        res.status(404).send(error);
     }
     
 });
