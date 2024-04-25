@@ -75,6 +75,28 @@ router.get('/users/:userId', async (req, res) => {
     }
 });
 
+//update info del grup
+router.put('/:grupId/update', async (req, res) => {
+    try {
+        const grupId = req.params.grupId;
+        const { name, descr, imatge, members } = req.body;
+
+        await db.collection('grups').doc(grupId).update({
+            'nom': name,
+            'descripcio': descr,
+            'imatge': imatge,
+            'participants': members
+        });
+
+        res.status(200).send({ message: "Grupo actualizado exitosamente" });
+
+    } catch (error) {
+        console.error("Error al actualitzar info del grup:", error);
+        res.status(500).send("Error interno del servidor");
+    }
+});
+
+
 //post de mensajes 
 router.post('/:grupId/mensajes', async (req, res) => {
     try {
