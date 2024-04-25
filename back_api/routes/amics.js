@@ -9,18 +9,14 @@ const { db } = require('../firebaseConfig');
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
 const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
 
 function decrypt(text) {
-    let iv = Buffer.from(text.iv, 'hex');
-    let encryptedText = Buffer.from(text.encryptedData, 'hex');
+    let encryptedText = Buffer.from(text, 'hex');
     let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();
-}
-
-function isHexadecimal(str) {
-    return /^[0-9A-Fa-f]+$/.test(str.iv);
 }
 
 router.post('/create', async(req, res) => {
@@ -32,12 +28,13 @@ router.post('/create', async(req, res) => {
             return;
         }
 
-        if(!isHexadecimal(token)){
-            res.status(401).send('El token no es hexadecimal');
+        let decryptedUid;
+        try {
+            decryptedUid = decrypt(token);
+        } catch (error) {
+            res.status(401).send('Token no válido');
             return;
         }
-
-        const decryptedUid = decrypt(token);
 
         const userRef = db.collection('usuaris').doc(decryptedUid);
         const userDoc = await userRef.get();
@@ -47,6 +44,8 @@ router.post('/create', async(req, res) => {
             return;
         }
 
+        const username_solicitador = userDoc.data().username;
+
         const userSnapshot = await db.collection('usuaris').where('username', '==', friend).get();
 
         if (userSnapshot.empty) {
@@ -54,15 +53,13 @@ router.post('/create', async(req, res) => {
             return;
         }
 
-        const friendUid = userSnapshot.docs[0].id;
-
-        if(decryptedUid == friendUid){
+        if(username_solicitador == friend){
             res.status(400).send('No puedes seguirte a ti mismo');
             return;
         }
 
         const followingCollection = db.collection('following');
-        const existingRequest = await followingCollection.where('user', '==', decryptedUid).where('friend', '==', friendUid).get();
+        const existingRequest = await followingCollection.where('user', '==', username_solicitador).where('friend', '==', friend).get();
 
         if (!existingRequest.empty) {
             res.status(409).send('La solicitud ya ha sido enviada');
@@ -70,8 +67,8 @@ router.post('/create', async(req, res) => {
         }
 
         await followingCollection.add({
-            'user': decryptedUid,
-            'friend': friendUid,
+            'user': username_solicitador,
+            'friend': friend,
             'acceptat': false,
             'pendent': true
         });
@@ -84,48 +81,9 @@ router.post('/create', async(req, res) => {
     
 });
 
-/*primera idea:
-    los amigos a los que sigues son los que tienen tu id en la columna user i acceptat a true
-    los amigos que te siguen son los que tienen tu id en la columna friend i acceptat a true
-*/
-router.get('/:id/following', async (req, res) => {
-    try {
-        var id = req.params.id;
-        console.log(id);
-        const docRef = db.collection('following').where('user', '==', id).where('acceptat', '==', true);
-        const response = await docRef.get();
-        let responseArr = [];
-        
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    } catch (error){
-        res.send(error);
-    }
-});
-
-router.get('/:id/followers', async (req, res) => {
-    
-    try {
-        const id = req.params.id;
-        const followersRef = db.collection('following').where('friend', '==', id).where('acceptat', '==', true);
-        const response = await followersRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    }
-    catch (error){
-        res.send(error);
-    }
-});
-
-
 router.put('/accept/:id', async(req, res) =>{
     try {
-        const id  = req.params.id;
+        const token  = req.params.id;
         const followingRef = db.collection('following').doc(id);
         await followingRef.update({
             'acceptat': true,
@@ -146,6 +104,85 @@ router.delete('/rebutjar/:id', async(req, res) =>{
         res.status(200).send('OK');
     }
     catch (error) {
+        res.send(error);
+    }
+});
+
+/*primera idea:
+    los amigos a los que sigues son los que tienen tu id en la columna user i acceptat a true
+    los amigos que te siguen son los que tienen tu id en la columna friend i acceptat a true
+*/
+router.get('/:id/following', async (req, res) => {
+    try {
+
+        const token = req.params.id;
+
+        let decryptedUid;
+        try {
+            decryptedUid = decrypt(token);
+        } catch (error) {
+            res.status(401).send('Token no válido');
+            return;
+        }
+
+        const userRef = db.collection('usuaris').doc(decryptedUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+
+        const username = userDoc.data().username;
+
+        const docRef = db.collection('following').where('user', '==', username).where('acceptat', '==', true);
+        const response = await docRef.get();
+        let responseArr = [];
+        
+        response.forEach(doc => {
+            responseArr.push(doc.data().friend);
+        });
+
+        res.status(200).send(responseArr);
+
+    } catch (error){
+        res.send(error);
+    }
+});
+
+router.get('/:id/followers', async (req, res) => {
+    try {
+
+        const token = req.params.id;
+
+        let decryptedUid;
+        try {
+            decryptedUid = decrypt(token);
+        } catch (error) {
+            res.status(401).send('Token no válido');
+            return;
+        }
+
+        const userRef = db.collection('usuaris').doc(decryptedUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+
+        const username = userDoc.data().username;
+
+        const followersRef = db.collection('following').where('friend', '==', username).where('acceptat', '==', true);
+        const response = await followersRef.get();
+        let responseArr = [];
+
+        response.forEach(doc => {
+            responseArr.push(doc.data().user);
+        });
+        res.status(200).send(responseArr);
+    }
+    catch (error){
         res.send(error);
     }
 });
