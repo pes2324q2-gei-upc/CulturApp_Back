@@ -39,14 +39,11 @@ router.post('/create/reportUsuari', async(req, res) => {
         }
 
         const decryptedUid = decrypt(token);
-        console.log("He desencriptado");
-        console.log(decryptedUid);
 
         const userRef = db.collection('usuaris').doc(decryptedUid);
         const userDoc = await userRef.get();
 
         if (!userDoc.exists) {
-            console.log('Usuario reportador no encontrado');
             res.status(404).send('Usuario reportador no encontrado');
             return;
         }
@@ -55,7 +52,6 @@ router.post('/create/reportUsuari', async(req, res) => {
         const userSnapshot = await db.collection('usuaris').where('username', '==', usuariReportat).get();
 
         if (userSnapshot.empty) {
-            console.log('Usuario reportado no encontrado');
             res.status(404).send('Usuario reportado no encontrado');
             return;
         }
