@@ -9,36 +9,49 @@ const { db } = require('../firebaseConfig');
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
 const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+
 
 function decrypt(text) {
-    let iv = Buffer.from(text.iv, 'hex');
-    let encryptedText = Buffer.from(text.encryptedData, 'hex');
+    let encryptedText = Buffer.from(text, 'hex');
     let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();
 }
 
-function isHexadecimal(str) {
-    return /^[0-9A-Fa-f]+$/.test(str.iv);
+async function validateAdmin(id) {
+    let decryptedUid;
+    try {
+        decryptedUid = decrypt(id);
+    } catch (error) {
+        return 401;
+    }
+    adminref = db.collection('usuaris').doc(decryptedUid);
+    adminDoc = await adminref.get();
+    if(!adminDoc.exists) {
+        return 404;
+    }
+    else return 200;    
 }
 
 router.post('/create/reportUsuari', async(req, res) => {
     try {
-        const { token, report, usuariReportat } = req.body;
+        const { token, titol, usuariReportat, report} = req.body;
 
 
-        if (!token || !report || !usuariReportat) {
+        if (!token || !report || !usuariReportat || !titol) {
             res.status(400).send('Faltan atributos');
             return;
         }
 
-        if(!isHexadecimal(token)){
-            res.status(401).send('El token no es hexadecimal');
+        let decryptedUid;
+        try {
+            decryptedUid = decrypt(token);
+        } catch (error) {
+            res.status(401).send('Token no válido');
             return;
         }
-
-        const decryptedUid = decrypt(token);
 
         const userRef = db.collection('usuaris').doc(decryptedUid);
         const userDoc = await userRef.get();
@@ -65,7 +78,9 @@ router.post('/create/reportUsuari', async(req, res) => {
             'motiuReport': report,
             'usuariReportat': reportedUserId,
             'solucionat': false,
-            'administrador': ''
+            'administrador': '',
+            'data_report': new Date(),
+            'titol': titol
         })
         res.status(200).send('OK')
     } catch (error){
@@ -120,6 +135,16 @@ router.get('/read/reportsUsuaris/solucionats', async(req, res) => {
 router.get('/reportsUsuari/solucionat/admin/:id', async(req, res) => {
     try {
         const id = req.params.id;
+        if (!id) {
+            res.status(400).send('Falta el id del administrador');
+            return;
+        }
+        let status = await validateAdmin(id);
+        if (status != 200) {
+            res.status(status).send('Administrador no valido');
+            return;
+        }
+        
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true).where('administrador', '==', id);   
         const response = await reportsRef.get();
         let responseArr = [];
@@ -133,16 +158,44 @@ router.get('/reportsUsuari/solucionat/admin/:id', async(req, res) => {
     }
 });
 
-router.put('/solucionat/reportUsuari/:id', async(req, res) => {
+router.get('/reportsUsuari/:id', async(req, res) => {
     try {
+        const id = req.params.id;
+        if (!id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
+        const reportRef = db.collection('reportsUsuaris').doc(id);
+        const doc = await reportRef.get();
+        if (!doc.exists) {
+            res.status(404).send('Report no encontrado');
+            return;
+        }
+        res.status(200).send(doc.data());
+    } catch (error){
+        res.send(error);
+    }
+});
+
+router.put('/reportUsuari/:id/solucionat', async(req, res) => {
+    try {
+        if(!req.params.id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
         const id  = req.params.id;
         const idAdmin = req.body.idAdmin;
+        let status = await validateAdmin(idAdmin);
+        if (status != 200) {
+            res.status(status).send('Administrador no válido');
+            return;
+        }
         const reportRef = db.collection('reportsUsuaris').doc(id);
         await reportRef.update({
             'solucionat': true,
             'administrador': idAdmin
         });
-        res.status(200).send('OK');
+        res.status(200).send('report usauri solucionat');
     } catch (error){
         res.send(error);
     }

@@ -14,7 +14,6 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
-
 describe('POST /tickets/create/reportUsuari', () => {
   const testUsers = [
     {
@@ -36,8 +35,10 @@ describe('POST /tickets/create/reportUsuari', () => {
       const res = await request(app)
       .post('/tickets/create/reportUsuari')
       .send({
-        token: encrypt('testUid1'),
-        report: 'testReport',
+        token: encrypt('testUid1').encryptedData,
+        titol: 'testTitol',
+        usuariReportat: 'testUsername2',
+        
       });
 
       expect(res.statusCode).toEqual(400);
@@ -53,9 +54,10 @@ describe('POST /tickets/create/reportUsuari', () => {
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          token: encrypt('testUid1'),
-          report: 'testReport',
+          token: encrypt('testUid1').encryptedData,
+          titol: 'tittoltest',
           usuariReportat: 'testUsername2',
+          report: 'testReport',
         });
   
       expect(res.statusCode).toEqual(200);
@@ -65,7 +67,7 @@ describe('POST /tickets/create/reportUsuari', () => {
       expect(docs.empty).toBeFalsy();
     });
 
-    it("deberia enviar un 401 porque el token no es hexadecimal", async () => {
+    it("deberia enviar un 401 porque el token no es valido", async () => {
      
       for (const usuari of testUsers) {
         await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
@@ -80,7 +82,7 @@ describe('POST /tickets/create/reportUsuari', () => {
         });
   
       expect(res.statusCode).toEqual(401);
-      expect(res.text).toBe('El token no es hexadecimal');
+      expect(res.text).toBe('El token no valido');
     });
 
     it("deberia enviar un 404 porque el token enviado no pertenece a ningun usuario", async () => {
@@ -92,9 +94,11 @@ describe('POST /tickets/create/reportUsuari', () => {
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          token: encrypt('testUid3'),
-          report: 'testReport',
+          token: encrypt('testUid3').encryptedData,
+          titol: 'tittoltest',
           usuariReportat: 'testUsername2',
+          report: 'testReport',
+
         });
   
       expect(res.statusCode).toEqual(404);
@@ -110,9 +114,10 @@ describe('POST /tickets/create/reportUsuari', () => {
       const res = await request(app)
         .post('/tickets/create/reportUsuari')
         .send({
-          token: encrypt('testUid1'),
-          report: 'testReport',
+          token: encrypt('testUid1').encryptedData,
+          titol: 'tittoltest',
           usuariReportat: 'testUsername3',
+          report: 'testReport',
         });
   
       expect(res.statusCode).toEqual(404);
@@ -156,7 +161,32 @@ describe('GET /tickets/read/reportsUsuari/all', () => {
   });
 });
 
+describe('GET /tickets/reportsUsuari/:id', () => {
+  it('deberia devolver un ticket', async () => {
+    // Add a test report to the database
+    const testReport = {
+      uid: 'testUid',
+      report: 'testReport',
+      usuariReportat: 'testUsuariReportat',
+      solucionat: false,
+      administrador: '',
+    };
 
+    await db.collection('reportsUsuaris').add(testReport);
+
+    const res = await request(app).get(`/tickets/reportsUsuari/${testReport.uid}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual(testReport);
+  });
+
+  it('should return 404 if the report does not exist', async () => {
+    const res = await request(app).get('/tickets/reportsUsuari/doesNotExist');
+
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Reporte no encontrado');
+  });
+});
 
 
 
