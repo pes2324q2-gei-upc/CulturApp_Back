@@ -35,7 +35,7 @@ async function checkUserAndFetchData(req, res, next) {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-        return res.status(404).send('Usuario no encontrado');
+        return res.status(404).send('Usuario que envió la solicitud no encontrado');
     }
 
     req.userDocument = userDoc;
