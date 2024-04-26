@@ -6,53 +6,26 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-const crypto = require('crypto');
-const algorithm = 'aes-256-cbc';
-const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
-const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 
-function decrypt(text) {
-    let encryptedText = Buffer.from(text, 'hex');
-    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-}
 
-router.post('/create', async(req, res) => {
+router.post('/create', checkUserAndFetchData, async(req, res) => {
     try{
-        const { token, friend } = req.body;
+        const { friend } = req.body;
 
-        if (!token || !friend) {
+        if (!friend) {
             res.status(400).send('Faltan atributos');
             return;
         }
 
-        let decryptedUid;
-        try {
-            decryptedUid = decrypt(token);
-        } catch (error) {
-            res.status(401).send('Token no válido');
-            return;
-        }
-
-        const userRef = db.collection('usuaris').doc(decryptedUid);
-        const userDoc = await userRef.get();
-
-        if (!userDoc.exists) {
-            res.status(404).send('Usuario que hace la solicitud no encontrado');
-            return;
-        }
-
-        const username_solicitador = userDoc.data().username;
-
         const userSnapshot = await db.collection('usuaris').where('username', '==', friend).get();
 
         if (userSnapshot.empty) {
-            res.status(404).send('Usuario que recibe la solicitud no encontrado');
-            return;
+            return res.status(404).send('Usuario que recibe la solicitud no encontrado');
         }
-
+        
+        const username_solicitador = req.userDocument.data().username;
+        
         if(username_solicitador == friend){
             res.status(400).send('No puedes seguirte a ti mismo');
             return;
@@ -187,16 +160,38 @@ router.get('/:id/followers', async (req, res) => {
     }
 });
 
-router.get('/pendents/:id', async(req, res) => { 
+router.get('/:id/pendents/', async(req, res) => { 
     try {
-        const id = req.params.id;
-        const amicsRef = db.collection('following').where('friend', '==', id).where('pendent', '==', true);
+
+        const token = req.params.id;
+
+        let decryptedUid;
+        try {
+            decryptedUid = decrypt(token);
+        } catch (error) {
+            res.status(401).send('Token no válido');
+            return;
+        }
+
+        const userRef = db.collection('usuaris').doc(decryptedUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+
+        const username = userDoc.data().username;
+
+        const amicsRef = db.collection('following').where('friend', '==', username).where('pendent', '==', true);
         const response = await amicsRef.get();
         let responseArr = [];
+
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.data().user);
         });
         res.status(200).send(responseArr);
+
     }
     catch (error){
         res.send(error);

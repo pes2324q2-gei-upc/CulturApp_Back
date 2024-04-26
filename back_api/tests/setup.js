@@ -2,12 +2,12 @@ const firebase = require('@firebase/testing');
 require('dotenv').config();
 
 beforeAll(async () => {
-  console.log('Initializing Firestore');
+  //console.log('Initializing Firestore');
   db  = require('../firebaseConfig').db;
 });
 
 afterEach(async () => {
-  console.log('Deleting all documents');
+  //console.log('Deleting all documents');
   
   const collections = ['reportsUsuaris', 'usuaris', 'following']; // Agregar aquí todas las colecciones que se quieran borrar
 
@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  console.log('Closing Firestore');
+  //console.log('Closing Firestore');
   await Promise.all(firebase.apps().map(app => app.delete())); //Cierra todas las app de FireStore
 });
 

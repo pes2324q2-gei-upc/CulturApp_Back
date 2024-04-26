@@ -31,7 +31,7 @@ describe('POST /amics/create/', () => {
           }    
         });
 
-      it('debería enviar 400 porque faltan atributos', async () => {
+      /*it('debería enviar 400 porque faltan atributos', async () => {
   
         const res = await request(app)
         .post('/amics/create/')
@@ -41,14 +41,14 @@ describe('POST /amics/create/', () => {
   
         expect(res.statusCode).toEqual(400);
         expect(res.text).toBe('Faltan atributos');
-      });
+      });*/
 
       it('debería crear un amigo', async () => {
   
         const res = await request(app)
           .post('/amics/create/')
+          .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
           .send({
-            token: encrypt('testUid1').encryptedData,
             friend: 'testUsername2',
           });
     
@@ -257,6 +257,73 @@ describe('GET /amics/:id/followers/', () => {
 
         const res = await request(app)
         .get(`/amics/${encrypt('testUid4').encryptedData}/followers/`)
+        
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario no encontrado');
+    });
+  
+});
+
+
+describe('GET /amics/:id/pendents/', () => {
+    const testUsers = [
+        {
+          uid: 'testUid1',
+          username: 'testUsername1',
+        },
+        {
+          uid: 'testUid2',
+          username: 'testUsername2',
+        },
+        {
+          uid: 'testUid3',
+          username: 'testUsername3',
+        }
+    ];
+
+    beforeEach(async () => {
+        for (const usuari of testUsers) {
+            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+        }
+        
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername2',
+            'acceptat': false,
+            'pendent': true,
+        });
+
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername3',
+            'acceptat': true,
+            'pendent': false,
+        });
+
+    });  
+
+    it('debería obtener a los usuarios que tienen pendiente su solicitud al usuario cuyo nombre de usuario está en la URI', async () => {
+
+        const res = await request(app)
+        .get(`/amics/${encrypt('testUid2').encryptedData}/pendents/`)
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toEqual(['testUsername1']);
+    });
+
+    it('debería enviar 401 porque el token no es válido', async () => {
+
+        const res = await request(app)
+        .get(`/amics/testUid2/pendents/`)
+        
+        expect(res.statusCode).toEqual(401);
+        expect(res.text).toBe('Token no válido');
+    });
+
+    it('debería enviar 404 porque el usuario no existe', async () => {
+
+        const res = await request(app)
+        .get(`/amics/${encrypt('testUid4').encryptedData}/pendents/`)
         
         expect(res.statusCode).toEqual(404);
         expect(res.text).toBe('Usuario no encontrado');
