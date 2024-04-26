@@ -6,62 +6,21 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-const crypto = require('crypto');
-const algorithm = 'aes-256-cbc';
-const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
-const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+const checkUsername = require('./middleware').checkUsername;
+const checkAdmin = require('./middleware').checkAdmin;
 
 
-function decrypt(text) {
-    let encryptedText = Buffer.from(text, 'hex');
-    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-}
-
-async function validateAdmin(id) {
-    let decryptedUid;
+router.post('/create/reportUsuari', checkUserAndFetchData, async(req, res) => {
     try {
-        decryptedUid = decrypt(id);
-    } catch (error) {
-        return 401;
-    }
-    adminref = db.collection('usuaris').doc(decryptedUid);
-    adminDoc = await adminref.get();
-    if(!adminDoc.exists) {
-        return 404;
-    }
-    else return 200;    
-}
-
-router.post('/create/reportUsuari', async(req, res) => {
-    try {
-        const { token, titol, usuariReportat, report} = req.body;
+        const { titol, usuariReportat, report } = req.body;
 
 
-        if (!token || !report || !usuariReportat || !titol) {
+        if (!report || !usuariReportat || !titol) {
             res.status(400).send('Faltan atributos');
             return;
         }
-
-        let decryptedUid;
-        try {
-            decryptedUid = decrypt(token);
-        } catch (error) {
-            res.status(401).send('Token no válido');
-            return;
-        }
-
-        const userRef = db.collection('usuaris').doc(decryptedUid);
-        const userDoc = await userRef.get();
-
-        if (!userDoc.exists) {
-            res.status(404).send('Usuario reportador no encontrado');
-            return;
-        }
-
-
+        //checkUsername(usuariReportat, res, 'Usuario reportado no encontrado');
         const userSnapshot = await db.collection('usuaris').where('username', '==', usuariReportat).get();
 
         if (userSnapshot.empty) {
@@ -74,8 +33,8 @@ router.post('/create/reportUsuari', async(req, res) => {
         const reportsCollection = db.collection('reportsUsuaris');
 
         await reportsCollection.add({
-            'user': decryptedUid,
-            'motiuReport': report,
+            'user': req.userDocument.id,
+            'report': report,
             'usuariReportat': reportedUserId,
             'solucionat': false,
             'administrador': '',
@@ -88,13 +47,13 @@ router.post('/create/reportUsuari', async(req, res) => {
     }
 });
 
-router.get('/read/reportsUsuari/all', async (req, res) => {
+router.get('/reportsUsuari/all', checkAdmin, async (req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     } catch (error){
@@ -102,13 +61,13 @@ router.get('/read/reportsUsuari/all', async (req, res) => {
     }
 });
 
-router.get('/read/reportsUsuaris/pendents', async(req, res) => {
+router.get('/reportsUsuaris/pendents', checkAdmin, async(req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', false);
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     } 
@@ -117,13 +76,13 @@ router.get('/read/reportsUsuaris/pendents', async(req, res) => {
     }
 });
 
-router.get('/read/reportsUsuaris/solucionats', async(req, res) => {
+router.get('/reportsUsuaris/done', checkAdmin, async(req, res) => {
     try {
         const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true)
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     }
@@ -132,33 +91,8 @@ router.get('/read/reportsUsuaris/solucionats', async(req, res) => {
     }
 });
 
-router.get('/reportsUsuari/solucionat/admin/:id', async(req, res) => {
-    try {
-        const id = req.params.id;
-        if (!id) {
-            res.status(400).send('Falta el id del administrador');
-            return;
-        }
-        let status = await validateAdmin(id);
-        if (status != 200) {
-            res.status(status).send('Administrador no valido');
-            return;
-        }
-        
-        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true).where('administrador', '==', id);   
-        const response = await reportsRef.get();
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-        res.status(200).send(responseArr);
-    }
-    catch (error){
-        res.send(error);
-    }
-});
 
-router.get('/reportsUsuari/:id', async(req, res) => {
+router.get('/reportsUsuari/:id', checkAdmin, async(req, res) => {
     try {
         const id = req.params.id;
         if (!id) {
@@ -171,26 +105,24 @@ router.get('/reportsUsuari/:id', async(req, res) => {
             res.status(404).send('Report no encontrado');
             return;
         }
-        res.status(200).send(doc.data());
+        res.status(200).send(doc.id, doc.data());
     } catch (error){
         res.send(error);
     }
 });
 
-router.put('/reportUsuari/:id/solucionat', async(req, res) => {
+router.put('/reportUsuari/:id/validar', checkAdmin, async(req, res) => {
     try {
         if(!req.params.id) {
             res.status(400).send('Falta el id del report');
             return;
         }
-        const id  = req.params.id;
-        const idAdmin = req.body.idAdmin;
-        let status = await validateAdmin(idAdmin);
-        if (status != 200) {
-            res.status(status).send('Administrador no válido');
+        const idAdmin = req.userDocument.id;
+        const reportRef = db.collection('reportsUsuaris').doc(id);
+        if(!reportRef.exists) {
+            res.status(404).send('Report no encontrado');
             return;
         }
-        const reportRef = db.collection('reportsUsuaris').doc(id);
         await reportRef.update({
             'solucionat': true,
             'administrador': idAdmin
@@ -201,44 +133,57 @@ router.put('/reportUsuari/:id/solucionat', async(req, res) => {
     }
 });
 
-router.delete('/delete/reportUsuari', async(req, res) => {
+router.delete('/delete/reportUsuari', checkAdmin, async(req, res) => {
     try {
         const { id } = req.body;
+        if(!id) {
+            res.status(400).send('Falta el id del reporte');
+            return;
+        }
         const reportRef = db.collection('reportsUsuaris').doc(id);
+        if(!reportRef.exists) {
+            res.status(404).send('Report no encontrado');
+            return;
+        }
         await reportRef.delete();
-        res.status(200).send('OK');
+        res.status(200).send('report usuari eliminat');
     } catch (error){
         res.send(error);
     }
 });
 
 //Operacions de reports de bugs
-router.post('/create/reportBug', async(req, res) => {
+router.post('/create/reportBug', checkUserAndFetchData,  async(req, res) => {
     try {
-        const { uid, report } = req.body;
-
+        const {titol, report } = req.body;
+        if(!titol || !report) {
+            res.status(400).send('Faltan atributos');
+            return;
+        }
+        uid = req.userDocument.id;
         const reportsCollection = db.collection('reportsBugs');
 
         await reportsCollection.add({
             'user': uid,
-            'errorApp': report,
+            'report': report,
             'solucionat': false,
-            'administrador': ''
+            'administrador': '',
+            'data_report': new Date()
         })
-        res.status(200).send('OK')
+        res.status(200).send('Report de bug creat')
     }
     catch (error){
         res.send(error);
     }
 });
 
-router.get('/read/reportsBug/all', async (req, res) => {
+router.get('/reportsBug/all', checkAdmin, async (req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     } catch (error){
@@ -246,13 +191,13 @@ router.get('/read/reportsBug/all', async (req, res) => {
     }
 });
 
-router.get('/read/reportsBugs/pendents', async(req, res) => {
+router.get('/reportsBugs/pendents', checkAdmin, async(req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').where('solucionat', '==', false);
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     } 
@@ -261,13 +206,13 @@ router.get('/read/reportsBugs/pendents', async(req, res) => {
     }
 });
 
-router.get('/read/reportsBugs/solucionats', async(req, res) => {
+router.get('/reportsBugs/solucionats', checkAdmin, async(req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').where('solucionat', '==', true);
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.data());
+            responseArr.push(doc.id, doc.data().titol, doc.data().report);
         });
         res.status(200).send(responseArr);
     } 
@@ -276,26 +221,63 @@ router.get('/read/reportsBugs/solucionats', async(req, res) => {
     }
 });
 
-router.put('/solucionat/reportBug/:id', async(req, res) =>{
+router.get('/reportsBug/:id', checkAdmin, async(req, res) => {
+    try {
+        const id = req.params.id;
+        if(!id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
+        const reportRef = db.collection('reportsBugs').doc(id);
+        const doc = await reportRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Report no encontrado');
+            return;
+        }
+        res.status(200).send(doc.id, doc.data());
+    }
+    catch (error) {
+        res.send(error);
+    }
+});
+    
+
+router.put('/reportBug/:id/validar', checkAdmin, async(req, res) =>{
     try {
         const id  = req.params.id;
-        const idAdmin = req.body.idAdmin;
+        if(!id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
+        const idAdmin = req.userDocument.id;
         const reportRef = db.collection('reportsBugs').doc(id);
+        if(!reportRef.exists) {
+            res.status(404).send('Report no trobat');
+            return;
+        }
         await reportRef.update({
             'solucionat':true,
             'administrador': idAdmin
         })
-        res.status(200).send('OK')
+        res.status(200).send('Bug reportat solucionat')
     }
     catch(error) {
         res.send(error)
     }
 });
 
-router.delete('/delete/reportBug', async(req, res) => {
+router.delete('/delete/reportBug', checkAdmin, async(req, res) => {
     try {
         const { id } = req.body;
+        if(!id) {
+            res.status(400).send('Falta el id del reporte');
+            return;
+        }
         const reportRef = db.collection('reportsBugs').doc(id);
+        if(!reportRef.exists) {
+            res.status(404).send('Report no encontrado');
+            return;
+        }
         await reportRef.delete();
         res.status(200).send('OK');
     } catch (error){
@@ -304,15 +286,15 @@ router.delete('/delete/reportBug', async(req, res) => {
 });
 
 //Operacions de sol·licituds d'organitzador
-router.post('/create/solicitudOrganitzador', async(req, res) => {
+router.post('/create/solicitudOrganitzador', checkUserAndFetchData, async(req, res) => {
     try {
-        const { uid, idActivitat, motiu } = req.body;
+        const { idActivitat, motiu } = req.body;
         const solictudRef = db.collection('solicitudsOrganitzador');
-        const activitatRef = db.collection('users').doc(uid);
+        const activitatRef = db.collection('users').doc();
         const doc = await activitatRef.get()
         const email = doc.data().email;
         await solictudRef.add({
-            'userSolicitant': uid,
+            'userSolicitant': req.userDocument.id,
             'email': email,
             'idActivitat': idActivitat,
             'motiu': motiu, 
