@@ -42,6 +42,14 @@ async function checkUserAndFetchData(req, res, next) {
     next();
 }
 
+async function checkUsername(username, res, message) {
+
+    const userSnapshot = await db.collection('usuaris').where('username', '==', username).get();
+
+    if (userSnapshot.empty) {
+        return res.status(404).send(message);
+    }
+}
 
 module.exports.checkUserAndFetchData = checkUserAndFetchData;
 module.exports.checkUsername = checkUsername;

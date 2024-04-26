@@ -7,6 +7,7 @@ router.use(express.json());
 const { db } = require('../firebaseConfig');
 
 const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+const checkUsername = require('./middleware').checkUsername;
 
 
 router.post('/create', checkUserAndFetchData, async(req, res) => {
@@ -18,11 +19,7 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
             return;
         }
 
-        const userSnapshot = await db.collection('usuaris').where('username', '==', friend).get();
-
-        if (userSnapshot.empty) {
-            return res.status(404).send('Usuario que recibe la solicitud no encontrado');
-        }
+        checkUsername(friend, res, 'Usuario que recibe la solicitud no encontrado');
         
         const username_solicitador = req.userDocument.data().username;
         
