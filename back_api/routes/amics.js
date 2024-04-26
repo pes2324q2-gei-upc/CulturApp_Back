@@ -19,7 +19,7 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
             return;
         }
 
-        checkUsername(friend, res, 'Usuario que recibe la solicitud no encontrado');
+        if(!(await checkUsername(friend, res, 'Usuario que recibe la solicitud no encontrado'))) return;
         
         const username_solicitador = req.userDocument.data().username;
         

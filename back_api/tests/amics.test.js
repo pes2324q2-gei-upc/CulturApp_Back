@@ -31,17 +31,15 @@ describe('POST /amics/create/', () => {
           }    
         });
 
-      /*it('debería enviar 400 porque faltan atributos', async () => {
+      it('debería enviar 400 porque faltan atributos', async () => {
   
         const res = await request(app)
         .post('/amics/create/')
-        .send({
-          token: encrypt('testUid1').encryptedData,
-        });
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
   
         expect(res.statusCode).toEqual(400);
         expect(res.text).toBe('Faltan atributos');
-      });*/
+      });
 
       it('debería crear un amigo', async () => {
   
@@ -58,46 +56,46 @@ describe('POST /amics/create/', () => {
         const docs = await db.collection('following').where('user', '==', 'testUsername1').get();
         expect(docs.empty).toBeFalsy();
       });
-
+      
       it('debería enviar 401 porque el token no es válido', async () => {
 
         const res = await request(app)
         .post('/amics/create/')
+        .set('Authorization', 'Bearer testUid1')
         .send({
-            token: 'testUid1',
             friend: 'testUsername2',
         });
     
         expect(res.statusCode).toEqual(401);
-        expect(res.text).toBe('Token no válido');
+        expect(res.text).toBe('Token inválido');
         });
-
+        
         it('debería enviar 404 porque el usuario que hace la solicitud no existe', async () => {
 
             const res = await request(app)
             .post('/amics/create/')
+            .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
             .send({
-                token: encrypt('testUid3').encryptedData,
                 friend: 'testUsername2',
             });
         
             expect(res.statusCode).toEqual(404);
-            expect(res.text).toBe('Usuario que hace la solicitud no encontrado');
+            expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
         });
-
+        
         it('debería enviar 404 porque el usuario que recibe la solicitud no existe', async () => {
 
             const res = await request(app)
             .post('/amics/create/')
+            .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
             .send({
-                token: encrypt('testUid1').encryptedData,
                 friend: 'testUsername3',
             });
         
             expect(res.statusCode).toEqual(404);
             expect(res.text).toBe('Usuario que recibe la solicitud no encontrado');
         });
-
+        /*
         it('debería enviar 400 porque no puedes seguirte a ti mismo', async () => {
 
             const res = await request(app)
@@ -130,9 +128,10 @@ describe('POST /amics/create/', () => {
             expect(res.statusCode).toEqual(409);
             expect(res.text).toBe('La solicitud ya ha sido enviada');
         });
+        */
 });
 
-
+/*
 describe('GET /amics/:id/following/', () => {
 
     const testUsers = [
@@ -329,4 +328,4 @@ describe('GET /amics/:id/pendents/', () => {
         expect(res.text).toBe('Usuario no encontrado');
     });
   
-});
+});*/

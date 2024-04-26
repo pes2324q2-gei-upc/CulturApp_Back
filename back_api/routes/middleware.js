@@ -47,8 +47,10 @@ async function checkUsername(username, res, message) {
     const userSnapshot = await db.collection('usuaris').where('username', '==', username).get();
 
     if (userSnapshot.empty) {
-        return res.status(404).send(message);
+        res.status(404).send(message);
+        return false;
     }
+    return true;
 }
 
 module.exports.checkUserAndFetchData = checkUserAndFetchData;
