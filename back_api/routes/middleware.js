@@ -32,7 +32,7 @@ async function checkUserAndFetchData(req, res, next) {
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
 
-    const userRef = db.collection('usuaris').doc(decryptedUid);
+    const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
@@ -45,7 +45,7 @@ async function checkUserAndFetchData(req, res, next) {
 
 async function checkUsername(username, res, message) {
 
-    const userSnapshot = await db.collection('usuaris').where('username', '==', username).get();
+    const userSnapshot = await db.collection('users').where('username', '==', username).get();
 
     if (userSnapshot.empty) {
         res.status(404).send(message);

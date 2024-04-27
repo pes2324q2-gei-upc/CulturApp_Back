@@ -28,7 +28,7 @@ describe('POST /amics/create/', () => {
 
       beforeEach(async () => {
         for (const usuari of testUsers) {
-            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
           }    
         });
 
@@ -152,7 +152,7 @@ describe('GET /amics/:id/following/', () => {
 
     beforeEach(async () => {
         for (const usuari of testUsers) {
-            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
         await db.collection('following').add({
@@ -252,7 +252,7 @@ describe('GET /amics/:id/followers/', () => {
 
     beforeEach(async () => {
         for (const usuari of testUsers) {
-            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
         await db.collection('following').add({
@@ -366,7 +366,7 @@ describe('GET /amics/:id/pendents/', () => {
 
 beforeEach(async () => {
     for (const usuari of testUsers) {
-        await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+        await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
     }
     
     await db.collection('following').add({
@@ -454,7 +454,7 @@ describe('PUT /amics/accept/:id', () => {
 
     beforeEach(async () => {
         for (const usuari of testUsers) {
-            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
         await db.collection('following').add({
@@ -555,7 +555,7 @@ describe('DELETE /amics/delete/:id', () => {
 
     beforeEach(async () => {
         for (const usuari of testUsers) {
-            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
         await db.collection('following').add({
