@@ -99,7 +99,7 @@ router.delete('/rebutjar/:id', async(req, res) =>{
         const username_request = req.userDocument.data().username;
 
         if(username_acceptance == username_request){
-            res.status(400).send('No puedes aceptarte a ti mismo');
+            res.status(400).send('No puedes rechazarte a ti mismo');
             return;
         }
 
@@ -118,10 +118,7 @@ router.delete('/rebutjar/:id', async(req, res) =>{
             return;
         }
 
-        await followingRef.doc(requestDoc.id).update({
-            'acceptat': true,
-            'pendent': false
-        });
+        await followingRef.doc(requestDoc.id).delete();
 
         res.status(200).send('OK');
     } catch (error) {

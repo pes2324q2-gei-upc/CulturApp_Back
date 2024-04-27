@@ -32,6 +32,8 @@ describe('POST /amics/create/', () => {
         });
 
       it('debería enviar 400 porque faltan atributos', async () => {
+
+        console.log()
   
         const res = await request(app)
         .post('/amics/create/')
@@ -211,6 +213,15 @@ describe('GET /amics/:id/following/', () => {
         expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
     });
 
+    it('debería enviar 404 porque el usuario indicado no existe', async () => {
+        const res = await request(app)
+        .get('/amics/testUsername4/following/')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario no encontrado');
+    });
+
     it('debería enviar 401 porque el usuario solicitador no tiene permiso para ver los seguidos del usuario indicado', async () => {
         
           const res = await request(app)
@@ -306,6 +317,15 @@ describe('GET /amics/:id/followers/', () => {
         expect(res.text).toBe('Token inválido');
     });
 
+    it('debería enviar 404 porque el usuario indicado no existe', async () => {
+        const res = await request(app)
+        .get('/amics/testUsername4/followers/')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario no encontrado');
+    });
+
     it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
 
         const res = await request(app)
@@ -396,6 +416,16 @@ beforeEach(async () => {
       expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
   });
 
+  it('debería enviar 404 porque el usuario indicado no existe', async () => {
+      const res = await request(app)
+      .get('/amics/testUsername4/pendents/')
+      .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.text).toBe('Usuario no encontrado');
+
+  });
+
   it('debería enviar 401 porque el usuario solicitador no tiene permiso para ver los pendientes de aceptar del usuario indicado', async () => {
       
         const res = await request(app)
@@ -406,3 +436,183 @@ beforeEach(async () => {
         expect(res.text).toBe('No tienes permiso para ver los pendientes a aceptar de este usuario');
   }); 
 });
+
+describe('PUT /amics/accept/:id', () => {
+    const testUsers = [
+      {
+        uid: 'testUid1',
+        username: 'testUsername1',
+      },
+      {
+        uid: 'testUid2',
+        username: 'testUsername2',
+      },
+      {
+        uid: 'testUid3',
+        username: 'testUsername3',
+      }
+    ];
+
+    beforeEach(async () => {
+        for (const usuari of testUsers) {
+            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+        }
+        
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername2',
+            'acceptat': false,
+            'pendent': true,
+        });
+
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername3',
+            'acceptat': true,
+            'pendent': false,
+        });
+
+    });
+
+    it('debería aceptar la solicitud de amistad', async () => {
+
+        const res = await request(app)
+        .put('/amics/accept/testUsername1')
+        .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.text).toBe('OK');
+    });
+
+    it('debería enviar 401 porque el token no es válido', async () => {
+
+        const res = await request(app)
+        .put('/amics/accept/testUsername1')
+        .set('Authorization', 'Bearer testUid2')
+
+        expect(res.statusCode).toEqual(401);
+        expect(res.text).toBe('Token inválido');
+    });
+
+    it('debería enviar 404 porque el usuario indicado no existe', async () => {
+        
+          const res = await request(app)
+          .put('/amics/accept/testUsername4')
+          .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+          expect(res.statusCode).toEqual(404);
+          expect(res.text).toBe('Usuario no encontrado');
+    });
+
+    it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
+
+        const res = await request(app)
+        .put('/amics/accept/testUsername1')
+        .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`)
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+    });
+
+    it('debería enviar 404 porque no se ha encontrado la solicitud de amistad', async () => {
+        
+          const res = await request(app)
+          .put('/amics/accept/testUsername2')
+          .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
+
+          expect(res.statusCode).toEqual(404);
+          expect(res.text).toBe('No se ha encontrado la solicitud de amistad');
+    });
+
+    it('debería enviar 409 porque la solicitud ya ha sido aceptada', async () => {
+        
+          const res = await request(app)
+          .put('/amics/accept/testUsername3')
+          .set('Authorization', `Bearer${encrypt('testUid1').encryptedData}`)
+
+          expect(res.statusCode).toEqual(409);
+          expect(res.text).toBe('La solicitud de amistad ya ha sido aceptada');
+
+    });
+
+});
+
+/*
+describe('DELETE /amics/delete/:id', () => {
+    const testUsers = [
+      {
+        uid: 'testUid1',
+        username: 'testUsername1',
+      },  
+      {
+        uid: 'testUid2',
+        username: 'testUsername2',
+      },
+      {
+        uid: 'testUid3',
+        username: 'testUsername3'
+      }
+    ];
+
+    beforeEach(async () => {
+        for (const usuari of testUsers) {
+            await db.collection('usuaris').doc(usuari.uid).set({"username": usuari.username});
+        }
+        
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername2',
+            'acceptat': false,
+            'pendent': true,
+        });
+
+        await db.collection('following').add({
+            'user': 'testUsername1',
+            'friend': 'testUsername3',
+            'acceptat': true,
+            'pendent': false,
+        });
+
+    });
+  
+    it('debería rechazar la solicitud de amistad', async () => {
+
+        const res = await request(app)
+        .delete('/amics/delete/testUsername1')
+        .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.text).toBe('OK');
+    });
+
+    it('debería enviar 401 porque el token no es válido', async () => {
+
+        const res = await request(app)
+        .delete('/amics/delete/testUsername1')
+        .set('Authorization', 'Bearer testUid2')
+
+        expect(res.statusCode).toEqual(401);
+        expect(res.text).toBe('Token inválido');
+    });
+
+    it('debería enviar 404 porque el usuario indicado no existe', async () => {
+        
+          const res = await request(app)
+          .delete('/amics/delete/testUsername4')
+          .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+          expect(res.statusCode).toEqual(404);
+          expect(res.text).toBe('Usuario no encontrado');
+    });
+
+    it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
+
+        const res = await request(app)
+        .delete('/amics/delete/testUsername1')
+        .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`)
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+    });
+
+  });*/
