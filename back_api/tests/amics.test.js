@@ -158,6 +158,7 @@ describe('GET /amics/:id/following/', () => {
         await db.collection('following').add({
             'user': 'testUsername1',
             'friend': 'testUsername2',
+            'data_follow': new Date().toISOString(),
             'acceptat': false,
             'pendent': true,
         });
@@ -165,6 +166,7 @@ describe('GET /amics/:id/following/', () => {
         await db.collection('following').add({
             'user': 'testUsername1',
             'friend': 'testUsername3',
+            'data_follow': new Date().toISOString(),
             'acceptat': true,
             'pendent': false,
         });
@@ -258,6 +260,7 @@ describe('GET /amics/:id/followers/', () => {
         await db.collection('following').add({
             'user': 'testUsername1',
             'friend': 'testUsername2',
+            'data_follow': new Date().toISOString(),
             'acceptat': false,
             'pendent': true,
         });
@@ -265,6 +268,7 @@ describe('GET /amics/:id/followers/', () => {
         await db.collection('following').add({
             'user': 'testUsername1',
             'friend': 'testUsername3',
+            'data_follow': new Date().toISOString(),
             'acceptat': true,
             'pendent': false,
         });
@@ -272,6 +276,7 @@ describe('GET /amics/:id/followers/', () => {
         await db.collection('following').add({
           'user': 'testUsername2',
           'friend': 'testUsername3',
+          'data_follow': new Date().toISOString(),
           'acceptat': true,
           'pendent': false,
         });
@@ -279,6 +284,7 @@ describe('GET /amics/:id/followers/', () => {
         await db.collection('following').add({
           'user': 'testUsername3',
           'friend': 'testUsername2',
+          'data_follow': new Date().toISOString(),
           'acceptat': true,
           'pendent': false,
       });
@@ -372,6 +378,7 @@ beforeEach(async () => {
     await db.collection('following').add({
         'user': 'testUsername1',
         'friend': 'testUsername2',
+        'data_follow': new Date().toISOString(),
         'acceptat': false,
         'pendent': true,
     });
@@ -379,6 +386,7 @@ beforeEach(async () => {
     await db.collection('following').add({
         'user': 'testUsername1',
         'friend': 'testUsername3',
+        'data_follow': new Date().toISOString(),
         'acceptat': true,
         'pendent': false,
     });

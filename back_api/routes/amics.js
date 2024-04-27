@@ -135,7 +135,7 @@ async function isHisFriend(friend, username){
 }
 
 async function fetchUsers(username, field_user, type, value) {
-    const docRef = db.collection('following').where(field_user, '==', username).where(type, '==', true);
+    const docRef = db.collection('following').where(field_user, '==', username).where(type, '==', true).orderBy('data_follow', 'desc');
     const response = await docRef.get();
     let responseArr = [];
     
