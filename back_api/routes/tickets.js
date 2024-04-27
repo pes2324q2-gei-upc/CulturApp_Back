@@ -11,7 +11,8 @@ const checkUsername = require('./middleware').checkUsername;
 const checkAdmin = require('./middleware').checkAdmin;
 
 
-router.post('/create/reportUsuari', checkUserAndFetchData, async(req, res) => {
+//Operacions de reports d'usuaris
+router.post('/reportUsuari/create', checkUserAndFetchData, async(req, res) => {
     try {
         const { titol, usuariReportat, report } = req.body;
 
@@ -38,22 +39,24 @@ router.post('/create/reportUsuari', checkUserAndFetchData, async(req, res) => {
             'usuariReportat': reportedUserId,
             'solucionat': false,
             'administrador': '',
-            'data_report': new Date(),
+            'data_report': new Date().toISOString(),
             'titol': titol
         })
-        res.status(200).send('OK')
+        res.status(200).send('report afegit')
     } catch (error){
         res.status(404).send(error);
     }
 });
 
-router.get('/reportsUsuari/all', checkAdmin, async (req, res) => {
+router.get('/reportsUsuaris/all', checkAdmin, async (req, res) => {
     try {
-        const reportsRef = db.collection('reportsUsuaris');
+        const reportsRef = db.collection('reportsUsuaris').orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     } catch (error){
@@ -63,11 +66,13 @@ router.get('/reportsUsuari/all', checkAdmin, async (req, res) => {
 
 router.get('/reportsUsuaris/pendents', checkAdmin, async(req, res) => {
     try {
-        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', false);
+        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', false).orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     } 
@@ -78,11 +83,13 @@ router.get('/reportsUsuaris/pendents', checkAdmin, async(req, res) => {
 
 router.get('/reportsUsuaris/done', checkAdmin, async(req, res) => {
     try {
-        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true)
+        const reportsRef = db.collection('reportsUsuaris').where('solucionat', '==', true).orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     }
@@ -102,25 +109,28 @@ router.get('/reportsUsuari/:id', checkAdmin, async(req, res) => {
         const reportRef = db.collection('reportsUsuaris').doc(id);
         const doc = await reportRef.get();
         if (!doc.exists) {
-            res.status(404).send('Report no encontrado');
+            res.status(404).send('Reporte no encontrado');
             return;
         }
-        res.status(200).send(doc.id, doc.data());
+        const resultdata = doc.data();
+        resultdata.id = doc.id;
+        res.status(200).send(resultdata);
     } catch (error){
         res.send(error);
     }
 });
 
-router.put('/reportUsuari/:id/validar', checkAdmin, async(req, res) => {
+router.put('/reportsUsuari/:id/solucionar', checkAdmin, async(req, res) => {
     try {
         if(!req.params.id) {
             res.status(400).send('Falta el id del report');
             return;
         }
         const idAdmin = req.userDocument.id;
-        const reportRef = db.collection('reportsUsuaris').doc(id);
-        if(!reportRef.exists) {
-            res.status(404).send('Report no encontrado');
+        const reportRef = db.collection('reportsUsuaris').doc(req.params.id);
+        const doc = await reportRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Reporte no encontrado');
             return;
         }
         await reportRef.update({
@@ -141,8 +151,9 @@ router.delete('/delete/reportUsuari', checkAdmin, async(req, res) => {
             return;
         }
         const reportRef = db.collection('reportsUsuaris').doc(id);
-        if(!reportRef.exists) {
-            res.status(404).send('Report no encontrado');
+        const doc = await reportRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Reporte no encontrado');
             return;
         }
         await reportRef.delete();
@@ -151,6 +162,9 @@ router.delete('/delete/reportUsuari', checkAdmin, async(req, res) => {
         res.send(error);
     }
 });
+
+
+
 
 //Operacions de reports de bugs
 router.post('/create/reportBug', checkUserAndFetchData,  async(req, res) => {
@@ -168,7 +182,7 @@ router.post('/create/reportBug', checkUserAndFetchData,  async(req, res) => {
             'report': report,
             'solucionat': false,
             'administrador': '',
-            'data_report': new Date()
+            'data_report': new Date().toISOString(),
         })
         res.status(200).send('Report de bug creat')
     }
@@ -179,11 +193,13 @@ router.post('/create/reportBug', checkUserAndFetchData,  async(req, res) => {
 
 router.get('/reportsBug/all', checkAdmin, async (req, res) => {
     try {
-        const reportsRef = db.collection('reportsBugs');
+        const reportsRef = db.collection('reportsBugs').orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     } catch (error){
@@ -193,11 +209,13 @@ router.get('/reportsBug/all', checkAdmin, async (req, res) => {
 
 router.get('/reportsBugs/pendents', checkAdmin, async(req, res) => {
     try {
-        const reportsRef = db.collection('reportsBugs').where('solucionat', '==', false);
+        const reportsRef = db.collection('reportsBugs').where('solucionat', '==', false).orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     } 
@@ -208,11 +226,13 @@ router.get('/reportsBugs/pendents', checkAdmin, async(req, res) => {
 
 router.get('/reportsBugs/solucionats', checkAdmin, async(req, res) => {
     try {
-        const reportsRef = db.collection('reportsBugs').where('solucionat', '==', true);
+        const reportsRef = db.collection('reportsBugs').where('solucionat', '==', true).orderBy('data_report', 'desc');
         const response = await reportsRef.get();
         let responseArr = [];
         response.forEach(doc => {
-            responseArr.push(doc.id, doc.data().titol, doc.data().report);
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responseArr);
     } 
@@ -234,7 +254,9 @@ router.get('/reportsBug/:id', checkAdmin, async(req, res) => {
             res.status(404).send('Report no encontrado');
             return;
         }
-        res.status(200).send(doc.id, doc.data());
+        const resultdata = doc.data();
+        resultdata.id = doc.id;
+        res.status(200).send(resultdata);
     }
     catch (error) {
         res.send(error);
@@ -251,7 +273,8 @@ router.put('/reportBug/:id/validar', checkAdmin, async(req, res) =>{
         }
         const idAdmin = req.userDocument.id;
         const reportRef = db.collection('reportsBugs').doc(id);
-        if(!reportRef.exists) {
+        const doc = await reportRef.get();
+        if(!doc.exists) {
             res.status(404).send('Report no trobat');
             return;
         }
@@ -274,7 +297,8 @@ router.delete('/delete/reportBug', checkAdmin, async(req, res) => {
             return;
         }
         const reportRef = db.collection('reportsBugs').doc(id);
-        if(!reportRef.exists) {
+        const doc = await reportRef.get();
+        if(!doc.exists) {
             res.status(404).send('Report no encontrado');
             return;
         }
@@ -285,37 +309,51 @@ router.delete('/delete/reportBug', checkAdmin, async(req, res) => {
     }
 });
 
+
+
+
 //Operacions de sol·licituds d'organitzador
 router.post('/create/solicitudOrganitzador', checkUserAndFetchData, async(req, res) => {
     try {
-        const { idActivitat, motiu } = req.body;
+        const {titol, idActivitat, motiu } = req.body;
+        if(!idActivitat || !motiu) {
+            res.status(400).send('Faltan atributos');
+            return;
+        }
+        const activitatRef = db.collection('activitats').doc(idActivitat);
+        const docAct = await activitatRef.get();
+        if(!docAct.exists) {
+            res.status(404).send('Activitat no encontrada');
+            return;
+        }
         const solictudRef = db.collection('solicitudsOrganitzador');
-        const activitatRef = db.collection('users').doc();
-        const doc = await activitatRef.get()
-        const email = doc.data().email;
         await solictudRef.add({
             'userSolicitant': req.userDocument.id,
-            'email': email,
+            'email': req.userDocument.email,
             'idActivitat': idActivitat,
             'motiu': motiu, 
             'atorgat': false,
             'pendent': true,
-            'administrador': ''
+            'administrador': '',
+            'titol': titol,
+            'data_sol': new Date().toISOString(),
         })
-        res.status(200).send('OK');
+        res.status(200).send('sol·licitud d\'organitzador creada');
     }
     catch (error){
         res.send(error)
     }
 });
 
-router.get('/read/solicitudsOrganitzador/pendents', async(req, res) => {
+router.get('/solicitudsOrganitzador/pendents', checkAdmin, async(req, res) => {
     try {
-        const solicitudsRef = db.collection('solicitudsOrganitzador').where('pendent', '==', true);
+        const solicitudsRef = db.collection('solicitudsOrganitzador').where('pendent', '==', true).orderBy('data_sol', 'desc');
         const response = await solicitudsRef.get();
         let responsArr = [];
         response.forEach(doc => {
-            responsArr.push(doc.data());
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responsArr);
     }
@@ -324,13 +362,15 @@ router.get('/read/solicitudsOrganitzador/pendents', async(req, res) => {
     }
 });
 
-router.get('/read/solicitudsOrganitzador/otorgades', async(req, res) => {
+router.get('/solicitudsOrganitzador/acceptades', checkAdmin, async(req, res) => {
     try {
-        const solicitudsRef = db.collection('solicitudsOrganitzador').where('atorgat', '==', true);
+        const solicitudsRef = db.collection('solicitudsOrganitzador').where('atorgat', '==', true).orderBy('data_sol', 'desc');
         const response = await solicitudsRef.get();
         let responsArr = [];
         response.forEach(doc => {
-            responsArr.push(doc.data());
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responseArr.push(resultdata);
         });
         res.status(200).send(responsArr);
     }
@@ -339,61 +379,77 @@ router.get('/read/solicitudsOrganitzador/otorgades', async(req, res) => {
     }
 });
 
-router.get('/read/solicitudsOrganitzador/caducades', async(req, res) => {
-    try {
-        var date = new Date();
-        date = date.toISOString();
-        date = date.replace('Z', '');
-        const solicitudsRef = db.collection('solicitudsOrganitzador').where('dataFi', '<', date);
-        const response = await solicitudsRef.get();
-        let responsArr = [];
-        response.forEach(doc => {
-            responsArr.push(doc.data());
-        });
-        res.status(200).send(responsArr);
-    }
-    catch (error){
-        res.send(error);
-    }
-});
-
-router.put('/acceptar/solicitudOrganitzador/:id', async(req, res) => {
+router.get('/solicitudsOrganitzador/:id', checkAdmin, async(req, res) => {
     try {
         const id = req.params.id;
-        const adminid = req.body.adminid;
+        if(!id) {
+            res.status(400).send('Falta el id de la solicitud');
+            return;
+        }
         const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
-        /*
-        Depenent de com volguem tenir les collections d'organitzadors, activitats i usauris es posarà com calgui
-
         const doc = await solicitudRef.get();
-        const usauriOrganitzador = doc.data().userSolicitant;
-        const userRef = db.collection('users').doc(usauriOrganitzador);
-        await userRef.update({
-            'organitzador': true
+        if(!doc.exists) {
+            res.status(404).send('Solicitud no encontrada');
+            return;
+        } 
+        const resultdata = doc.data();
+        resultdata.id = doc.id;
+        res.status(200).send(resultdata);
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.post('/solicitudOrganitzador/:id/acceptar', checkAdmin, async(req, res) => {
+    try {
+        const id = req.params.id;
+        const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
+        const doc = await solicitudRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Solicitud no encontrada');
+            return;
+        }
+        const sol = solicitudRef.get();
+        const userRef = db.collection('usuaris').doc(sol.data().userSolicitant);
+        if(!userRef.exists) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+        const userdoc = await userRef.get();
+        const organitzadorRef = db.collection('organitzadors');
+        await organitzadorRef.add({
+            'user': sol.data().userSolicitant,
+            'email': userdoc.data().email,
+            'activitats': sol.data().idActivitat,
         });
-        */
+
         await solicitudRef.update({
             'atorgat': true,
             'pendent': false,
-            'administrador': adminid
+            'administrador': req.userDocument.id,
         })
-        res.status(200).send('OK');
+        res.status(200).send('sol·licitud d\'organitzador acceptada');
     }
     catch (error){
         res.send(error);
     }
 });
 
-router.put('/rebutjar/solicitudOrganitzador/:id', async(req, res) => {
+router.put('/solicitudOrganitzador/:id/rebutjar', checkAdmin, async(req, res) => {
     try {
         const id = req.params.id;
-        const adminid = req.body.adminid;
         const solicitudRef = db.collection('solicitudsOrganitzador').doc(id);
+        const doc = await solicitudRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Solicitud no encontrada');
+            return;
+        }
         await solicitudRef.update({
             'pendent': false,
-            'administrador': adminid
+            'administrador': req.userDocument.id,
         })
-        res.status(200).send('OK');
+        res.status(200).send('sol·licitud d\'organitzador rebutjada');
     }
     catch (error){
         res.send(error);

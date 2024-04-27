@@ -57,7 +57,7 @@ async function checkAdmin(req, res, next) {
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
 
-    const userRef = db.collection('admin').doc(decryptedUid);
+    const userRef = db.collection('administradors').doc(decryptedUid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
