@@ -262,6 +262,7 @@ describe('PUT /tickets/reportsUsuari/:id/solucionar', () => {
     username: 'adminUsername',
   };
   beforeEach(async () => {
+    console.log(adminUser.username)
     await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
     for (const report of testReports) {
       await db.collection('reportsUsuaris').doc(report.id).set({
@@ -288,6 +289,53 @@ describe('PUT /tickets/reportsUsuari/:id/solucionar', () => {
     .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
     expect(res.statusCode).toEqual(404);
     expect(res.text).toBe('Reporte no encontrado');
+  });
+});
+describe('GET /tickets/reportsUsuari/pendent', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      usuariReportat: 'testUsuariReportat1',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      usuariReportat: 'testUsuariReportat2',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    console.log(adminUser.username)
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsUsuaris').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'usuariReportat': report.usuariReportat,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      });
+    }
+  });
+  it ('deberia devolver todos los reportes pendientes', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsUsuaris/pendent')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveLength(testReports.length);
   });
 });
 

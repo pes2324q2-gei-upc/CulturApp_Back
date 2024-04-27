@@ -13,7 +13,7 @@ const app = express()
 app.use(cors({
     origin: 'http://localhost:3000', // Allow requests from this origin
     methods: ['GET', 'POST', 'PUT', 'DELETE'],         // Allow only specified methods
-    allowedHeaders: ['Content-Type'], // Allow only specified headers
+    allowedHeaders: ['Content-Type', 'Authorization'], // Allow only specified headers
 }));
 
 app.use('/activitats', activitatsRoutes)

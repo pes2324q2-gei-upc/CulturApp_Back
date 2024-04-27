@@ -53,14 +53,13 @@ async function checkUsername(username, res, message) {
 
 async function checkAdmin(req, res, next) {
     const token = req.headers.authorization?.split(' ')[1];
-
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
-
     const userRef = db.collection('administradors').doc(decryptedUid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
+        console.log('a');
         return res.status(404).send('Admin no encontrado');
     }
 
