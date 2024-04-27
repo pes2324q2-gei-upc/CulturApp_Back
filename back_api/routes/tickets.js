@@ -143,7 +143,7 @@ router.put('/reportsUsuari/:id/solucionar', checkAdmin, async(req, res) => {
     }
 });
 
-router.delete('/delete/reportUsuari', checkAdmin, async(req, res) => {
+router.delete('/reportUsuari/delete', checkAdmin, async(req, res) => {
     try {
         const { id } = req.body;
         if(!id) {
@@ -167,7 +167,7 @@ router.delete('/delete/reportUsuari', checkAdmin, async(req, res) => {
 
 
 //Operacions de reports de bugs
-router.post('/create/reportBug', checkUserAndFetchData,  async(req, res) => {
+router.post('/reportBug/create', checkUserAndFetchData,  async(req, res) => {
     try {
         const {titol, report } = req.body;
         if(!titol || !report) {
@@ -195,7 +195,6 @@ router.get('/reportsBug/all', checkAdmin, async (req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').orderBy('data_report', 'desc');
         const response = await reportsRef.get();
-        let responseArr = [];
         response.forEach(doc => {
             const resultdata = doc.data();
             resultdata.id = doc.id;
@@ -224,7 +223,7 @@ router.get('/reportsBugs/pendents', checkAdmin, async(req, res) => {
     }
 });
 
-router.get('/reportsBugs/solucionats', checkAdmin, async(req, res) => {
+router.get('/reportsBugs/done', checkAdmin, async(req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').where('solucionat', '==', true).orderBy('data_report', 'desc');
         const response = await reportsRef.get();

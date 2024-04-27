@@ -47,7 +47,8 @@ router.post('/login', async(req, res) => {
         else {
             if(password === response.docs[0].data().password) {
                 const encryptedToken = encrypt(response.docs[0].id);
-                res.setHeader('Authorization', `Bearer ${encryptedToken.encryptedData}`);
+                res.setHeader('Authorization', encryptedToken.encryptedData);
+                res.setHeader('Access-Control-Expose-Headers', 'Authorization');
                 res.status(200).send('OK');
             }
             else {
