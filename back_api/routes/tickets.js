@@ -137,7 +137,28 @@ router.put('/reportsUsuari/:id/solucionar', checkAdmin, async(req, res) => {
             'solucionat': true,
             'administrador': idAdmin
         });
-        res.status(200).send('report usauri solucionat');
+        res.status(200).send('report usuari solucionat');
+    } catch (error){
+        res.send(error);
+    }
+});
+router.put('/reportsUsuari/:id/nosolucionar', checkAdmin, async(req, res) => {
+    try {
+        if(!req.params.id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
+        const reportRef = db.collection('reportsUsuaris').doc(req.params.id);
+        const doc = await reportRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Reporte no encontrado');
+            return;
+        }
+        await reportRef.update({
+            'solucionat': false,
+            'administrador': ''
+        });
+        res.status(200).send('report usuari no solucionat');
     } catch (error){
         res.send(error);
     }
@@ -183,6 +204,7 @@ router.post('/reportBug/create', checkUserAndFetchData,  async(req, res) => {
             'solucionat': false,
             'administrador': '',
             'data_report': new Date().toISOString(),
+            'titol': titol
         })
         res.status(200).send('Report de bug creat')
     }
@@ -289,6 +311,30 @@ router.put('/reportsBug/:id/solucionar', checkAdmin, async(req, res) =>{
     }
 });
 
+router.put('/reportsBug/:id/nosolucionar', checkAdmin, async(req, res) => {
+    try {
+        const id = req.params.id;
+        if(!id) {
+            res.status(400).send('Falta el id del report');
+            return;
+        }
+        const reportRef = db.collection('reportsBugs').doc(id);
+        const doc = await reportRef.get();
+        if(!doc.exists) {
+            res.status(404).send('Reporte no encontrado');
+            return;
+        }
+        await reportRef.update({
+            'solucionat': false,
+            'administrador': ''
+        })
+        res.status(200).send('Bug reportado no solucionado')
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
 router.delete('/reportsBug/:id/delete', checkAdmin, async(req, res) => {
     try {
         const  id = req.params.id;
@@ -313,7 +359,7 @@ router.delete('/reportsBug/:id/delete', checkAdmin, async(req, res) => {
 
 
 //Operacions de sol·licituds d'organitzador
-router.post('/create/solicitudOrganitzador', checkUserAndFetchData, async(req, res) => {
+router.post('/solicitudsOrganitzador/create', checkUserAndFetchData, async(req, res) => {
     try {
         const {titol, idActivitat, motiu } = req.body;
         if(!idActivitat || !motiu) {
