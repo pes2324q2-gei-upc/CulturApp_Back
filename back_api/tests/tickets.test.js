@@ -262,7 +262,6 @@ describe('PUT /tickets/reportsUsuari/:id/solucionar', () => {
     username: 'adminUsername',
   };
   beforeEach(async () => {
-    console.log(adminUser.username)
     await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
     for (const report of testReports) {
       await db.collection('reportsUsuaris').doc(report.id).set({
@@ -317,7 +316,6 @@ describe('GET /tickets/reportsUsuari/pendent', () => {
     username: 'adminUsername',
   };
   beforeEach(async () => {
-    console.log(adminUser.username)
     await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
     for (const report of testReports) {
       await db.collection('reportsUsuaris').doc(report.id).set({
@@ -332,10 +330,58 @@ describe('GET /tickets/reportsUsuari/pendent', () => {
   });
   it ('deberia devolver todos los reportes pendientes', async () => {
     const res = await request(app)
-    .get('/tickets/reportsUsuaris/pendent')
+    .get('/tickets/reportsUsuaris/pendents')
     .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveLength(testReports.length);
   });
+  it ('deberia devolver 404 si el usuario no es admin', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsUsuaris/pendents')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Admin no encontrado');
+  });
 });
+describe('GET /tickets/reportsUsuari/done', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      usuariReportat: 'testUsuariReportat1',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      usuariReportat: 'testUsuariReportat2',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsUsuaris').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'usuariReportat': report.usuariReportat,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      });
+    }
+  });
+});
+
+
 
