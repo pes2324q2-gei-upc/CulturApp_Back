@@ -22,7 +22,7 @@ router.post('/reportUsuari/create', checkUserAndFetchData, async(req, res) => {
             return;
         }
         //checkUsername(usuariReportat, res, 'Usuario reportado no encontrado');
-        const userSnapshot = await db.collection('usuaris').where('username', '==', usuariReportat).get();
+        const userSnapshot = await db.collection('users').where('username', '==', usuariReportat).get();
 
         if (userSnapshot.empty) {
             res.status(404).send('Usuario reportado no encontrado');
@@ -366,7 +366,7 @@ router.post('/solicitudsOrganitzador/create', checkUserAndFetchData, async(req, 
             res.status(400).send('Faltan atributos');
             return;
         }
-        const activitatRef = db.collection('activitats').doc(idActivitat);
+        const activitatRef = db.collection('actividades').doc(idActivitat);
         const docAct = await activitatRef.get();
         if(!docAct.exists) {
             res.status(404).send('Activitat no encontrada');
@@ -375,7 +375,7 @@ router.post('/solicitudsOrganitzador/create', checkUserAndFetchData, async(req, 
         const solictudRef = db.collection('solicitudsOrganitzador');
         await solictudRef.add({
             'userSolicitant': req.userDocument.id,
-            'email': req.userDocument.email,
+            'email': req.userDocument.data().email,
             'idActivitat': idActivitat,
             'motiu': motiu, 
             'atorgat': false,
@@ -384,10 +384,27 @@ router.post('/solicitudsOrganitzador/create', checkUserAndFetchData, async(req, 
             'titol': titol,
             'data_sol': new Date().toISOString(),
         })
-        res.status(200).send('sol·licitud d\'organitzador creada');
+        res.status(200).send('Solicitud de organizador creada');
     }
     catch (error){
         res.send(error)
+    }
+});
+
+router.get('/solicitudsOrganitzador/all', checkAdmin, async(req, res) => {
+    try {
+        const solicitudsRef = db.collection('solicitudsOrganitzador').orderBy('data_sol', 'desc');
+        const response = await solicitudsRef.get();
+        let responsArr = [];
+        response.forEach(doc => {
+            const resultdata = doc.data();
+            resultdata.id = doc.id;
+            responsArr.push(resultdata);
+        });
+        res.status(200).send(responsArr);
+    }
+    catch (error){
+        res.send(error);
     }
 });
 
@@ -399,7 +416,7 @@ router.get('/solicitudsOrganitzador/pendents', checkAdmin, async(req, res) => {
         response.forEach(doc => {
             const resultdata = doc.data();
             resultdata.id = doc.id;
-            responseArr.push(resultdata);
+            responsArr.push(resultdata);
         });
         res.status(200).send(responsArr);
     }
@@ -416,7 +433,7 @@ router.get('/solicitudsOrganitzador/acceptades', checkAdmin, async(req, res) => 
         response.forEach(doc => {
             const resultdata = doc.data();
             resultdata.id = doc.id;
-            responseArr.push(resultdata);
+            responsArr.push(resultdata);
         });
         res.status(200).send(responsArr);
     }
@@ -456,26 +473,25 @@ router.post('/solicitudOrganitzador/:id/acceptar', checkAdmin, async(req, res) =
             res.status(404).send('Solicitud no encontrada');
             return;
         }
-        const sol = solicitudRef.get();
-        const userRef = db.collection('usuaris').doc(sol.data().userSolicitant);
-        if(!userRef.exists) {
+        const userid = doc.data().userSolicitant;
+        const userRef = db.collection('users').doc(userid);
+        const userDoc = await userRef.get();
+        if(!userDoc.exists) {
             res.status(404).send('Usuario no encontrado');
             return;
         }
-        const userdoc = await userRef.get();
         const organitzadorRef = db.collection('organitzadors');
         await organitzadorRef.add({
-            'user': sol.data().userSolicitant,
-            'email': userdoc.data().email,
-            'activitats': sol.data().idActivitat,
+            'user': doc.data().userSolicitant,
+            'email': userDoc.data().email,
+            'activitats': doc.data().idActivitat,
         });
-
         await solicitudRef.update({
             'atorgat': true,
             'pendent': false,
             'administrador': req.userDocument.id,
         })
-        res.status(200).send('sol·licitud d\'organitzador acceptada');
+        res.status(200).send('sol·licitud de organitzador acceptada');
     }
     catch (error){
         res.send(error);
@@ -495,7 +511,7 @@ router.put('/solicitudOrganitzador/:id/rebutjar', checkAdmin, async(req, res) =>
             'pendent': false,
             'administrador': req.userDocument.id,
         })
-        res.status(200).send('sol·licitud d\'organitzador rebutjada');
+        res.status(200).send('sol·licitud de organitzador rebutjada');
     }
     catch (error){
         res.send(error);
