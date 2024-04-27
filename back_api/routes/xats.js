@@ -31,7 +31,7 @@ router.post('/create', async(req, res) => {
 //post de mensajes 
 router.post('/:xatId/mensajes', async (req, res) => {
     try {
-        const { senderId, receiverId, mensaje, fecha } = req.body;
+        const { senderId, mensaje, fecha } = req.body;
         const xatId = req.params.xatId;
 
         // Verificar si el xat existe
@@ -47,7 +47,6 @@ router.post('/:xatId/mensajes', async (req, res) => {
         // Agregar el nuevo mensaje al xat
         await xatRef.collection('mensajes').add({
             senderId: senderId,
-            receiverId: receiverId,
             mensaje: mensaje,
             fecha: fecha
         });

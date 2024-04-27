@@ -18,15 +18,19 @@ router.post('/create', async(req, res) => {
             'descripcio': descr,
             'imatge': imatge,
             //'creador': admin,
-            'members': members,
+            'participants': members,
             'last_msg': ' ',
             'last_time': ' '
         });
 
         res.status(201).send({ message: "Grup creado exitosamente", id: docRef.id });
+
+        // Actualitzar l'ultim missatge i data al grup
+        await docRef.update({
+            id: docRef.id
+        });
     }
     catch (error){
-        //console.error("Error al crear el grupo:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
@@ -71,10 +75,32 @@ router.get('/users/:userId', async (req, res) => {
     }
 });
 
+//update info del grup
+router.put('/:grupId/update', async (req, res) => {
+    try {
+        const grupId = req.params.grupId;
+        const { name, descr, imatge, members } = req.body;
+
+        await db.collection('grups').doc(grupId).update({
+            'nom': name,
+            'descripcio': descr,
+            'imatge': imatge,
+            'participants': members
+        });
+
+        res.status(200).send({ message: "Grupo actualizado exitosamente" });
+
+    } catch (error) {
+        console.error("Error al actualitzar info del grup:", error);
+        res.status(500).send("Error interno del servidor");
+    }
+});
+
+
 //post de mensajes 
 router.post('/:grupId/mensajes', async (req, res) => {
     try {
-        const { senderId, receiverId, mensaje, fecha } = req.body;
+        const { senderId, mensaje, fecha } = req.body;
         const grupId = req.params.grupId;
 
         // Verificar si el xat existe
@@ -89,7 +115,6 @@ router.post('/:grupId/mensajes', async (req, res) => {
         // Agregar el nuevo mensaje al grup
         await grupRef.collection('mensajes').add({
             senderId: senderId,
-            receiverId: receiverId,
             mensaje: mensaje,
             fecha: fecha
         });
