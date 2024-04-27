@@ -143,9 +143,9 @@ router.put('/reportsUsuari/:id/solucionar', checkAdmin, async(req, res) => {
     }
 });
 
-router.delete('/reportUsuari/delete', checkAdmin, async(req, res) => {
+router.delete('/reportsUsuari/:id/delete', checkAdmin, async(req, res) => {
     try {
-        const { id } = req.body;
+        const id = req.params.id;
         if(!id) {
             res.status(400).send('Falta el id del reporte');
             return;
@@ -195,6 +195,7 @@ router.get('/reportsBug/all', checkAdmin, async (req, res) => {
     try {
         const reportsRef = db.collection('reportsBugs').orderBy('data_report', 'desc');
         const response = await reportsRef.get();
+        let responseArr = [];
         response.forEach(doc => {
             const resultdata = doc.data();
             resultdata.id = doc.id;

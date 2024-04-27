@@ -59,7 +59,6 @@ async function checkAdmin(req, res, next) {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-        console.log('a');
         return res.status(404).send('Admin no encontrado');
     }
 
