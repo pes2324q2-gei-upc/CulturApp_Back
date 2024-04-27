@@ -251,7 +251,7 @@ router.get('/reportsBug/:id', checkAdmin, async(req, res) => {
         const reportRef = db.collection('reportsBugs').doc(id);
         const doc = await reportRef.get();
         if(!doc.exists) {
-            res.status(404).send('Report no encontrado');
+            res.status(404).send('Reporte no encontrado');
             return;
         }
         const resultdata = doc.data();
@@ -264,7 +264,7 @@ router.get('/reportsBug/:id', checkAdmin, async(req, res) => {
 });
     
 
-router.put('/reportBug/:id/validar', checkAdmin, async(req, res) =>{
+router.put('/reportsBug/:id/solucionar', checkAdmin, async(req, res) =>{
     try {
         const id  = req.params.id;
         if(!id) {
@@ -275,23 +275,23 @@ router.put('/reportBug/:id/validar', checkAdmin, async(req, res) =>{
         const reportRef = db.collection('reportsBugs').doc(id);
         const doc = await reportRef.get();
         if(!doc.exists) {
-            res.status(404).send('Report no trobat');
+            res.status(404).send('Reporte no encontrado');
             return;
         }
         await reportRef.update({
             'solucionat':true,
             'administrador': idAdmin
         })
-        res.status(200).send('Bug reportat solucionat')
+        res.status(200).send('Bug reportado solucionado')
     }
     catch(error) {
         res.send(error)
     }
 });
 
-router.delete('/delete/reportBug', checkAdmin, async(req, res) => {
+router.delete('/reportsBug/:id/delete', checkAdmin, async(req, res) => {
     try {
-        const { id } = req.body;
+        const  id = req.params.id;
         if(!id) {
             res.status(400).send('Falta el id del reporte');
             return;
@@ -299,11 +299,11 @@ router.delete('/delete/reportBug', checkAdmin, async(req, res) => {
         const reportRef = db.collection('reportsBugs').doc(id);
         const doc = await reportRef.get();
         if(!doc.exists) {
-            res.status(404).send('Report no encontrado');
+            res.status(404).send('Reporte no encontrado');
             return;
         }
         await reportRef.delete();
-        res.status(200).send('OK');
+        res.status(200).send('report bug eliminat');
     } catch (error){
         res.send(error);
     }

@@ -631,5 +631,295 @@ describe('GET /tickets/reportsBug/all', () => {
     expect(res.text).toBe('Admin no encontrado');
   });
 });
-
-
+describe('GET /tickets/reportsBug/:id', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      });
+    }
+  });
+  it('deberia devolver un reporte de bug', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBug/testUid1')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual(testReports[0]);
+  });
+  it('deberia devolver 404 si el reporte no existe', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBug/doesNotExist')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Reporte no encontrado');
+  });
+});
+describe('GET /tickets/reportsBug/pendent', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      });
+    }
+  });
+  it('deberia devolver todos los reportes pendientes', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBugs/pendents')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveLength(testReports.length);
+  });
+  it('deberia devolver 404 si el usuario no es admin', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBugs/pendents')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Admin no encontrado');
+  });
+});
+describe('GET /tickets/reportsBug/done', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      })
+    }
+  });
+  it('deberia devolver todos los reportes solucionados', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBugs/done')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveLength(testReports.length);
+  });
+  it('deberia devolver 404 si el usuario no es admin', async () => {
+    const res = await request(app)
+    .get('/tickets/reportsBugs/done')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Admin no encontrado');
+  });
+});
+describe('PUT /tickets/reportsBug/:id/solucionar', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      })
+    }
+  });
+  it('deberia devolver 404 si el reporte no existe', async () => {
+    const res = await request(app)
+    .put('/tickets/reportsBug/doesNotExist/solucionar')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Reporte no encontrado');
+  });
+  it('deberia solucionar un reporte', async () => {
+    const res = await request(app)
+    .put('/tickets/reportsBug/testUid1/solucionar')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('Bug reportado solucionado');
+  });
+  it('deberia devolver 404 si el usuario no es admin', async () => {
+    const res = await request(app)
+    .put('/tickets/reportsBug/testUid1/solucionar')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Admin no encontrado');
+  });
+});
+describe('DELETE /tickets/reportsBug/:id/delete', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: true,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      })
+    }
+  });
+  it('deberia devolver 404 si el reporte no existe', async () => {
+    const res = await request(app)
+    .delete('/tickets/reportsBug/doesNotExist/delete')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Reporte no encontrado');
+  });
+  it('deberia eliminar un reporte', async () => {
+    const res = await request(app)
+    .delete('/tickets/reportsBug/testUid1/delete')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('report bug eliminat');
+  });
+});
+/*
+describe('GET /tickets/reportsBug/pendent', () => {
+  const testReports = [
+    {
+      id: 'testUid1',
+      report: 'testReport1',
+      titol: 'testTitol1',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      report: 'testReport2',
+      solucionat: false,
+      administrador: '',
+      data_report: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for (const report of testReports) {
+      await db.collection('reportsBugs').doc(report.id).set({
+        'titol': report.titol,
+        'report': report.report,
+        'solucionat': report.solucionat,
+        'administrador': report.administrador,
+        'data_report': report.data_report,
+      });
+    })*/
