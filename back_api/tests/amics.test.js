@@ -13,6 +13,7 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
+
 describe('POST /amics/create/', () => {
     const testUsers = [
         {
@@ -33,8 +34,6 @@ describe('POST /amics/create/', () => {
 
       it('debería enviar 400 porque faltan atributos', async () => {
 
-        console.log()
-  
         const res = await request(app)
         .post('/amics/create/')
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
@@ -473,7 +472,7 @@ describe('PUT /amics/accept/:id', () => {
         });
 
     });
-
+    
     it('debería aceptar la solicitud de amistad', async () => {
 
         const res = await request(app)
@@ -527,8 +526,8 @@ describe('PUT /amics/accept/:id', () => {
     it('debería enviar 409 porque la solicitud ya ha sido aceptada', async () => {
         
           const res = await request(app)
-          .put('/amics/accept/testUsername3')
-          .set('Authorization', `Bearer${encrypt('testUid1').encryptedData}`)
+          .put('/amics/accept/testUsername1')
+          .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
 
           expect(res.statusCode).toEqual(409);
           expect(res.text).toBe('La solicitud de amistad ya ha sido aceptada');
@@ -537,7 +536,7 @@ describe('PUT /amics/accept/:id', () => {
 
 });
 
-/*
+
 describe('DELETE /amics/delete/:id', () => {
     const testUsers = [
       {
@@ -574,7 +573,7 @@ describe('DELETE /amics/delete/:id', () => {
         });
 
     });
-  
+    
     it('debería rechazar la solicitud de amistad', async () => {
 
         const res = await request(app)
@@ -584,7 +583,7 @@ describe('DELETE /amics/delete/:id', () => {
         expect(res.statusCode).toEqual(200);
         expect(res.text).toBe('OK');
     });
-
+    
     it('debería enviar 401 porque el token no es válido', async () => {
 
         const res = await request(app)
@@ -599,7 +598,7 @@ describe('DELETE /amics/delete/:id', () => {
         
           const res = await request(app)
           .delete('/amics/delete/testUsername4')
-          .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+          .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
           expect(res.statusCode).toEqual(404);
           expect(res.text).toBe('Usuario no encontrado');
@@ -615,4 +614,34 @@ describe('DELETE /amics/delete/:id', () => {
         expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
     });
 
-  });*/
+    it('debería enviar 400 porque no puedes rechazarte a ti mismo', async () => {
+        
+          const res = await request(app)
+          .delete('/amics/delete/testUsername1')
+          .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+          expect(res.statusCode).toEqual(400);
+          expect(res.text).toBe('No puedes rechazarte a ti mismo');
+    });
+
+    it('debería enviar 404 porque no se ha encontrado la solicitud de amistad', async () => {
+          
+            const res = await request(app)
+            .delete('/amics/delete/testUsername2')
+            .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
+
+            expect(res.statusCode).toEqual(404);
+            expect(res.text).toBe('No se ha encontrado la solicitud de amistad');
+    });
+
+    it('debería enviar 409 porque la solicitud ya ha sido aceptada', async () => {
+          
+            const res = await request(app)
+            .delete('/amics/delete/testUsername1')
+            .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
+
+            expect(res.statusCode).toEqual(409);
+            expect(res.text).toBe('La solicitud de amistad ya ha sido aceptada');
+    });
+    
+});

@@ -75,6 +75,7 @@ router.put('/accept/:id', checkUserAndFetchData, async (req, res) => {
         const requestDoc = existingRequest.docs[0];
 
         if (requestDoc.data().acceptat) {
+
             res.status(409).send('La solicitud de amistad ya ha sido aceptada');
             return;
         }
@@ -86,25 +87,26 @@ router.put('/accept/:id', checkUserAndFetchData, async (req, res) => {
 
         res.status(200).send('OK');
     } catch (error) {
-        res.send(error);
+        res.status(404).send(error);
     }
 });
 
-router.delete('/rebutjar/:id', async(req, res) =>{
+router.delete('/delete/:id', checkUserAndFetchData, async(req, res) =>{
     try {
-        const username_acceptance = req.params.id;
 
-        if (!(await checkUsername(username_acceptance, res, 'Usuario no encontrado'))) return;
+        const username_delete = req.params.id;
+
+        if (!(await checkUsername(username_delete, res, 'Usuario no encontrado'))) return;
 
         const username_request = req.userDocument.data().username;
 
-        if(username_acceptance == username_request){
+        if(username_delete == username_request){
             res.status(400).send('No puedes rechazarte a ti mismo');
             return;
         }
 
         const followingRef = db.collection('following');
-        const existingRequest = await followingRef.where('user', '==', username_acceptance).where('friend', '==', username_request).get();
+        const existingRequest = await followingRef.where('user', '==', username_delete).where('friend', '==', username_request).get();
 
         if (existingRequest.empty) {
             res.status(404).send('No se ha encontrado la solicitud de amistad');
@@ -122,7 +124,7 @@ router.delete('/rebutjar/:id', async(req, res) =>{
 
         res.status(200).send('OK');
     } catch (error) {
-        res.send(error);
+        res.status(404).send(error);
     }
 });
 
