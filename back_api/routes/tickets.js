@@ -29,6 +29,9 @@ router.post('/create/reportUsuari', async(req, res) => {
 
 router.get('/read/reportsUsuari/all', async (req, res) => {
     try {
+        const token = req.headers.authorization?.split(' ')[1];
+        console.log(token);
+
         const reportsRef = db.collection('reportsUsuaris');
         const response = await reportsRef.get();
         let responseArr = [];
