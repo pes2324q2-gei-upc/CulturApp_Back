@@ -108,8 +108,6 @@ describe('GET /activitats/read/all', () => {
 
     });
 });
-
-
 describe('GET /activitats/categoria/:categoria', () => {
     const testUsers = [
         {

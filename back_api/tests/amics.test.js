@@ -132,7 +132,6 @@ describe('POST /amics/create/', () => {
         
 });
 
-
 describe('GET /amics/:id/following/', () => {
 
     const testUsers = [

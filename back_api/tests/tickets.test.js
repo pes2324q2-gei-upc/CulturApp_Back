@@ -112,7 +112,6 @@ describe('POST /tickets/reportUsuari/create', () => {
     });
 
 });
-
 describe('GET /tickets/reportsUsuari/all', () => {
   const testReports = [
     {
