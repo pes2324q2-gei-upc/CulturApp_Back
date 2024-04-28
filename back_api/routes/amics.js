@@ -39,6 +39,7 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         await followingCollection.add({
             'user': username_solicitador,
             'friend': friend,
+            'data_follow': new Date().toISOString(),
             'acceptat': false,
             'pendent': true
         });

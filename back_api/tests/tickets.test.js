@@ -121,6 +121,7 @@ describe('POST /tickets/create/reportUsuari', () => {
 
 });
 
+
 describe('GET /tickets/read/reportsUsuari/all', () => {
   it('should return all user reports', async () => {
     // Add test reports to the database
