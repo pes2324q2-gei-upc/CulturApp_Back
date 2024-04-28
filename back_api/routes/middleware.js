@@ -35,10 +35,8 @@ async function checkUserAndFetchData(req, res, next) {
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
 
-    if (!userDoc.exists) {
-        return res.status(404).send('Usuario que envió la solicitud no encontrado');
-    }
-
+    if (!userDoc.exists) return res.status(404).send('Usuario que envió la solicitud no encontrado');
+    
     req.userDocument = userDoc;
     next();
 }
@@ -70,10 +68,25 @@ async function checkPerson(req, res, next) {
     if (!userDoc.exists && !clientDoc.exists) {
         return res.status(404).send('Usuario o cliente que envió la solicitud no encontrado');
     }
+  
+}
 
+async function checkAdmin(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decryptedUid = decryptToken(token, res);
+    if (!decryptedUid) return;
+    const userRef = db.collection('administradors').doc(decryptedUid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+        return res.status(404).send('Admin no encontrado');
+    }
+
+    req.userDocument = userDoc;
     next();
 }
 
 module.exports.checkUserAndFetchData = checkUserAndFetchData;
 module.exports.checkUsername = checkUsername;
 module.exports.checkPerson = checkPerson;
+module.exports.checkAdmin = checkAdmin;
