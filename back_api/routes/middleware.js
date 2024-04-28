@@ -1,4 +1,4 @@
-const db = require('../firebaseConfig').db;
+
 require('dotenv').config();
 
 const crypto = require('crypto');
