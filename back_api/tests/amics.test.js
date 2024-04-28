@@ -132,7 +132,7 @@ describe('POST /amics/create/', () => {
         
 });
 
-/*
+
 describe('GET /amics/:id/following/', () => {
 
     const testUsers = [
@@ -644,4 +644,4 @@ describe('DELETE /amics/delete/:id', () => {
             expect(res.text).toBe('La solicitud de amistad ya ha sido aceptada');
     });
     
-});*/
+});

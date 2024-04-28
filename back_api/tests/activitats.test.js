@@ -15,7 +15,7 @@ function encrypt(text) {
 }
 
 
-/*describe('GET /activitats/read/all', () => {
+describe('GET /activitats/read/all', () => {
     const testUsers = [
         {
           uid: 'testUid1',
@@ -412,7 +412,7 @@ describe('GET /activitats/name/:name', () => {
             expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
     })
     
-});*/
+});
 
 describe('GET /activitats/read/:id', () => {
 
