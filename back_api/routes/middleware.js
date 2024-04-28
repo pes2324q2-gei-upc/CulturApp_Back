@@ -68,7 +68,8 @@ async function checkPerson(req, res, next) {
     if (!userDoc.exists && !clientDoc.exists) {
         return res.status(404).send('Usuario o cliente que envió la solicitud no encontrado');
     }
-  
+
+    next();
 }
 
 async function checkAdmin(req, res, next) {
