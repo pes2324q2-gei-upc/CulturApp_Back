@@ -14,6 +14,7 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
+
 describe('GET /activitats/read/all', () => {
     const testUsers = [
         {
@@ -414,42 +415,43 @@ describe('GET /activitats/name/:name', () => {
 });
 
 describe('GET /activitats/read/:id', () => {
-    const testUsers = [
-        {
-          uid: 'testUid1',
-          username: 'testUsername1',
-        },
-    ];
 
-    const testClients = [ 
-        {
-         uid: 'testUid2',
-         username: 'testUsername2',
-        },
-    ];
+  const testUsers = [
+    {
+      uid: 'testUid1',
+      username: 'testUsername1',
+    },
+  ];
 
-    beforeEach(async () => {
-        for (const usuari of testUsers) {
-            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
-        } 
-        
-        for (const client of testClients) {
-            await db.collection('clients').doc(client.uid).set({"username": client.username});
-        } 
+  const testClients = [ 
+      {
+      uid: 'testUid2',
+      username: 'testUsername2',
+      },
+  ];
 
-        await db.collection('actividades').doc('testAct1').set({
-            "denominaci": "testNom1",
-            "descripcio": "testDescripcio1",
-            "data_inici": "2024-02-02T00:00:00.000",
-            "data_fi": "testDataFi1",
-            "tags_categor_es": ["testTag1", "testTag2"],
-            "ubicacio": "testUbicacio1",
-            "aforament": 100,
-            "aforament_actual": 50,
-            "assistents": ["testUid1"],
-            "assistents_actuals": 1
-        });
-    });
+  beforeEach(async () => {
+      for (const usuari of testUsers) {
+          await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+      } 
+      
+      for (const client of testClients) {
+          await db.collection('clients').doc(client.uid).set({"username": client.username});
+      } 
+
+      await db.collection('actividades').doc('testAct1').set({
+          "denominaci": "testNom1",
+          "descripcio": "testDescripcio1",
+          "data_inici": "2024-02-02T00:00:00.000",
+          "data_fi": "testDataFi1",
+          "tags_categor_es": ["testTag1", "testTag2"],
+          "ubicacio": "testUbicacio1",
+          "aforament": 100,
+          "aforament_actual": 50,
+          "assistents": ["testUid1"],
+          "assistents_actuals": 1
+      });
+  });
 
     it('debería obtener la actividad porque lo pide un usuario', async () => {
 
@@ -466,7 +468,7 @@ describe('GET /activitats/read/:id', () => {
             ])
           );
     });
-
+    
     it('debería obtener la actividad porque lo pide un cliente', async () => {
 
         const response = await request(app)
@@ -492,7 +494,7 @@ describe('GET /activitats/read/:id', () => {
         expect(response.statusCode).toBe(401);
         expect(response.text).toBe('Token inválido');
 
-});
+    });
 
     it('debería enviar 404 porque la actividad no existe', async () => {
 

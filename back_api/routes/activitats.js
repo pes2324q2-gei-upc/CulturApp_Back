@@ -18,7 +18,7 @@ router.get('/read/all', checkPerson, async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
@@ -33,7 +33,7 @@ router.get('/categoria/:categoria', checkPerson, async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
@@ -51,7 +51,7 @@ router.get('/date/:date', checkPerson, async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
@@ -69,20 +69,27 @@ router.get('/name/:name', checkPerson, async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
 router.get('/read/:id', checkPerson, async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").doc(req.params.id);
+        const actId = req.params.id;
+
+        const activityRef = db.collection("actividades").doc(actId);
         const response = await activityRef.get();
 
         if(response.empty) return res.status(404).send('Actividad no encontrada');
-        
-        res.send(response.data());
+
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+
+        res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(407).send(error);
     }
 });
 

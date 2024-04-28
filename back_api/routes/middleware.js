@@ -57,10 +57,10 @@ async function checkUsername(username, res, message) {
 async function checkPerson(req, res, next) {
 
     const token = req.headers.authorization?.split(' ')[1];
-
+    
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
-
+    
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
 
