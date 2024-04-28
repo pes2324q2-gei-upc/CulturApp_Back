@@ -2,6 +2,18 @@
 const request = require('supertest');
 const app = require('../app'); 
 
+const crypto = require('crypto');
+const algorithm = 'aes-256-cbc';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+
+function encrypt(text) {
+  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
 describe('POST /users/create', () => {
   it('should create a user', async () => {
     const res = await request(app)
@@ -23,7 +35,7 @@ describe('POST /users/create', () => {
 
 //OK
 describe('POST /users/activitats/signout', () => {
-  it('should create a user', async () => {
+  it('should signout a user from an activity', async () => {
     const users = [
       {
         uid: 'testUid1',
@@ -38,6 +50,7 @@ describe('POST /users/activitats/signout', () => {
 
     const res = await request(app)
       .post('/users/activitats/signout')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
       .send({
         uid: 'testUid1',
         activityId: '2',
@@ -46,7 +59,9 @@ describe('POST /users/activitats/signout', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('OK');
 
-    const res2 = await request(app).get('/users/activitats/isuserin?uid=testUid1&activityId=2');
+    const res2 = await request(app)
+      .get('/users/activitats/isuserin?uid=testUid1&activityId=2')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res2.statusCode).toEqual(200);
     expect(res2.text).toBe('no');
@@ -70,6 +85,7 @@ describe('POST /users/activitats/signup', () => {
 
     const res = await request(app)
       .post('/users/activitats/signup')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
       .send({
         uid: 'testUid1',
         activityId: '4',
@@ -78,7 +94,9 @@ describe('POST /users/activitats/signup', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('OK');
 
-    const res2 = await request(app).get('/users/activitats/isuserin?uid=testUid1&activityId=4');
+    const res2 = await request(app)
+      .get('/users/activitats/isuserin?uid=testUid1&activityId=4')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res2.statusCode).toEqual(200);
     expect(res2.text).toBe('yes');
@@ -101,7 +119,9 @@ describe('GET /users/activitats/isuserin', () => {
       await db.collection('users').doc('testUid1').set(user);
     }
 
-    const res = await request(app).get('/users/activitats/isuserin?uid=testUid1&activityId=1');
+    const res = await request(app)
+      .get('/users/activitats/isuserin?uid=testUid1&activityId=1')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('yes');
@@ -124,7 +144,9 @@ describe('GET /users/:uid/username', () => {
       await db.collection('users').doc('testUid1').set(user);
     }
 
-    const res = await request(app).get('/users/testUid1/username');
+    const res = await request(app)
+      .get('/users/testUid1/username')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('\"testUsername1\"');
@@ -147,7 +169,9 @@ describe('GET /users/exists', () => {
       await db.collection('users').doc('testUid1').set(user);
     }
 
-    const res = await request(app).get('/users/exists?uid=testUid1');
+    const res = await request(app)
+      .get('/users/exists?uid=testUid1')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('exists');
@@ -175,14 +199,16 @@ describe('GET /users/uniqueUsername', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('notunique');
 
-    const res2 = await request(app).get('/users/uniqueUsername?username=testUsername2');
+    const res2 = await request(app)
+      .get('/users/uniqueUsername?username=testUsername2')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res2.statusCode).toEqual(200);
     expect(res2.text).toBe('unique');
   });
 });
 
-describe('POST /users/edit', () => {
+describe('PUT /users/edit', () => {
   it('should edit a user', async () => {
     const res = await request(app)
       .post('/users/create')
@@ -198,6 +224,7 @@ describe('POST /users/edit', () => {
 
     const res2 = await request(app)
       .post('/users/edit')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
       .send({
         uid: 'testUid',
         username: 'newUsername',

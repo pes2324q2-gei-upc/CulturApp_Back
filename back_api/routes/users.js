@@ -4,6 +4,9 @@ const router = express.Router()
 
 router.use(express.json());
 
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+const checkUsername = require('./middleware').checkUsername;
+
 router.get('/read/users', async (req, res) => {
     try {
 
@@ -87,9 +90,13 @@ router.get('/activitats/isuserin', async (req, res) => {
     }
 });
 
-router.post('/activitats/signout', async(req, res) => {
+router.post('/activitats/signout', checkUserAndFetchData, async(req, res) => {
     try {
         const { uid, activityId } = req.body;
+
+        //currentUserId = req.userDocument.id;
+        //if (currentUserId != uid) res.status(404).send(error);
+
         const userRef = db.collection('users').doc(uid);
         const userSnapshot = await userRef.get();
     

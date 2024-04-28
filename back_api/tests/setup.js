@@ -4,13 +4,11 @@ require('dotenv').config();
 const projectId = `${process.env.PROJECT_ID}`;
 
 beforeAll(async () => {
-  console.log('Initializing Firestore');
   const app = await firebase.initializeTestApp({ projectId });
   db = app.firestore();
 });
 
 afterEach(async () => {
-  console.log('Deleting all documents');
   
   const collections = ['users']; // Agregar aquí todas las colecciones que se quieran borrar
 
@@ -26,7 +24,6 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  console.log('Closing Firestore');
   await Promise.all(firebase.apps().map(app => app.delete()));
 });
 
