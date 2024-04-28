@@ -26,6 +26,7 @@ function decryptToken(token, res) {
 }
 
 async function checkUserAndFetchData(req, res, next) { 
+
     const token = req.headers.authorization?.split(' ')[1];
 
     const decryptedUid = decryptToken(token, res);
@@ -34,10 +35,8 @@ async function checkUserAndFetchData(req, res, next) {
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
 
-    if (!userDoc.exists) {
-        return res.status(404).send('Usuario que envio la solicitud no encontrado');
-    }
-
+    if (!userDoc.exists) return res.status(404).send('Usuario que envió la solicitud no encontrado');
+    
     req.userDocument = userDoc;
     next();
 }
@@ -47,8 +46,29 @@ async function checkUsername(username, res, message) {
     const userSnapshot = await db.collection('users').where('username', '==', username).get();
 
     if (userSnapshot.empty) {
-        return res.status(404).send(message);
+        res.status(404).send(message);
+        return false;
     }
+    return true;
+}
+
+async function checkPerson(req, res, next) {
+
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    const decryptedUid = decryptToken(token, res);
+    if (!decryptedUid) return;
+    
+    const userRef = db.collection('users').doc(decryptedUid);
+    const userDoc = await userRef.get();
+
+    const clientRef = db.collection('clients').doc(decryptedUid);
+    const clientDoc = await clientRef.get();
+
+    if (!userDoc.exists && !clientDoc.exists) {
+        return res.status(404).send('Usuario o cliente que envió la solicitud no encontrado');
+    }
+  
 }
 
 async function checkAdmin(req, res, next) {
@@ -68,4 +88,5 @@ async function checkAdmin(req, res, next) {
 
 module.exports.checkUserAndFetchData = checkUserAndFetchData;
 module.exports.checkUsername = checkUsername;
+module.exports.checkPerson = checkPerson;
 module.exports.checkAdmin = checkAdmin;

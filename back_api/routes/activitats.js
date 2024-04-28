@@ -6,9 +6,10 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-router.get('/read/all', async (req, res) => {
-    try {
+const checkPerson = require('./middleware').checkPerson;
 
+router.get('/read/all', checkPerson, async (req, res) => {
+    try {
         const activityRef = db.collection("actividades").limit(20);
         const response = await activityRef.get();
         let responseArr = [];
@@ -17,11 +18,11 @@ router.get('/read/all', async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
-router.get('/categoria/:categoria', async (req, res) => {
+router.get('/categoria/:categoria', checkPerson, async (req, res) => {
     try {
         var cats = req.params.categoria.split(',');
         const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', cats);
@@ -32,11 +33,11 @@ router.get('/categoria/:categoria', async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
-router.get('/date/:date', async (req, res) => {
+router.get('/date/:date', checkPerson, async (req, res) => {
     try {
         var date = req.params.date;
         date = date.slice(0, -4);
@@ -50,32 +51,37 @@ router.get('/date/:date', async (req, res) => {
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
-router.get('/name/:name', async (req, res) => {
+router.get('/name/:name', checkPerson, async (req, res) => {
     try {
         var nomAct = req.params.name;
         const activityRef = db.collection("actividades").where('denominaci', '==', nomAct);
         const response = await activityRef.get();
+
+        if(response.empty) return res.status(404).send('Actividad no encontrada');
+
         let responseArr = [];
         response.forEach(doc => {
             responseArr.push(doc.data());
         });
         res.status(200).send(responseArr);
     } catch (error){
-        res.send(error);
+        res.send(404).send(error);
     }
 });
 
-router.get('/read/:id', async (req, res) => {
+router.get('/read/:id', checkPerson, async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").doc(req.params.id);
+        const actId = req.params.id;
+        const activityRef = db.collection("actividades").doc(actId);
         const response = await activityRef.get();
-        res.send(response.data());
+        if(!response.exists) return res.status(404).send('Actividad no encontrada');
+        res.status(200).send(response.data());
     } catch (error){
-        res.send(error);
+        res.send(407).send(error);
     }
 });
 
