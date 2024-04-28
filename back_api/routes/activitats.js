@@ -76,18 +76,10 @@ router.get('/name/:name', checkPerson, async (req, res) => {
 router.get('/read/:id', checkPerson, async (req, res) => {
     try {
         const actId = req.params.id;
-
         const activityRef = db.collection("actividades").doc(actId);
         const response = await activityRef.get();
-
-        if(response.empty) return res.status(404).send('Actividad no encontrada');
-
-        let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
-
-        res.status(200).send(responseArr);
+        if(!response.exists) return res.status(404).send('Actividad no encontrada');
+        res.status(200).send(response.data());
     } catch (error){
         res.send(407).send(error);
     }
