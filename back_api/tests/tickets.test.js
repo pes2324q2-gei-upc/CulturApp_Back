@@ -93,7 +93,7 @@ describe('POST /tickets/reportUsuari/create', () => {
         });
   
       expect(res.statusCode).toEqual(404);
-      expect(res.text).toBe('Usuario que envio la solicitud no encontrado');
+      expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
     });
 
     it("deberia enviar un 404 porque el username enviado no pertenece a ningun usuario", async () => {
@@ -637,7 +637,7 @@ describe ('POST /tickets/reportBug/create', () => {
       report: 'testDescripcio',
     });
     expect(res.statusCode).toEqual(404);
-    expect(res.text).toBe('Usuario que envio la solicitud no encontrado');
+    expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
   });
 });
 describe('GET /tickets/reportsBug/all', () => {
@@ -1074,7 +1074,7 @@ describe('POST /tickets/solicitudsOrganitzador/create', () => {
       motiu: 'testDescripcio',
     });
     expect(res.statusCode).toEqual(404);
-    expect(res.text).toBe('Usuario que envio la solicitud no encontrado');
+    expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
   });
 });
 describe('GET /tickets/solicitudsOrganitzador/all', () => {

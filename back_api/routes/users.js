@@ -21,6 +21,21 @@ router.get('/read/users', async (req, res) => {
     }
 });
 
+router.get('/:id', async (req, res) => {
+    try {
+        var id = req.params.id;
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.post('/create', async(req, res) => {
     try {
         const { uid, username, email, favcategories } = req.body;
