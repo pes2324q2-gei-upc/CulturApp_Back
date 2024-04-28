@@ -491,7 +491,7 @@ router.post('/solicitudOrganitzador/:id/acceptar', checkAdmin, async(req, res) =
             'pendent': false,
             'administrador': req.userDocument.id,
         })
-        res.status(200).send('sol·licitud de organitzador acceptada');
+        res.status(200).send('Solicitud de organizador aceptada');
     }
     catch (error){
         res.send(error);
@@ -511,7 +511,7 @@ router.put('/solicitudOrganitzador/:id/rebutjar', checkAdmin, async(req, res) =>
             'pendent': false,
             'administrador': req.userDocument.id,
         })
-        res.status(200).send('sol·licitud de organitzador rebutjada');
+        res.status(200).send('Solicitud de organizador rechazada');
     }
     catch (error){
         res.send(error);

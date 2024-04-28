@@ -1301,7 +1301,7 @@ describe('GET /tickets/solicitudsOrganitzador/done', () => {
     expect(res.text).toBe('Admin no encontrado');
   });
 });
-describe('PUT /tickets/solicitudsOrganitzador/:id/acceptar', () => {
+describe('POST /tickets/solicitudsOrganitzador/:id/acceptar', () => {
   const testSolicituds = [
     {
       id: 'testUid1',
@@ -1345,7 +1345,7 @@ describe('PUT /tickets/solicitudsOrganitzador/:id/acceptar', () => {
         'pendent': solicitud.pendent,
         'administrador': solicitud.administrador,
         'data_sol': solicitud.data_sol,
-        'usuariSolicitant': 'testUid1',
+        'userSolicitant': 'testUid1',
       })
     }
   });
@@ -1366,6 +1366,76 @@ describe('PUT /tickets/solicitudsOrganitzador/:id/acceptar', () => {
   it('deberia devolver 404 si el usuario no es admin', async () => {
     const res = await request(app)
     .post('/tickets/solicitudOrganitzador/testUid1/acceptar')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Admin no encontrado');
+  });
+});
+describe('PUT /tickets/solicitudsOrganitzador/:id/rebutjar', () => {
+  const testSolicituds = [
+    {
+      id: 'testUid1',
+      motiu: 'testReport1',
+      titol: 'testTitol1',
+      idActivitat: 'testIdActivitat',
+      pendent:true,
+      atorgat: false,
+      administrador: '',
+      data_sol: new Date().toISOString(),
+    },
+    {
+      id: 'testUid2',
+      titol: 'testTitol2',
+      motiu: 'testReport2',
+      idActivitat: 'testIdActivitat',
+      atorgat: true,
+      pendent: false,
+      administrador: '',
+      data_sol: new Date().toISOString(),
+    },
+  ];
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    await db.collection('actividades').doc('testIdActivitat').set({
+      'a': 'a',
+    });
+    await db.collection('users').doc('testUid1').set({
+      'email': 'testEmail1',
+    });
+    for (const solicitud of testSolicituds) {
+      await db.collection('solicitudsOrganitzador').doc(solicitud.id).set({
+        'titol': solicitud.titol,
+        'motiu': solicitud.motiu,
+        'atorgat': solicitud.atorgat,
+        'idActivitat': solicitud.idActivitat,
+        'pendent': solicitud.pendent,
+        'administrador': solicitud.administrador,
+        'data_sol': solicitud.data_sol,
+        'userSolicitant': 'testUid1',
+      })
+    }
+  });
+  it('deberia devolver 404 si la solicitud no existe', async () => {
+    const res = await request(app)
+    .put('/tickets/solicitudOrganitzador/doesNotExist/rebutjar')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Solicitud no encontrada');
+  });
+  it('deberia rechazar una solicitud', async () => {
+    const res = await request(app)
+    .put('/tickets/solicitudOrganitzador/testUid1/rebutjar')
+    .set('Authorization',  `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('Solicitud de organizador rechazada');
+  });
+  it('deberia devolver 404 si el usuario no es admin', async () => {
+    const res = await request(app)
+    .put('/tickets/solicitudOrganitzador/testUid1/rebutjar')
     .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
     expect(res.statusCode).toEqual(404);
     expect(res.text).toBe('Admin no encontrado');
