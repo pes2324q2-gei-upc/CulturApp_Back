@@ -45,13 +45,24 @@ router.post('/create', async(req, res) => {
     }
 });
 
-router.get('/:id/activitats', async (req, res) => {
+router.get('/:id', checkUserAndFetchData, async (req, res) => {
     try {
         var id = req.params.id;
         const docRef = db.collection('users').doc(id);
         const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
 
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
+    try {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
             if(responseAct.exists) {
@@ -194,35 +205,28 @@ router.get('/exists', async (req, res) => {
     }
 });
 
-router.get('/activitats/:id/search/:name', async (req, res) => {
+router.get('/activitats/search/:name', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
         var name = req.params.name;
-
-        const docRef = db.collection('users').doc(id);
-        const response = await docRef.get();
-
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
-            let activityData = responseAct.data();
 
-            // Check if the activity has the specified name
-            if (activityData.denominaci === name) {
-                return activityData;
+            if(!responseAct.exists) return null;
+            else if (responseAct.data().denominaci === name) {
+                return responseAct.data();
             } else {
                 return null; // If activity doesn't match the name, return null
             }
         }));
 
         // Filter out null values (activities that don't match the name)
-        responseArr = responseArr.filter(activity => activity !== null);
-        res.status(200).send(responseArr);
+        const filteredResponseArr = responseArr.filter(activity => activity !== null);
+        res.status(200).send(filteredResponseArr);
     } catch (error){
         res.send(error);
     }
 });
-
 
 router.get('/uniqueUsername', async (req, res) => {
     try {
@@ -242,16 +246,14 @@ router.get('/uniqueUsername', async (req, res) => {
     }
 });
 
-router.get('/:id/categories/:categories', async (req, res) => {
+router.get('/categories/:categories', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
-        const codiActivitats =  db.collection('users').doc(id);
-        const response = await codiActivitats.get();
         var categories = req.params.categories.split(",");
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity)//.where('tags_categor_es', 'array-contains-any', categories);
             const responseAct = await activityRef.get();
-            if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
+            if(!responseAct.exists) return null;
+            else if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
                 return responseAct.data();
             } else {
                 return null
@@ -264,15 +266,12 @@ router.get('/:id/categories/:categories', async (req, res) => {
     }
 })
 
-router.get('/:id/data/:data', async (req, res) => {
+router.get('/data/:data', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
-        const codiActivitats =  db.collection('users').doc(id);
-        const response = await codiActivitats.get();
         var date = req.params.data;
         date = date.slice(0, -4);
         date = date.replace(' ', 'T');
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity)
             const response = await activityRef.get();
             if (response.exists && response.data().data_inici >= date) {
