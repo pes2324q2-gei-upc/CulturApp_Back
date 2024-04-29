@@ -7,6 +7,18 @@ router.use(express.json());
 const { db } = require('../firebaseConfig');
 const { checkUserAndFetchData, checkUsername } = require('./middleware');
 
+const crypto = require('crypto');
+const algorithm = 'aes-256-cbc';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+
+function encrypt(text) {
+  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
 router.get('/read/users', checkUserAndFetchData, async (req, res) => {
     try {
 
@@ -22,13 +34,15 @@ router.get('/read/users', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.get('/:id', checkUserAndFetchData, async (req, res) => {
+router.get('/info', async (req, res) => {
     try {
-        var id = req.params.id;
+        id = req.headers.authorization.split(' ')[1];
         const docRef = db.collection('users').doc(id);
         const response = await docRef.get();
         if (response.exists) {
-            res.status(200).send(response.data());
+            const respdata = response.data();
+            respdata.token = encrypt(response.id).encryptedData;
+            res.status(200).send(respdata);
         } else {
             res.status(404).send('Usuario no encontrado');
         }
@@ -36,12 +50,7 @@ router.get('/:id', checkUserAndFetchData, async (req, res) => {
         res.send(error);
     }
 });
-/*
-router.get('/infoUser', checkUserAndFetchData, async (req, res) => {
-    
-        res.status(200).send(req.userDocument.data());
-});
-*/
+
 
 router.post('/create', async(req, res) => {
     try {
@@ -57,7 +66,7 @@ router.post('/create', async(req, res) => {
           'email': email,
           'username': username,
           'favcategories': categories,
-          'activities': activities
+          'activities': activities,
         });
 
         res.status(200).send('OK');

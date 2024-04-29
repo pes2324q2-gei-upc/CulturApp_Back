@@ -19,12 +19,14 @@ describe('GET /users/:id', () => {
             id: 'useridTest1',
             username: 'username',
             email: 'email',
+            token: "10b79ecbebb4da0fedff89edf6a504f5",
             activitats: ['1', '2', '3'],
         },
         usertest2 = {
             id: 'useridTest2',
             username: 'username2',
             email: 'email2',
+            token: "10b79ecbebb4da0fedff89edf6a504f5",
             activitats: ['1', '2', '3'],
         }
     ]
@@ -37,31 +39,17 @@ describe('GET /users/:id', () => {
     it('should return 200 and user data', async () => {
         const user = testUsers[0];
         const response = await request(app)
-            .get(`/users/${user.id}`)
-            .set('Authorization', `Bearer ${encrypt(user.id).encryptedData}`);
+            .get(`/users/info`)
+            .set('Authorization', `Bearer ${user.id}`);
         expect(response.status).toBe(200);
         expect(response.body).toEqual(user);
     });
-    it('should return 401 if token is invalid', async () => {
-        const response = await request(app)
-            .get(`/users/${testUsers[0].id}`)
-            .set('Authorization', 'Bearer invalidToken');
-        expect(response.status).toBe(401);
-        expect(response.text).toBe('Token inválido');
-    });
-    it('should return 404 if user who is beeing searched does not exist', async () => {
-        const response = await request(app)
-            .get(`/users/invalidId`)
-            .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`);
-        expect(response.status).toBe(404);
-        expect(response.text).toBe('Usuario no encontrado');
-    });
     it('should return 404 if user does not exist', async () => {
         const response = await request(app)
-            .get(`/users/useridTest1`)
-            .set('Authorization', `Bearer ${encrypt('invaldId').encryptedData}`);
+            .get(`/users/info`)
+            .set('Authorization', `Bearer ${'invaldId'}`);
         expect(response.status).toBe(404);
-        expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+        expect(response.text).toBe('Usuario no encontrado');
     });
 });
 describe('GET /users/read/users', () => {
