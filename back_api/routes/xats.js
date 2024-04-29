@@ -6,10 +6,37 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
+//existeix el xat? 
+router.get('/exists', async (req, res) => {
+    try {
+        var receiverId = req.query.receiverId;
+        var senderId = req.query.senderId;
+
+        const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', senderId).limit(1);
+
+        docRef.get()
+        .then(snapshot => {
+            if (!snapshot.empty) {
+                // Si existe al menos un documento con el activitat_code dado, entonces el foro existe
+                const data = snapshot.docs[0].data();
+                res.status(200).json({ "exists": true, "data": data });
+            } else {
+                // Si no existe ningún documento con el activitat_code dado, el foro no existe
+                res.status(200).json({ "exists": false });
+            }
+        })
+        .catch(error => {
+            res.status(500).send("Error interno del servidor");
+        });
+    } catch (error) {
+        res.status(500).send("Error interno del servidor");
+    }
+});
+
 //crear xat
 router.post('/create', async(req, res) => {
     try {
-        //console.log("Solicitud recibida en la ruta '/xats/create'");
+        console.log("Solicitud recibida en la ruta '/xats/create'");
 
         const { senderId, receiverId } = req.body;
  
@@ -23,7 +50,7 @@ router.post('/create', async(req, res) => {
         res.status(201).send({ message: "Xat creado exitosamente", id: docRef.id });
     }
     catch (error){
-        //console.error("Error al crear el xat:", error);
+        console.error("Error al crear el xat:", error);
         res.status(500).send("Error interno del servidor");
     }
 });

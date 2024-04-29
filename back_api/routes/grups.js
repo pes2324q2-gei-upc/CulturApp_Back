@@ -6,6 +6,7 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
+//crear grup
 router.post('/create', async(req, res) => {
     try {
         //console.log("Solicitud recibida en la ruta '/grups/create'");
