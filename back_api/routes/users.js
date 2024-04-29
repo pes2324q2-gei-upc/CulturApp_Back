@@ -36,6 +36,12 @@ router.get('/:id', checkUserAndFetchData, async (req, res) => {
         res.send(error);
     }
 });
+/*
+router.get('/infoUser', checkUserAndFetchData, async (req, res) => {
+    
+        res.status(200).send(req.userDocument.data());
+});
+*/
 
 router.post('/create', async(req, res) => {
     try {
