@@ -56,7 +56,7 @@ router.post('/create', async(req, res) => {
     try {
         const { uid, username, email, favcategories } = req.body;
 
-        const categories = JSON.parse(favcategories);
+        const categories = favcategories;
 
         const usersCollection = admin.firestore().collection('users');
         
@@ -265,7 +265,7 @@ router.get('/categories/:categories', checkUserAndFetchData, async (req, res) =>
         let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity)//.where('tags_categor_es', 'array-contains-any', categories);
             const responseAct = await activityRef.get();
-            if(!responseAct.exists) return null;
+            if(!responseAct.exists) return  null;
             else if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
                 return responseAct.data();
             } else {
