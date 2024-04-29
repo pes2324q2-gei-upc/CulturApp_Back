@@ -29,15 +29,10 @@ async function checkUserAndFetchData(req, res, next) {
 
     const token = req.headers.authorization?.split(' ')[1];
 
-    console.log("hola");
     const decryptedUid = decryptToken(token, res);
-    console.log("adios");
 
-    console.log(decryptedUid);
-    const userRef = db.collection('users').doc("testUid1");
-    console.log("userREf hecho");
+    const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
-    console.log("await acabat");
 
     if (!userDoc.exists) return res.status(404).send('Usuario que envió la solicitud no encontrado');
     
@@ -73,7 +68,7 @@ async function checkPerson(req, res, next) {
     if (!userDoc.exists && !clientDoc.exists) {
         return res.status(404).send('Usuario o cliente que envió la solicitud no encontrado');
     }
-  
+    next();
 }
 
 async function checkAdmin(req, res, next) {
