@@ -65,7 +65,10 @@ async function checkPerson(req, res, next) {
     const clientRef = db.collection('clients').doc(decryptedUid);
     const clientDoc = await clientRef.get();
 
-    if (!userDoc.exists && !clientDoc.exists) {
+    const adminReg = db.collection('administradors').doc(decryptedUid);
+    const adminDoc = await clientRef.get();
+
+    if (!userDoc.exists && !clientDoc.exists && !adminDoc.exists) {
         return res.status(404).send('Usuario o cliente que envió la solicitud no encontrado');
     }
 
