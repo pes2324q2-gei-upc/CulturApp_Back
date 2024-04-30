@@ -61,7 +61,7 @@ router.get('/:grupId', async (req, res) => {
 router.get('/users/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
-        const querySnapshot = await db.collection('grups').where('members', 'array-contains', userId).get();
+        const querySnapshot = await db.collection('grups').where('participants', 'array-contains', userId).get();
     
         const userGroups = [];
     
