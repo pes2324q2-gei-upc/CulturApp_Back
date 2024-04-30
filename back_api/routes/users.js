@@ -5,7 +5,7 @@ const router = express.Router()
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-const { checkUserAndFetchData, checkUsername } = require('./middleware');
+const { checkUserAndFetchData, checkUsername, checkAdmin } = require('./middleware');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -34,9 +34,10 @@ router.get('/read/users', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.get('/info', async (req, res) => {
+
+router.get('/infoToken', async (req, res) => {
     try {
-        id = req.headers.authorization.split(' ')[1];
+        const id = req.headers.authorization.split(' ')[1];
         const docRef = db.collection('users').doc(id);
         const response = await docRef.get();
         if (response.exists) {
@@ -50,6 +51,23 @@ router.get('/info', async (req, res) => {
         res.send(error);
     }
 });
+
+
+router.get('/:id', checkAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
+
 
 
 router.post('/create', async(req, res) => {

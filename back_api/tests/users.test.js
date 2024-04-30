@@ -13,7 +13,7 @@ function encrypt(text) {
   encrypted = Buffer.concat([encrypted, cipher.final()]);
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
-describe('GET /users/:id', () => {
+describe('GET /users/infoToken', () => {
     const testUsers = [
         usertes1 = {
             id: 'useridTest1',
@@ -39,19 +39,74 @@ describe('GET /users/:id', () => {
     it('should return 200 and user data', async () => {
         const user = testUsers[0];
         const response = await request(app)
-            .get(`/users/info`)
-            .set('Authorization', `Bearer ${user.id}`);
+            .get(`/users/infoToken`)
+            .set('Authorization', `Bearer useridTest1`);
         expect(response.status).toBe(200);
         expect(response.body).toEqual(user);
     });
     it('should return 404 if user does not exist', async () => {
         const response = await request(app)
-            .get(`/users/info`)
-            .set('Authorization', `Bearer ${'invaldId'}`);
+            .get(`/users/infoToken`)
+            .set('Authorization', `Bearer invalid`);
         expect(response.status).toBe(404);
         expect(response.text).toBe('Usuario no encontrado');
     });
 });
+describe('GET /users/:id', () => {
+    const testUsers = [
+        usertes1 = {
+            id: 'useridTest1',
+            username: 'username',
+            email: 'email',
+            token: "10b79ecbebb4da0fedff89edf6a504f5",
+            activitats: ['1', '2', '3'],
+        },
+        usertest2 = {
+            id: 'useridTest2',
+            username: 'username2',
+            email: 'email2',
+            token: "10b79ecbebb4da0fedff89edf6a504f5",
+            activitats: ['1', '2', '3'],
+        }
+    ]
+    beforeEach(async () => {
+        const adminUser = {
+        uid: 'adminUid',
+        username: 'adminUsername',
+      };
+      // Then add the admin user to the 'admin' collection
+      await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+        for(const user of testUsers) {
+            const userRef = db.collection('users').doc(user.id);
+            await userRef.set(user);
+        }
+        
+    });
+    it('should return 200 and user data', async () => {
+        const user = testUsers[0];
+        const response = await request(app)
+            .get(`/users/${user.id}`)
+            .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(user);
+    });
+    it('should return 401 if token is invalid', async () => {
+        const response = await request(app)
+            .get(`/users/${testUsers[0].id}`)
+            .set('Authorization', 'Bearer invalidToken');
+        expect(response.status).toBe(401);
+        expect(response.text).toBe('Token inválido');
+    });
+    it('should return 404 if user does not exist', async () => {
+        const response = await request(app)
+            .get(`/users/invalidId`)
+            .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
+        expect(response.status).toBe(404);
+        expect(response.text).toBe('Usuario no encontrado');
+    });
+});
+
+
 describe('GET /users/read/users', () => {
     const testUsers = [
         usertes1 = {
