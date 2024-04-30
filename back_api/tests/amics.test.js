@@ -353,7 +353,7 @@ describe('GET /amics/:id/followers/', () => {
 });
 
 
-describe('GET /amics/:id/pendents/', () => {
+describe('GET /amics/:id/pendents', () => {
   const testUsers = [
     {
       uid: 'testUid1',
@@ -395,7 +395,7 @@ beforeEach(async () => {
   it('debería obtener todos los usuarios pendientes de aceptar el usuario indicado porque lo solicita el mismo', async () => {
 
       const res = await request(app)
-      .get('/amics/testUsername2/pendents/')
+      .get('/amics/testUsername2/pendents')
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
@@ -405,7 +405,7 @@ beforeEach(async () => {
   it('debería enviar 401 porque el token no es válido', async () => {
 
       const res = await request(app)
-      .get('/amics/testUsername2/pendents/')
+      .get('/amics/testUsername2/pendents')
       .set('Authorization', 'Bearer testUid2')
       
       expect(res.statusCode).toEqual(401);
@@ -415,7 +415,7 @@ beforeEach(async () => {
   it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
 
       const res = await request(app)
-      .get('/amics/testUsername2/pendents/')
+      .get('/amics/testUsername2/pendents')
       .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`)
       
       expect(res.statusCode).toEqual(404);
@@ -424,7 +424,7 @@ beforeEach(async () => {
 
   it('debería enviar 404 porque el usuario indicado no existe', async () => {
       const res = await request(app)
-      .get('/amics/testUsername4/pendents/')
+      .get('/amics/testUsername4/pendents')
       .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
 
       expect(res.statusCode).toEqual(404);
@@ -435,7 +435,7 @@ beforeEach(async () => {
   it('debería enviar 401 porque el usuario solicitador no tiene permiso para ver los pendientes de aceptar del usuario indicado', async () => {
       
         const res = await request(app)
-        .get('/amics/testUsername2/pendents/')
+        .get('/amics/testUsername2/pendents')
         .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
         
         expect(res.statusCode).toEqual(401);

@@ -187,7 +187,7 @@ router.get('/:id/followers', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.get('/:id/pendents/', checkUserAndFetchData, async(req, res) => { 
+router.get('/:id/pendents', checkUserAndFetchData, async(req, res) => { 
     try {
         const username_pendents = req.params.id;
 
