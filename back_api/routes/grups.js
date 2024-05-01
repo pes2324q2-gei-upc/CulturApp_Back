@@ -1,4 +1,3 @@
-const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
 
@@ -6,19 +5,29 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-//crear grup
-router.post('/create', async(req, res) => {
-    try {
-        //console.log("Solicitud recibida en la ruta '/grups/create'");
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+const checkUsername = require('./middleware').checkUsername;
 
-        const { name, descr, /*admin,*/ imatge, members } = req.body;
- 
+//crear grup
+router.post('/create', checkUserAndFetchData, async(req, res) => {
+    try {
+
+        const { name, descr, imatge, members } = req.body;
+
+        for (const member of members) {
+            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+        }
+
+        const username = req.userDocument.data().username;
+
+        //me añado a mi mismo como un participante
+        members.push(username);
+        
         const docRef = await db.collection('grups').add({
             'id': " ",
             'nom': name,
             'descripcio': descr,
             'imatge': imatge,
-            //'creador': admin,
             'participants': members,
             'last_msg': ' ',
             'last_time': ' '
@@ -26,7 +35,6 @@ router.post('/create', async(req, res) => {
 
         res.status(201).send({ message: "Grup creado exitosamente", id: docRef.id });
 
-        // Actualitzar l'ultim missatge i data al grup
         await docRef.update({
             id: docRef.id
         });
@@ -57,12 +65,15 @@ router.get('/:grupId', async (req, res) => {
     }
 });
 
+
 //get dels grups on es troba l'usuari
-router.get('/users/:userId', async (req, res) => {
+router.get('/users/all', checkUserAndFetchData, async (req, res) => {
     try {
-        const userId = req.params.userId;
-        const querySnapshot = await db.collection('grups').where('participants', 'array-contains', userId).get();
-    
+
+        const username = req.userDocument.data().username;
+
+        const querySnapshot = await db.collection('grups').where('participants', 'array-contains', username).get();
+
         const userGroups = [];
     
         querySnapshot.forEach(doc => {
@@ -82,6 +93,10 @@ router.put('/:grupId/update', async (req, res) => {
         const grupId = req.params.grupId;
         const { name, descr, imatge, members } = req.body;
 
+        for (const member of members) {
+            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+        }
+
         await db.collection('grups').doc(grupId).update({
             'nom': name,
             'descripcio': descr,
@@ -92,17 +107,17 @@ router.put('/:grupId/update', async (req, res) => {
         res.status(200).send({ message: "Grupo actualizado exitosamente" });
 
     } catch (error) {
-        console.error("Error al actualitzar info del grup:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
 
-
 //post de mensajes 
-router.post('/:grupId/mensajes', async (req, res) => {
+router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
     try {
-        const { senderId, mensaje, fecha } = req.body;
+        const { mensaje, fecha } = req.body;
         const grupId = req.params.grupId;
+
+        const username = req.userDocument.data().username;
 
         // Verificar si el xat existe
         const grupRef = db.collection('grups').doc(grupId);
@@ -115,7 +130,7 @@ router.post('/:grupId/mensajes', async (req, res) => {
 
         // Agregar el nuevo mensaje al grup
         await grupRef.collection('mensajes').add({
-            senderId: senderId,
+            senderId: username,
             mensaje: mensaje,
             fecha: fecha
         });
@@ -128,10 +143,10 @@ router.post('/:grupId/mensajes', async (req, res) => {
 
         res.status(201).send("Mensaje agregado exitosamente al grup");
     } catch (error) {
-        //console.error("Error al agregar mensaje al grup:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
+
 
 //get mensajes
 router.get('/:grupId/mensajes', async (req, res) => {
@@ -143,7 +158,6 @@ router.get('/:grupId/mensajes', async (req, res) => {
         const snapshot = await mensajesRef.get();
 
         if (snapshot.empty) {
-            //console.log('No hay mensajes encontrados para el grupo con el ID:', grupId);
             res.status(404).send('No hay mensajes encontrados para el grupo');
             return;
         }
@@ -155,7 +169,6 @@ router.get('/:grupId/mensajes', async (req, res) => {
 
         res.status(200).json(mensajes);
     } catch (error) {
-        //console.error('Error al obtener los mensajes del grupo:', error);
         res.status(500).send('Error interno del servidor');
     }
 });

@@ -1,4 +1,3 @@
-const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
 
@@ -6,22 +5,28 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+const checkUsername = require('./middleware').checkUsername;
+
+
+//AÑADIR TOKEN
 //existeix el xat? 
-router.get('/exists', async (req, res) => {
+router.get('/exists', checkUserAndFetchData, async (req, res) => {
     try {
         var receiverId = req.query.receiverId;
-        var senderId = req.query.senderId;
 
-        const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', senderId).limit(1);
+        const username = req.userDocument.data().username;
+
+        const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', username).limit(1);
 
         docRef.get()
         .then(snapshot => {
             if (!snapshot.empty) {
-                // Si existe al menos un documento con el activitat_code dado, entonces el foro existe
+                // Si existe al menos un documento 
                 const data = snapshot.docs[0].data();
                 res.status(200).json({ "exists": true, "data": data });
             } else {
-                // Si no existe ningún documento con el activitat_code dado, el foro no existe
+                // Si no existe ningún documento 
                 res.status(200).json({ "exists": false });
             }
         })
@@ -34,14 +39,16 @@ router.get('/exists', async (req, res) => {
 });
 
 //crear xat
-router.post('/create', async(req, res) => {
+router.post('/create', checkUserAndFetchData, async(req, res) => {
     try {
-        console.log("Solicitud recibida en la ruta '/xats/create'");
+        const { receiverId } = req.body;
 
-        const { senderId, receiverId } = req.body;
+        if (!(await checkUsername(receiverId, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+
+        const username = req.userDocument.data().username;
  
         const docRef = await db.collection('xats').add({
-            'senderId': senderId,
+            'senderId': username,
             'receiverId': receiverId,
             'last_msg': ' ',
             'last_time': ' '
@@ -50,16 +57,17 @@ router.post('/create', async(req, res) => {
         res.status(201).send({ message: "Xat creado exitosamente", id: docRef.id });
     }
     catch (error){
-        console.error("Error al crear el xat:", error);
         res.status(500).send("Error interno del servidor");
     }
 });
 
 //post de mensajes 
-router.post('/:xatId/mensajes', async (req, res) => {
+router.post('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
     try {
-        const { senderId, mensaje, fecha } = req.body;
+        const { mensaje, fecha } = req.body;
         const xatId = req.params.xatId;
+
+        const username = req.userDocument.data().username;
 
         // Verificar si el xat existe
         const xatRef = db.collection('xats').doc(xatId);
@@ -73,7 +81,7 @@ router.post('/:xatId/mensajes', async (req, res) => {
 
         // Agregar el nuevo mensaje al xat
         await xatRef.collection('mensajes').add({
-            senderId: senderId,
+            senderId: username,
             mensaje: mensaje,
             fecha: fecha
         });
