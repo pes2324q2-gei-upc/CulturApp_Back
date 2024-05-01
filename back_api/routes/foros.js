@@ -5,6 +5,8 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
+
 //foro existe?
 router.get('/exists', async (req, res) => {
     try {
@@ -48,6 +50,7 @@ router.post('/create', async(req, res) => {
     }
 });
 
+//get els posts d'un foro
 router.get('/:foroId/posts', async (req, res) => {
     try {
         const foroId = req.params.foroId;
@@ -73,10 +76,12 @@ router.get('/:foroId/posts', async (req, res) => {
 });
 
 //publica un post
-router.post('/:foroId/posts', async (req, res) => {
+router.post('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
     try {
-        const { username, mensaje, fecha, numero_likes } = req.body;
+        const { mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
+
+        const username = req.userDocument.data().username;
 
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
@@ -102,7 +107,7 @@ router.post('/:foroId/posts', async (req, res) => {
 });
 
 //elimina un post
-router.delete('/:foroId/posts/:postId', async(req, res) => {
+router.delete('/:foroId/posts/:postId', checkUserAndFetchData, async(req, res) => {
     try {
         const foroId = req.params.foroId;
         const postId = req.params.postId;
@@ -115,10 +120,23 @@ router.delete('/:foroId/posts/:postId', async(req, res) => {
             res.status(404).send("Foro no encontrado");
             return;
         }
-        
-        await foroRef.collection('posts').doc(postId).delete();
-        
-        res.status(200).send('OK');
+
+        const username = req.userDocument.data().username;
+
+        const postSnapshot = await foroRef.collection('posts').doc(postId).get();
+
+        if (!postSnapshot.exists) {
+            res.status(404).send("Post no encontrado");
+            return;
+        }
+
+        const postUsername = postSnapshot.data().username;
+
+        if(username == postUsername) {
+            await foroRef.collection('posts').doc(postId).delete();
+            res.status(200).send('OK');
+        }
+        else res.status(301).send('Not creator of the post');
     }
     catch (error) {
         res.send(error);
@@ -126,11 +144,13 @@ router.delete('/:foroId/posts/:postId', async(req, res) => {
 });
 
 //crea una reply
-router.post('/:foroId/posts/:postId/reply', async (req, res) => {
+router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, res) => {
     try {
-        const { username, mensaje, fecha, numero_likes } = req.body;
+        const { mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
         const postId = req.params.postId;
+
+        const username = req.userDocument.data().username;
 
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
@@ -191,7 +211,7 @@ router.get('/:foroId/posts/:postId/reply', async (req, res) => {
 });
 
 //elimina reply
-router.delete('/:foroId/posts/:postId/reply/:replyId', async(req, res) => {
+router.delete('/:foroId/posts/:postId/reply/:replyId', checkUserAndFetchData, async(req, res) => {
     try {
         const foroId = req.params.foroId;
         const postId = req.params.postId;
@@ -205,10 +225,23 @@ router.delete('/:foroId/posts/:postId/reply/:replyId', async(req, res) => {
             res.status(404).send('No hay replies encontrados para el post');
             return;
         }
-        
-        await postRef.collection('reply').doc(replyId).delete();
-        
-        res.status(200).send('OK');
+
+        const username = req.userDocument.data().username;
+
+        const replySnapshot = await postRef.collection('reply').doc(replyId).get();
+
+        if (!replySnapshot.exists) {
+            res.status(404).send("Reply no encontrada");
+            return;
+        }
+
+        const replyUsername = replySnapshot.data().username;
+
+        if(username == replyUsername) {
+            await postRef.collection('reply').doc(replyId).delete();
+            res.status(200).send('OK');
+        }
+        else res.status(301).send('Not creator of the post');
     }
     catch (error) {
         res.status(500).send('Error interno del servidor');
