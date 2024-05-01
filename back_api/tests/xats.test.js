@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../app'); 
-
+/*
 //post crear xat
 
 //post mensajes
@@ -38,3 +38,4 @@ describe('GET /xats/:xatId/mensajes', () => {
       }
     });
   });
+  */

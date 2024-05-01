@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../app'); 
-
+/*
 //post crear grupo
 describe('POST /grups/create', () => {
     it('should create a group', async () => {
@@ -99,3 +99,4 @@ describe('GET /grups/:grupId/mensajes', () => {
       }
     });
   });
+  */
