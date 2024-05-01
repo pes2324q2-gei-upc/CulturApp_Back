@@ -4,8 +4,22 @@ const router = express.Router()
 
 router.use(express.json());
 
+const { db } = require('../firebaseConfig');
+const { checkUserAndFetchData, checkUsername, checkAdmin } = require('./middleware');
 
-router.get('/read/users', async (req, res) => {
+const crypto = require('crypto');
+const algorithm = 'aes-256-cbc';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const iv = Buffer.from(process.env.ENCRYPTION_IV, 'hex');
+
+function encrypt(text) {
+  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
+router.get('/read/users', checkUserAndFetchData, async (req, res) => {
     try {
 
         const usersRef = db.collection("users");
@@ -20,12 +34,47 @@ router.get('/read/users', async (req, res) => {
     }
 });
 
+
+router.get('/infoToken', async (req, res) => {
+    try {
+        const id = req.headers.authorization.split(' ')[1];
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+        if (response.exists) {
+            const respdata = response.data();
+            respdata.token = encrypt(response.id).encryptedData;
+            res.status(200).send(respdata);
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
+
+
+router.get('/:id', checkAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
+
+
+
 router.post('/create', async(req, res) => {
     try {
-
         const { uid, username, email, favcategories } = req.body;
 
-        const categories = JSON.parse(favcategories);
+        const categories = favcategories;
 
         const usersCollection = admin.firestore().collection('users');
         
@@ -35,7 +84,7 @@ router.post('/create', async(req, res) => {
           'email': email,
           'username': username,
           'favcategories': categories,
-          'activities': activities
+          'activities': activities,
         });
 
         res.status(200).send('OK');
@@ -45,13 +94,9 @@ router.post('/create', async(req, res) => {
     }
 });
 
-router.get('/:id/activitats', async (req, res) => {
+router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
-        const docRef = db.collection('users').doc(id);
-        const response = await docRef.get();
-
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
             if(responseAct.exists) {
@@ -190,30 +235,24 @@ router.get('/exists', async (req, res) => {
     }
 });
 
-router.get('/activitats/:id/search/:name', async (req, res) => {
+router.get('/activitats/search/:name', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
         var name = req.params.name;
-
-        const docRef = db.collection('users').doc(id);
-        const response = await docRef.get();
-
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
-            let activityData = responseAct.data();
 
-            // Check if the activity has the specified name
-            if (activityData.denominaci === name) {
-                return activityData;
+            if(!responseAct.exists) return null;
+            else if (responseAct.data().denominaci === name) {
+                return responseAct.data();
             } else {
                 return null; // If activity doesn't match the name, return null
             }
         }));
 
         // Filter out null values (activities that don't match the name)
-        responseArr = responseArr.filter(activity => activity !== null);
-        res.status(200).send(responseArr);
+        const filteredResponseArr = responseArr.filter(activity => activity !== null);
+        res.status(200).send(filteredResponseArr);
     } catch (error){
         res.send(error);
     }
@@ -238,16 +277,14 @@ router.get('/uniqueUsername', async (req, res) => {
     }
 });
 
-router.get('/:id/categories/:categories', async (req, res) => {
+router.get('/categories/:categories', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
-        const codiActivitats =  db.collection('users').doc(id);
-        const response = await codiActivitats.get();
         var categories = req.params.categories.split(",");
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity)//.where('tags_categor_es', 'array-contains-any', categories);
             const responseAct = await activityRef.get();
-            if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
+            if(!responseAct.exists) return  null;
+            else if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
                 return responseAct.data();
             } else {
                 return null
@@ -260,15 +297,12 @@ router.get('/:id/categories/:categories', async (req, res) => {
     }
 })
 
-router.get('/:id/data/:data', async (req, res) => {
+router.get('/data/:data', checkUserAndFetchData, async (req, res) => {
     try {
-        var id = req.params.id;
-        const codiActivitats =  db.collection('users').doc(id);
-        const response = await codiActivitats.get();
         var date = req.params.data;
         date = date.slice(0, -4);
         date = date.replace(' ', 'T');
-        let responseArr = await Promise.all(response.data().activities.map(async activity => {
+        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity)
             const response = await activityRef.get();
             if (response.exists && response.data().data_inici >= date) {

@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ 97_testing ]
+    branches: [ dev, 237_tokens_tickets ]
   pull_request:
-    branches: [ 97_testing ]
+    branches: [ dev, 237_tokens_tickets ]
 
 jobs:
   emulator_test:
@@ -32,6 +32,8 @@ jobs:
       working-directory: back_api
       env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          ENCRYPTION_IV: ${{ secrets.ENCRYPTION_IV }}
           
 
 #Habría que actualizar dependencias en el package.json para que al hacer npm install se actualice todo correctamente
