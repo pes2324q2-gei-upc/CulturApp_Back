@@ -149,7 +149,7 @@ describe('GET /amics/:id/following/', () => {
         }
     ];
 
-    const activitats = [
+    const requests = [
         {
           'user': 'testUsername1',
           'friend': 'testUsername2',
@@ -171,8 +171,8 @@ describe('GET /amics/:id/following/', () => {
             await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
-        for (const activitat of activitats) {
-            await db.collection('following').add(activitat);
+        for (const request of requests) {
+            await db.collection('following').add(request);
         }
 
     });   
@@ -184,7 +184,7 @@ describe('GET /amics/:id/following/', () => {
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual([activitats[1]]);
+        expect(res.body).toEqual([requests[1]]);
     });
 
     it('debería obtener todos los usuarios que sigue el usuario indicado porque es un amigo del usuario', async () => {
@@ -194,7 +194,7 @@ describe('GET /amics/:id/following/', () => {
       .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual([activitats[1]]);
+      expect(res.body).toEqual([requests[1]]);
      });
 
     
@@ -256,7 +256,7 @@ describe('GET /amics/:id/followers/', () => {
       }
     ];
 
-    const activitats = [
+    const requests = [
       {
         'user': 'testUsername1',
         'friend': 'testUsername2',
@@ -292,8 +292,8 @@ describe('GET /amics/:id/followers/', () => {
             await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
 
-        for (const activitat of activitats) {
-            await db.collection('following').add(activitat);
+        for (const request of requests) {
+            await db.collection('following').add(request);
         }
 
     });   
@@ -305,7 +305,7 @@ describe('GET /amics/:id/followers/', () => {
         .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual([activitats[2], activitats[1]]);
+        expect(res.body).toEqual([requests[2], requests[1]]);
     });
     
     it('debería obtener todos los seguidores del usuario indicado porque es un amigo del usuario', async () => {
@@ -315,7 +315,7 @@ describe('GET /amics/:id/followers/', () => {
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual([activitats[2], activitats[1]]);
+      expect(res.body).toEqual([requests[2], requests[1]]);
     });
 
 
@@ -377,7 +377,7 @@ describe('GET /amics/:id/pendents', () => {
     }  
   ];
 
-  const activitats = [
+  const requests = [
     {
       'user': 'testUsername1',
       'friend': 'testUsername2',
@@ -399,8 +399,8 @@ describe('GET /amics/:id/pendents', () => {
           await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
       }
       
-      for (const activitat of activitats) {
-          await db.collection('following').add(activitat);
+      for (const request of requests) {
+          await db.collection('following').add(request);
       }
 
   });   
@@ -412,7 +412,7 @@ describe('GET /amics/:id/pendents', () => {
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual([activitats[0]]);
+      expect(res.body).toEqual([requests[0]]);
   });
 
   it('debería enviar 401 porque el token no es válido', async () => {
@@ -654,4 +654,73 @@ describe('DELETE /amics/delete/:id', () => {
             expect(res.text).toBe('No se ha encontrado la solicitud de amistad');
     });
     
+});
+describe('GET /amics/followingRequests' , () => {
+  const testUsers = [
+    {
+      uid: 'testUid1',
+      username: 'testUsername1',
+    },
+    {
+      uid: 'testUid2',
+      username: 'testUsername2',
+    },
+    {
+      uid: 'testUid3',
+      username: 'testUsername3',
+    }  
+  ];
+
+  const requests = [
+    {
+      'user': 'testUsername1',
+      'friend': 'testUsername2',
+      'data_follow': new Date().toISOString(),
+      'acceptat': false,
+      'pendent': true,
+    },
+    {
+      'user': 'testUsername1',
+      'friend': 'testUsername3',
+      'data_follow': new Date().toISOString(),
+      'acceptat': true,
+      'pendent': false,
+    }
+  ];
+
+  beforeEach(async () => {
+      for (const usuari of testUsers) {
+          await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+      }
+      
+      for (const request of requests) {
+          await db.collection('following').add(request);
+      }
+  }); 
+  it('debería obtener todas las solicitudes de amistad pendientes de aceptar', async () => {
+
+      const res = await request(app)
+      .get('/amics/followingRequests')
+      .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toEqual([requests[0]]);
+  });
+  it('debería enviar 401 porque el token no es válido', async () => {
+      
+        const res = await request(app)
+        .get('/amics/followingRequests')
+        .set('Authorization', 'Bearer testUid2')
+        expect(res.statusCode).toEqual(401);
+        expect(res.text).toBe('Token inválido');
+  });
+  it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
+
+      const res = await request(app)
+      .get('/amics/followingRequests')
+      .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`)
+      
+      expect(res.statusCode).toEqual(404);
+      expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
 });

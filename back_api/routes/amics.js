@@ -52,6 +52,7 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
     
 });
 
+
 router.put('/accept/:id', checkUserAndFetchData, async (req, res) => {
     try {
         const username_acceptance = req.params.id;
@@ -198,6 +199,22 @@ router.get('/:id/pendents', checkUserAndFetchData, async(req, res) => {
         }
 
     } catch (error){
+        res.status(404).send(error);
+    }
+});
+
+router.get('/followingRequests', checkUserAndFetchData, async(req, res) => {
+    try {
+        const username = req.userDocument.data().username;
+        const followingRef = db.collection('following').where('user', '==', username).where('pendent', '==', true);
+        const response = await followingRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+
+        res.status(200).send(responseArr);
+    } catch (error) {
         res.status(404).send(error);
     }
 });
