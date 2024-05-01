@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ dev, 237_tokens_tickets ]
+    branches: [ dev ]
   pull_request:
-    branches: [ dev, 237_tokens_tickets ]
+    branches: [ dev ]
 
 jobs:
   emulator_test:
