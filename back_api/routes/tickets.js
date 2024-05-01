@@ -191,6 +191,7 @@ router.delete('/reportsUsuari/:id/delete', checkAdmin, async(req, res) => {
 router.post('/reportBug/create', checkUserAndFetchData,  async(req, res) => {
     try {
         const {titol, report } = req.body;
+
         if(!titol || !report) {
             res.status(400).send('Faltan atributos');
             return;

@@ -149,26 +149,31 @@ describe('GET /amics/:id/following/', () => {
         }
     ];
 
+    const activitats = [
+        {
+          'user': 'testUsername1',
+          'friend': 'testUsername2',
+          'data_follow': new Date().toISOString(),
+          'acceptat': false,
+          'pendent': true,
+        },
+        {
+          'user': 'testUsername1',
+          'friend': 'testUsername3',
+          'data_follow': new Date().toISOString(),
+          'acceptat': true,
+          'pendent': false,
+        },
+      ];  
+
     beforeEach(async () => {
         for (const usuari of testUsers) {
             await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
         
-        await db.collection('following').add({
-            'user': 'testUsername1',
-            'friend': 'testUsername2',
-            'data_follow': new Date().toISOString(),
-            'acceptat': false,
-            'pendent': true,
-        });
-
-        await db.collection('following').add({
-            'user': 'testUsername1',
-            'friend': 'testUsername3',
-            'data_follow': new Date().toISOString(),
-            'acceptat': true,
-            'pendent': false,
-        });
+        for (const activitat of activitats) {
+            await db.collection('following').add(activitat);
+        }
 
     });   
     
@@ -179,7 +184,7 @@ describe('GET /amics/:id/following/', () => {
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual(['testUsername3']);
+        expect(res.body).toEqual([activitats[1]]);
     });
 
     it('debería obtener todos los usuarios que sigue el usuario indicado porque es un amigo del usuario', async () => {
@@ -189,7 +194,7 @@ describe('GET /amics/:id/following/', () => {
       .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual(['testUsername3']);
+      expect(res.body).toEqual([activitats[1]]);
      });
 
     
@@ -251,42 +256,45 @@ describe('GET /amics/:id/followers/', () => {
       }
     ];
 
+    const activitats = [
+      {
+        'user': 'testUsername1',
+        'friend': 'testUsername2',
+        'data_follow': new Date().toISOString(),
+        'acceptat': false,
+        'pendent': true,
+      },
+      {
+        'user': 'testUsername1',
+        'friend': 'testUsername3',
+        'data_follow': "2024-05-01T17:06:23.159Z",
+        'acceptat': true,
+        'pendent': false,
+      },
+      {
+        'user': 'testUsername2',
+        'friend': 'testUsername3',
+        'data_follow': "2024-06-01T17:06:23.159Z",
+        'acceptat': true,
+        'pendent': false,
+      }, 
+      {
+        'user': 'testUsername3',
+        'friend': 'testUsername2',
+        'data_follow': new Date().toISOString(),
+        'acceptat': true,
+        'pendent': false,
+      },
+    ];
+
     beforeEach(async () => {
         for (const usuari of testUsers) {
             await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
         }
-        
-        await db.collection('following').add({
-            'user': 'testUsername1',
-            'friend': 'testUsername2',
-            'data_follow': new Date().toISOString(),
-            'acceptat': false,
-            'pendent': true,
-        });
 
-        await db.collection('following').add({
-            'user': 'testUsername1',
-            'friend': 'testUsername3',
-            'data_follow': new Date().toISOString(),
-            'acceptat': true,
-            'pendent': false,
-        });
-
-        await db.collection('following').add({
-          'user': 'testUsername2',
-          'friend': 'testUsername3',
-          'data_follow': new Date().toISOString(),
-          'acceptat': true,
-          'pendent': false,
-        });
-
-        await db.collection('following').add({
-          'user': 'testUsername3',
-          'friend': 'testUsername2',
-          'data_follow': new Date().toISOString(),
-          'acceptat': true,
-          'pendent': false,
-      });
+        for (const activitat of activitats) {
+            await db.collection('following').add(activitat);
+        }
 
     });   
 
@@ -297,7 +305,7 @@ describe('GET /amics/:id/followers/', () => {
         .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual(expect.arrayContaining(['testUsername1', 'testUsername2']));
+        expect(res.body).toEqual([activitats[2], activitats[1]]);
     });
     
     it('debería obtener todos los seguidores del usuario indicado porque es un amigo del usuario', async () => {
@@ -307,7 +315,7 @@ describe('GET /amics/:id/followers/', () => {
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual(expect.arrayContaining(['testUsername1', 'testUsername2']));
+      expect(res.body).toEqual([activitats[2], activitats[1]]);
     });
 
 
@@ -366,29 +374,34 @@ describe('GET /amics/:id/pendents', () => {
     {
       uid: 'testUid3',
       username: 'testUsername3',
-    }
-];
+    }  
+  ];
 
-beforeEach(async () => {
-    for (const usuari of testUsers) {
-        await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+  const activitats = [
+    {
+      'user': 'testUsername1',
+      'friend': 'testUsername2',
+      'data_follow': new Date().toISOString(),
+      'acceptat': false,
+      'pendent': true,
+    },
+    {
+      'user': 'testUsername1',
+      'friend': 'testUsername3',
+      'data_follow': new Date().toISOString(),
+      'acceptat': true,
+      'pendent': false,
     }
-    
-    await db.collection('following').add({
-        'user': 'testUsername1',
-        'friend': 'testUsername2',
-        'data_follow': new Date().toISOString(),
-        'acceptat': false,
-        'pendent': true,
-    });
+  ];
 
-    await db.collection('following').add({
-        'user': 'testUsername1',
-        'friend': 'testUsername3',
-        'data_follow': new Date().toISOString(),
-        'acceptat': true,
-        'pendent': false,
-    });
+  beforeEach(async () => {
+      for (const usuari of testUsers) {
+          await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+      }
+      
+      for (const activitat of activitats) {
+          await db.collection('following').add(activitat);
+      }
 
   });   
 
@@ -399,7 +412,7 @@ beforeEach(async () => {
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual(['testUsername1']);
+      expect(res.body).toEqual([activitats[0]]);
   });
 
   it('debería enviar 401 porque el token no es válido', async () => {
@@ -639,16 +652,6 @@ describe('DELETE /amics/delete/:id', () => {
 
             expect(res.statusCode).toEqual(404);
             expect(res.text).toBe('No se ha encontrado la solicitud de amistad');
-    });
-
-    it('debería enviar 409 porque la solicitud ya ha sido aceptada', async () => {
-          
-            const res = await request(app)
-            .delete('/amics/delete/testUsername1')
-            .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`)
-
-            expect(res.statusCode).toEqual(409);
-            expect(res.text).toBe('La solicitud de amistad ya ha sido aceptada');
     });
     
 });

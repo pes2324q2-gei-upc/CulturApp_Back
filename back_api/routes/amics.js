@@ -116,11 +116,6 @@ router.delete('/delete/:id', checkUserAndFetchData, async(req, res) =>{
 
         const requestDoc = existingRequest.docs[0];
 
-        if (requestDoc.data().acceptat) {
-            res.status(409).send('La solicitud de amistad ya ha sido aceptada');
-            return;
-        }
-
         await followingRef.doc(requestDoc.id).delete();
 
         res.status(200).send('OK');
@@ -141,7 +136,7 @@ async function fetchUsers(username, field_user, type, value) {
     let responseArr = [];
     
     response.forEach(doc => {
-        responseArr.push(doc.data()[value]);
+        responseArr.push(doc.data());
     });
 
     return responseArr;

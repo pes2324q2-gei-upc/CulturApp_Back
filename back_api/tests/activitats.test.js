@@ -515,7 +515,7 @@ describe('GET /activitats/read/:id', () => {
     });
 
 });
-describe('GET /activitats/airepur', () => {
+describe('GET /activitats/mediambient', () => {
   const testUsers = [
     {
       uid: 'testUid1',
@@ -552,10 +552,10 @@ describe('GET /activitats/airepur', () => {
     
     await db.collection('actividades').doc('testAct1').set(act[0]);
   });
-  it('debería obtener todas las actividades de airepur', async () => {
+  it('debería obtener todas las actividades de mediambient', async () => {
 
       const response = await request(app)
-      .get('/activitats/airepur')
+      .get('/activitats/mediambient')
       .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`);
         expect(response.statusCode).toBe(200);
         expect(response.body).toEqual(act);
@@ -563,7 +563,7 @@ describe('GET /activitats/airepur', () => {
   it('debería enviar 401 porque el token no es válido', async () => {
       
           const response = await request(app)
-          .get('/activitats/airepur')
+          .get('/activitats/mediambient')
           .set('Authorization', `Bearer testUid1`);
           expect(response.statusCode).toBe(401);
           expect(response.text).toBe('Token inválido');
@@ -571,7 +571,7 @@ describe('GET /activitats/airepur', () => {
     it('debería enviar 404 porque el usuario o cliente no existe', async () => {
                 
             const response = await request(app)
-                .get('/activitats/airepur')
+                .get('/activitats/mediambient')
                 .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`);
             expect(response.statusCode).toBe(404);
             expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');

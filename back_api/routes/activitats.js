@@ -85,7 +85,7 @@ router.get('/read/:id', checkPerson, async (req, res) => {
     }
 });
 
-router.get('/airepur', checkPerson, async (req, res) => {
+router.get('/mediambient', checkPerson, async (req, res) => {
 
     /*global.callCount++;
     if (global.callCount > 0) {
@@ -95,7 +95,7 @@ router.get('/airepur', checkPerson, async (req, res) => {
     try {
         let date = new Date().toISOString();
         date = date.replace('Z', '');
-        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains', 'Residus')
+        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', ['Residus', 'Sostenibilitat'])
                                                         .where('data_inici', '>=', date)
                                                         .orderBy('data_inici', 'asc');
         const response = await activityRef.get();
