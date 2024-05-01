@@ -9,6 +9,8 @@ const forosRoutes = require('./routes/foros')
 const xatsRoutes = require('./routes/xats')
 const grupsRoutes = require('./routes/grups')
 
+global.callCount = 0;
+
 const app = express()
 app.use(cors({
     origin: 'http://localhost:3000', // Allow requests from this origin

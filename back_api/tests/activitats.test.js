@@ -515,3 +515,65 @@ describe('GET /activitats/read/:id', () => {
     });
 
 });
+describe('GET /activitats/airepur', () => {
+  const testUsers = [
+    {
+      uid: 'testUid1',
+      username: 'testUsername1',
+    },
+  ];
+
+  const testClients = [ 
+      {
+      uid: 'testUid2',
+      username: 'testUsername2',
+      },
+  ];
+  const act = [{
+    denominaci: "testNom1",
+    descripcio: "testDescripcio1",
+    data_inici: "2026-12-02T00:00:00.000",
+    data_fi: "testDataFi1",
+    tags_categor_es: ["Residus", "testTag2"],
+    ubicacio: "testUbicacio1",
+    aforament: 100,
+    aforament_actual: 50,
+    assistents: ["testUid1"],
+    assistents_actuals: 1
+  }]
+  beforeEach(async () => {
+    for (const usuari of testUsers) {
+        await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+    } 
+    
+    for (const client of testClients) {
+        await db.collection('clients').doc(client.uid).set({"username": client.username});
+    } 
+    
+    await db.collection('actividades').doc('testAct1').set(act[0]);
+  });
+  it('debería obtener todas las actividades de airepur', async () => {
+
+      const response = await request(app)
+      .get('/activitats/airepur')
+      .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`);
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toEqual(act);
+  });
+  it('debería enviar 401 porque el token no es válido', async () => {
+      
+          const response = await request(app)
+          .get('/activitats/airepur')
+          .set('Authorization', `Bearer testUid1`);
+          expect(response.statusCode).toBe(401);
+          expect(response.text).toBe('Token inválido');
+    });
+    it('debería enviar 404 porque el usuario o cliente no existe', async () => {
+                
+            const response = await request(app)
+                .get('/activitats/airepur')
+                .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`);
+            expect(response.statusCode).toBe(404);
+            expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
+    });
+  });

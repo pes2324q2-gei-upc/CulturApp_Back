@@ -85,4 +85,31 @@ router.get('/read/:id', checkPerson, async (req, res) => {
     }
 });
 
+router.get('/airepur', checkPerson, async (req, res) => {
+
+    /*global.callCount++;
+    if (global.callCount > 0) {
+        return res.status(429).send('Numero de crides diaries superat');
+    }*/
+
+    try {
+        let date = new Date().toISOString();
+        date = date.replace('Z', '');
+        const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains', 'Residus')
+                                                        .where('data_inici', '>=', date)
+                                                        .orderBy('data_inici', 'asc');
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    }
+    catch(error){
+        res.status(404).send(error);
+    }
+
+});
+
+
 module.exports = router
