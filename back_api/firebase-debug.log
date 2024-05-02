@@ -1,0 +1,10 @@
+[debug] [2024-03-17T16:53:47.328Z] ----------------------------------------------------------------------
+[debug] [2024-03-17T16:53:47.331Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\pepev\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2024-03-17T16:53:47.331Z] CLI Version:   13.4.0
+[debug] [2024-03-17T16:53:47.331Z] Platform:      win32
+[debug] [2024-03-17T16:53:47.332Z] Node Version:  v20.11.1
+[debug] [2024-03-17T16:53:47.332Z] Time:          Sun Mar 17 2024 17:53:47 GMT+0100 (hora estándar de Europa central)
+[debug] [2024-03-17T16:53:47.332Z] ----------------------------------------------------------------------
+[debug] 
+[error] 
+[error] Error: Cannot understand what targets to deploy/serve. No targets in firebase.json match '--only functions'. If you are using PowerShell make sure you place quotes around any comma-separated lists (ex: --only "functions,firestore").
