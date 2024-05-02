@@ -108,7 +108,8 @@ describe('POST /users/activitats/signup', () => {
 
     const res2 = await request(app)
       .get('/users/activitats/isuserin?uid=testUid1&activityId=4')
-      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
+      .body;
 
     expect(res2.statusCode).toEqual(200);
     expect(res2.text).toBe('yes');
