@@ -5,7 +5,7 @@ const router = express.Router()
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-const { checkUserAndFetchData, checkUsername, checkAdmin, checkPerson } = require('./middleware');
+const { checkUserAndFetchData, checkAdmin, checkPerson } = require('./middleware');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -36,7 +36,7 @@ router.get('/exists', async (req, res) => {
     }
 });
 
-router.get('/uniqueUsername', checkPerson, async (req, res) => {
+router.get('/uniqueUsername', async (req, res) => {
     try {
         var username = req.query.username;
 
