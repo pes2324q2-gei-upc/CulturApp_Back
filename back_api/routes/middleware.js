@@ -42,7 +42,7 @@ async function checkUserAndFetchData(req, res, next) {
 }
 
 async function checkUsername(username, res, message) {
-
+    
     const userSnapshot = await db.collection('users').where('username', '==', username).get();
 
     if (userSnapshot.empty) {

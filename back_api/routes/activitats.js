@@ -10,7 +10,7 @@ const checkPerson = require('./middleware').checkPerson;
 
 router.get('/read/all', checkPerson, async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(20);
+        const activityRef = db.collection("actividades").limit(100);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
