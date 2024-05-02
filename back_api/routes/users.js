@@ -5,7 +5,7 @@ const router = express.Router()
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-const { checkUserAndFetchData, checkUsername, checkAdmin } = require('./middleware');
+const { checkUserAndFetchData, checkUsername, checkAdmin, checkPerson } = require('./middleware');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -19,7 +19,42 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
-router.get('/read/users', checkUserAndFetchData, async (req, res) => {
+router.get('/exists', checkPerson, async (req, res) => {
+    try {
+        var uid = req.query.uid;
+       
+        const userRef = db.collection('users').doc(uid);
+        const userSnapshot = await userRef.get();
+    
+        if (userSnapshot.exists) {
+            res.status(200).send("exists");
+        } else {
+            res.status(200).send("notexists");
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
+
+router.get('/uniqueUsername', checkPerson, async (req, res) => {
+    try {
+        var username = req.query.username;
+
+        const usersRef = db.collection('users');
+
+        const querySnapshot = await usersRef.where('username', '==', username).get();
+
+        if (!querySnapshot.empty) {
+            res.status(200).send("notunique");
+        } else {
+            res.status(200).send("unique");
+        }
+    } catch (error) {
+        res.status(500).send(error); 
+    }
+});
+
+router.get('/read/users', async (req, res) => {
     try {
 
         const usersRef = db.collection("users");
@@ -76,7 +111,7 @@ router.post('/create', async(req, res) => {
 
         const categories = favcategories;
 
-        const usersCollection = admin.firestore().collection('users');
+        const usersCollection = db.collection('users');
         
         const activities = [];
 
@@ -84,15 +119,29 @@ router.post('/create', async(req, res) => {
           'email': email,
           'username': username,
           'favcategories': categories,
-          'activities': activities,
+          'activities': activities
         });
-
         res.status(200).send('OK');
     }
     catch (error){
         res.send(error);
     }
 });
+
+/*router.get('/:id', checkPerson, async (req, res) => {
+    try {
+        var id = req.params.id;
+        const docRef = db.collection('users').doc(id);
+        const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});*/
 
 router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     try {
@@ -112,65 +161,80 @@ router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.get('/activitats/isuserin', async (req, res) => {
+router.get('/activitats/isuserin', checkUserAndFetchData, async (req, res) => {
     try {
         var uid = req.query.uid;
         var activityId = req.query.activityId;
-        const userRef = db.collection('users').doc(uid);
-        const userSnapshot = await userRef.get();
+        const userSnapshot = await req.userDocument;
     
         if (userSnapshot.exists) {
-          const activities = userSnapshot.data().activities || [];
-    
-          if (activities.includes(activityId)) {
-            res.status(200).send("yes");
-          } else {
-            res.status(200).send("no");
-          }
+            if (uid == userSnapshot.id) {
+                const activities = userSnapshot.data().activities || [];
+                if (activities.includes(activityId)) {
+                    res.status(200).send("yes");
+                } else {
+                    res.status(200).send("no");
+                }
+            }
+            else {
+                res.status(401).send("Forbidden");
+            }
         } else {
-            res.status(200).send("no");
+            res.status(404).send("Not Found");
         }
     } catch (error){
         res.send(error);
     }
 });
 
-router.post('/activitats/signout', async(req, res) => {
+router.post('/activitats/signout', checkUserAndFetchData, async(req, res) => {
     try {
         const { uid, activityId } = req.body;
+
         const userRef = db.collection('users').doc(uid);
-        const userSnapshot = await userRef.get();
+        const userSnapshot = await req.userDocument;
     
         if (userSnapshot.exists) {
-          const activities = userSnapshot.data().activities || [];
+            if (userSnapshot.id == uid) {
+                const activities = userSnapshot.data().activities || [];
     
-          const index = activities.indexOf(activityId);
-          if (index !== -1) activities.splice(index, 1);
-          await userRef.update({ activities: activities });
+                const index = activities.indexOf(activityId);
+                if (index !== -1) activities.splice(index, 1);
+                await userRef.update({ activities: activities });
+
+                res.status(200).send("OK");
+            }
+            else {
+                res.status(401).send('Forbidden');
+            }
         }
-        res.status(200).send("Ok");
       } catch (error) {
         res.send(error);
     }
 });
 
-router.post('/activitats/signup', async(req, res) => {
+router.post('/activitats/signup', checkUserAndFetchData, async(req, res) => {
     try {
         const { uid, activityId } = req.body;
         const userRef = db.collection('users').doc(uid);
         const userSnapshot = await userRef.get();
     
         if (userSnapshot.exists) {
-          const activities = userSnapshot.data().activities || [];
-    
-          if (!activities.includes(activityId)) {
-            activities.push(activityId);
-            await userRef.update({ activities: activities });
-          }
+            if (userSnapshot.id == uid) {
+                const activities = userSnapshot.data().activities || [];
+                if (!activities.includes(activityId)) {
+                    activities.push(activityId);
+                    await userRef.update({ activities: activities });
+                }
+                res.status(200).send("OK");
+            }
+            else {
+                res.status(401).send("Forbidden");
+            }
+          
         } else {
-            res.send("El usuario no existe");
+            res.status(404).send("El usuario no existe");
         }
-        res.status(200).send("Ok");
       } catch (error) {
         res.send(error);
     }
@@ -178,6 +242,7 @@ router.post('/activitats/signup', async(req, res) => {
 
 router.get('/:uid/favcategories', checkUserAndFetchData, async (req, res) => { //MODIFICADA
     try {
+
         const favCategories = req.userDocument.data().favcategories;
         res.status(200).json(favCategories);
     } catch (error) {
@@ -186,45 +251,28 @@ router.get('/:uid/favcategories', checkUserAndFetchData, async (req, res) => { /
     }
 });
 
-router.get('/:uid/username', async (req, res) => {
+router.get('/:uid/username', checkUserAndFetchData, async (req, res) => {
     try {
         const uid = req.params.uid;
-        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+        const userDoc = await req.userDocument;
 
-        if (!userDoc.exists) {
-            return res.status(404).send('Usuario no encontrado');
+        if (userDoc.exists && userDoc.id == uid) {
+            const userData = userDoc.data();
+            const usname = userData.username;
+            res.status(200).json(usname);
         }
-
-        const userData = userDoc.data();
-        const usname = userData.username;
-
-        res.status(200).json(usname);
+        else if (userDoc.exists) {
+            return res.status(401).send('Forbidden');
+        }
+        else {
+            return res.status(404).send('Not found');
+        }
     } catch (error) {
         console.error('Error al obtener username del usuario:', error);
         res.status(500).send('Error interno del servidor');
     }
 });
 
-router.get('/exists', async (req, res) => {
-    try {
-        var uid = req.query.uid;
-
-        const docRef = db.collection('users').doc(uid);
-
-        docRef.get()
-        .then(doc => {
-            if (doc.exists) {
-                res.status(200).send("exists");
-            } else {
-                res.status(200).send("notexists");
-            }
-        })
-        .catch(error => {
-            res.send(error);
-        });
-    } catch (error) {
-    }
-});
 
 router.get('/activitats/search/:name', checkUserAndFetchData, async (req, res) => {
     try {
@@ -246,25 +294,6 @@ router.get('/activitats/search/:name', checkUserAndFetchData, async (req, res) =
         res.status(200).send(filteredResponseArr);
     } catch (error){
         res.send(error);
-    }
-});
-
-
-router.get('/uniqueUsername', async (req, res) => {
-    try {
-        var username = req.query.username;
-
-        const usersRef = db.collection('users');
-
-        const querySnapshot = await usersRef.where('username', '==', username).get();
-
-        if (!querySnapshot.empty) {
-            res.status(200).send("notunique");
-        } else {
-            res.status(200).send("unique");
-        }
-    } catch (error) {
-        res.status(500).send(error); 
     }
 });
 
@@ -310,6 +339,8 @@ router.get('/data/:data', checkUserAndFetchData, async (req, res) => {
     }
 })
 
+
+
 router.get('/username', async (req, res) => {
     try {
         var uid = req.query.uid;
@@ -328,23 +359,31 @@ router.get('/username', async (req, res) => {
     }
 });
 
-router.post('/edit', async(req, res) => { //MODIFICAR PARA USO DE TOKENS
+router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PARA USO DE TOKENS
     try {
 
         const { uid, username, favcategories } = req.body;
 
+        userDoc = await req.userDocument;
+
         const categories = JSON.parse(favcategories);
 
-        const usersCollection = admin.firestore().collection('users');
+        const usersCollection = db.collection('users');
         
         const activities = [];
 
-        await usersCollection.doc(uid).update({
-          'username': username,
-          'favcategories': categories,
-        });
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                'username': username,
+                'favcategories': categories,
+              });
+      
+              res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
 
-        res.status(200).send('OK');
     }
     catch (error){
         res.send(error);
