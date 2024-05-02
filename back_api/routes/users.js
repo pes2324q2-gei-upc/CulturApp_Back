@@ -96,14 +96,14 @@ router.post('/create', async(req, res) => {
 
 router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     try {
-        let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
-            const activityRef = db.collection("actividades").doc(activity);
-            const responseAct = await activityRef.get();
-            if(responseAct.exists) {
-                return responseAct.data();
-            }
-            else return null;
-        }));
+            let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
+                const activityRef = db.collection("actividades").doc(activity);
+                const responseAct = await activityRef.get();
+                if(responseAct.exists) {
+                    return responseAct.data();
+                }
+                else return null;
+            }));
         const filteredActivities = responseArr.filter(activity => activity !== null);
         res.status(200).send(filteredActivities);
         
@@ -176,18 +176,9 @@ router.post('/activitats/signup', async(req, res) => {
     }
 });
 
-router.get('/:uid/favcategories', async (req, res) => {
+router.get('/:uid/favcategories', checkUserAndFetchData, async (req, res) => { //MODIFICADA
     try {
-        const uid = req.params.uid;
-        const userDoc = await admin.firestore().collection('users').doc(uid).get();
-
-        if (!userDoc.exists) {
-            return res.status(404).send('Usuario no encontrado');
-        }
-
-        const userData = userDoc.data();
-        const favCategories = userData.favcategories;
-
+        const favCategories = req.userDocument.data().favcategories;
         res.status(200).json(favCategories);
     } catch (error) {
         console.error('Error al obtener las categorías favoritas del usuario:', error);
@@ -337,7 +328,7 @@ router.get('/username', async (req, res) => {
     }
 });
 
-router.post('/edit', async(req, res) => {
+router.post('/edit', async(req, res) => { //MODIFICAR PARA USO DE TOKENS
     try {
 
         const { uid, username, favcategories } = req.body;
