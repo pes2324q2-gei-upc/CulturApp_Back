@@ -60,7 +60,7 @@ describe('POST /users/activitats/signout', () => {
     expect(res.text).toBe('OK');
 
     const res2 = await request(app)
-      .get('/users/activitats/isuserin?uid=testUid1&activityId=2')
+      .get('/users/activitats/isuserin?id=testUid1&activityId=2')
       .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res2.statusCode).toEqual(200);
@@ -108,8 +108,7 @@ describe('POST /users/activitats/signup', () => {
 
     const res2 = await request(app)
       .get('/users/activitats/isuserin?uid=testUid1&activityId=4')
-      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
-      .body;
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res2.statusCode).toEqual(200);
     expect(res2.text).toBe('yes');
@@ -144,28 +143,28 @@ describe('GET /users/activitats/isuserin', () => {
     }
 
     let res = await request(app)
-      .get('/users/activitats/isuserin?uid=testUid1&activityId=1')
+      .get('/users/activitats/isuserin?id=testUid1&activityId=1')
       .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('yes');
 
     res = await request(app)
-      .get('/users/activitats/isuserin?uid=testUid1&activityId=4')
+      .get('/users/activitats/isuserin?id=testUid1&activityId=4')
       .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('no');
 
     res = await request(app)
-      .get('/users/activitats/isuserin?uid=testUid2&activityId=1')
+      .get('/users/activitats/isuserin?id=testUid2&activityId=1')
       .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
     expect(res.statusCode).toEqual(401);
     expect(res.text).toBe('Forbidden');
 
     res = await request(app)
-      .get('/users/activitats/isuserin?uid=nonexistentUid&activityId=1')
+      .get('/users/activitats/isuserin?id=nonexistentUid&activityId=1')
       .set('Authorization', `Bearer ${encrypt('nonexistentUid').encryptedData}`);
 
     expect(res.statusCode).toEqual(404);
