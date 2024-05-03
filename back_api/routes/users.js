@@ -103,16 +103,21 @@ router.get('/:id', checkAdmin, async (req, res) => {
     }
 });
 
-router.get('/name/:name', checkAdmin, async (req, res) => {
+router.get('/:username/info', async (req, res) => {
     try {
-        const name = req.params.name;
-        const docRef = db.collection('users').doc(name);
-        const response = await docRef.get();
-        if (response.exists) {
-            res.status(200).send(response.data());
-        } else {
-            res.status(404).send('Usuario no encontrado');
-        }
+        const username = req.params.username;
+        const docRef = db.collection('users').where('username', '==', username);
+
+        docRef.get()
+        .then(snapshot => {
+            if (!snapshot.empty) {
+                // Si existe al menos un documento 
+                const data = snapshot.docs[0].data();
+                res.status(200).json(data);
+            } else {
+                res.status(404).send('Usuario no encontrado');
+            }
+        })
     } catch (error){
         res.send(error);
     }
