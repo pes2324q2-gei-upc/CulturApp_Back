@@ -103,7 +103,20 @@ router.get('/:id', checkAdmin, async (req, res) => {
     }
 });
 
-
+router.get('/name/:name', checkAdmin, async (req, res) => {
+    try {
+        const name = req.params.name;
+        const docRef = db.collection('users').doc(name);
+        const response = await docRef.get();
+        if (response.exists) {
+            res.status(200).send(response.data());
+        } else {
+            res.status(404).send('Usuario no encontrado');
+        }
+    } catch (error){
+        res.send(error);
+    }
+});
 
 router.post('/create', async(req, res) => {
     try {
