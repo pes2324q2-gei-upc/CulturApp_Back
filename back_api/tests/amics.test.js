@@ -656,7 +656,7 @@ describe('DELETE /amics/delete/:id', () => {
     
 });
 
-describe('DELETE /amics/deleteFollow/:id', () => {
+describe('DELETE /amics/deleteFollowing/:id', () => {
     const testUsers = [
       {
         uid: 'testUid1',
@@ -694,7 +694,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería eliminar el following', async () => {
       const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername2')
+        .delete('/amics/deleteFollowing/testUsername2')
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
         expect(res.statusCode).toEqual(200);
@@ -703,7 +703,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería enviar 401 porque el token no es válido', async () => {
         const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername2')
+        .delete('/amics/deleteFollowing/testUsername2')
         .set('Authorization', 'Bearer testUid1');
 
         expect(res.statusCode).toEqual(401);
@@ -712,7 +712,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería enviar 404 porque el usuario indicado no existe', async () => {
         const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername4')
+        .delete('/amics/deleteFollowing/testUsername4')
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
         expect(res.statusCode).toEqual(404);
@@ -721,7 +721,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
         const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername2')
+        .delete('/amics/deleteFollowing/testUsername2')
         .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`);
 
         expect(res.statusCode).toEqual(404);
@@ -730,7 +730,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería enviar 404 porque no se ha encontrado el following', async () => {
         const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername3')
+        .delete('/amics/deleteFollowing/testUsername3')
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
         expect(res.statusCode).toEqual(404);
@@ -739,7 +739,7 @@ describe('DELETE /amics/deleteFollow/:id', () => {
 
     it('debería enviar 400 porque no puedes eliminarte a ti mismo', async () => {
         const res = await request(app)
-        .delete('/amics/deleteFollow/testUsername1')
+        .delete('/amics/deleteFollowing/testUsername1')
         .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
 
         expect(res.statusCode).toEqual(400);

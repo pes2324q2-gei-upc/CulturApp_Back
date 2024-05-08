@@ -126,7 +126,7 @@ router.delete('/delete/:id', checkUserAndFetchData, async(req, res) =>{
 });
 
 
-router.delete('/deleteFollow/:id', checkUserAndFetchData, async(req, res) =>{
+router.delete('/deleteFollowing/:id', checkUserAndFetchData, async(req, res) =>{
     try {
 
         const username_delete = req.params.id;
