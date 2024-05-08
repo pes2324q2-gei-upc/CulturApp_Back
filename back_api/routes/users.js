@@ -2,10 +2,13 @@ const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
 
+const fs = require('fs');
+const path = require('path');
+
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-const { checkUserAndFetchData, checkAdmin, checkPerson } = require('./middleware');
+const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -408,5 +411,57 @@ router.post('/activitats/signup', checkUserAndFetchData, async(req, res) => {
         res.send(error);
     }
 });
+
+router.post('/:id/ban', checkAdmin, async (req, res) => {
+    id = req.params.id;
+    token = encrypt(id).encryptedData;
+    const filepath = path.join(__dirname, '../BannedUsersTokens.json');
+
+    const newBannedToken = {
+        'token': token,
+    };
+    const bannedTokens = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+    if(bannedTokens.some(bannedToken => bannedToken.token === token)) {
+        res.status(200).send('User already banned');
+        return;
+    }
+    bannedTokens.push(newBannedToken);
+
+    fs.writeFileSync(path.join(__dirname, '../BannedUsersTokens.json'), JSON.stringify(bannedTokens), 'utf8');
+    res.status(200).send('User banned');
+});
+
+router.post('/:id/unban', checkAdmin, async (req, res) => {
+    id = req.params.id;
+    token = encrypt(id).encryptedData;
+    const filepath = path.join(__dirname, '../BannedUsersTokens.json');
+
+    const bannedTokens = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+    const filteredTokens = bannedTokens.filter(bannedToken => bannedToken.token !== token);
+
+    fs.writeFileSync(path.join(__dirname, '../BannedUsersTokens.json'), JSON.stringify(filteredTokens), 'utf8');
+    res.status(200).send('User unbanned');
+});
+
+router.get('/banned/list', checkAdmin, async (req, res) => {
+    try{
+        const filepath = path.join(__dirname, '../BannedUsersTokens.json');
+        const bannedTokens = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        userRef = db.collection('users');
+        let responseArr = await Promise.all(bannedTokens.map(async bannedToken => {
+            decryptTok = decryptToken(bannedToken.token, res);
+            let response = {};
+            response.id = decryptTok;
+            response = await userRef.doc(decryptTok).get();
+            response = response.data();
+            return response;
+        }));
+        res.status(200).send(responseArr);
+    }
+    catch (error){
+        res.send
+    }
+});
+
 
 module.exports = router

@@ -1,5 +1,7 @@
 const db = require('../firebaseConfig').db;
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -25,12 +27,21 @@ function decryptToken(token, res) {
     return decryptedUid;
 }
 
+function userban(token) {
+    const file = path.join(__dirname, '../BannedUsersTokens.json');
+    const bannedUsers = JSON.parse(fs.readFileSync(file));
+    return bannedUsers.some(user => user.token === token);
+}
+
 async function checkUserAndFetchData(req, res, next) { 
 
     const token = req.headers.authorization?.split(' ')[1];
 
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
+
+    if(userban(token))
+        return res.status(403).send('Usuario baneado');
 
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
@@ -58,6 +69,9 @@ async function checkPerson(req, res, next) {
     
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
+
+    if(userban(token))
+        return res.status(403).send('Usuario baneado');
     
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
@@ -94,3 +108,4 @@ module.exports.checkUserAndFetchData = checkUserAndFetchData;
 module.exports.checkUsername = checkUsername;
 module.exports.checkPerson = checkPerson;
 module.exports.checkAdmin = checkAdmin;
+module.exports.decryptToken = decryptToken;
