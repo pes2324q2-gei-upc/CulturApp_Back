@@ -8,8 +8,7 @@ const { db } = require('../firebaseConfig');
 const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 const checkUsername = require('./middleware').checkUsername;
 
-
-//AÑADIR TOKEN 
+//mirar si existeix el xat
 router.get('/exists', checkUserAndFetchData, async (req, res) => {
     try {
         var receiverId = req.query.receiverId;
@@ -17,33 +16,23 @@ router.get('/exists', checkUserAndFetchData, async (req, res) => {
         const username = req.userDocument.data().username;
 
         const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', username).limit(1);
+        const snapshot = await docRef.get();
+        
+        if(!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            res.status(200).json({ "exists": true, "data": data });
+            return; // Return to prevent further execution
+        }
 
-        docRef.get()
-        .then(snapshot => {
-            if (!snapshot.empty) {
-                // Si existe al menos un documento 
-                const data = snapshot.docs[0].data();
-                res.status(200).json({ "exists": true, "data": data });
-            } else {
-                const xatRef = db.collection('xats').where('receiverId', '==', username).where('senderId', '==', receiverId).limit(1);
+        const xatRef = db.collection('xats').where('receiverId', '==', username).where('senderId', '==', receiverId).limit(1);
+        const xatSnapshot = await xatRef.get();
 
-                xatRef.get().then(snapshot => {
-                    if (!snapshot.empty) {
-                        // Si existe al menos un documento 
-                        const data = snapshot.docs[0].data();
-                        res.status(200).json({ "exists": true, "data": data });
-                    }
-                    else {
-                        res.status(200).json({ "exists": false });
-                    }
-                })
-                // Si no existe ningún documento 
-                res.status(200).json({ "exists": false });
-            }
-        })
-        .catch(error => {
-            res.status(500).send("Error interno del servidor");
-        });
+        if (!xatSnapshot.empty) {
+            const data = xatSnapshot.docs[0].data();
+            res.status(200).json({ "exists": true, "data": data });
+        } else {
+            res.status(200).json({ "exists": false });
+        }
     } catch (error) {
         res.status(500).send("Error interno del servidor");
     }
