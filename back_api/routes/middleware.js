@@ -32,6 +32,12 @@ async function checkUserAndFetchData(req, res, next) {
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
 
+    const banedUser = db.collection('bannedUsers').doc(decryptedUid);
+    const banedUserDoc = await banedUser.get();
+    if(banedUserDoc.exists) {
+        return res.status(403).send('Usuario baneado');
+    }
+
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
 
@@ -58,6 +64,12 @@ async function checkPerson(req, res, next) {
     
     const decryptedUid = decryptToken(token, res);
     if (!decryptedUid) return;
+
+    const banedUser = db.collection('bannedUsers').doc(decryptedUid);
+    const banedUserDoc = await banedUser.get();
+    if(banedUserDoc.exists) {
+        return res.status(403).send('Usuario baneado');
+    }
     
     const userRef = db.collection('users').doc(decryptedUid);
     const userDoc = await userRef.get();
@@ -94,3 +106,4 @@ module.exports.checkUserAndFetchData = checkUserAndFetchData;
 module.exports.checkUsername = checkUsername;
 module.exports.checkPerson = checkPerson;
 module.exports.checkAdmin = checkAdmin;
+module.exports.decryptToken = decryptToken;
