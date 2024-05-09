@@ -498,4 +498,22 @@ router.get('/banned/list', checkAdmin, async (req, res) => {
 });
 
 
+router.delete('/:id/treureRol', checkAdmin, async (req, res) => {
+    try{
+        id = req.params.id;
+        const {activitatID} = req.body;
+        let userRef = db.collection('organitzadors').where('user', '==', id).where('activitat', '==', activitatID);
+        let snapshot = await userRef.get();
+        snapshot.forEach(doc => {
+            doc.ref.delete();
+        });
+        res.status(200).send('Rol eliminado');
+    }
+    catch(error) {
+        res.send(error);
+    }
+});
+
+
+
 module.exports = router
