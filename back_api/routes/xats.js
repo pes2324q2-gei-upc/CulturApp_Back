@@ -9,8 +9,7 @@ const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 const checkUsername = require('./middleware').checkUsername;
 
 
-//AÑADIR TOKEN
-//existeix el xat? 
+//AÑADIR TOKEN 
 router.get('/exists', checkUserAndFetchData, async (req, res) => {
     try {
         var receiverId = req.query.receiverId;
@@ -26,6 +25,18 @@ router.get('/exists', checkUserAndFetchData, async (req, res) => {
                 const data = snapshot.docs[0].data();
                 res.status(200).json({ "exists": true, "data": data });
             } else {
+                const xatRef = db.collection('xats').where('receiverId', '==', username).where('senderId', '==', receiverId).limit(1);
+
+                xatRef.get().then(snapshot => {
+                    if (!snapshot.empty) {
+                        // Si existe al menos un documento 
+                        const data = snapshot.docs[0].data();
+                        res.status(200).json({ "exists": true, "data": data });
+                    }
+                    else {
+                        res.status(200).json({ "exists": false });
+                    }
+                })
                 // Si no existe ningún documento 
                 res.status(200).json({ "exists": false });
             }
