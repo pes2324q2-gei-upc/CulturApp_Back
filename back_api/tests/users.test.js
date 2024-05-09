@@ -869,13 +869,6 @@ beforeEach(async () => {
     expect(response.status).toBe(401);
     expect(response.text).toBe('Token inválido');
   });
-  it('should return 200 user already banned', async () => {
-    const response = await request(app)
-        .post(`/users/${testUsers[0].id}/ban`)
-        .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
-    expect(response.status).toBe(200);
-    expect(response.text).toBe('User already banned');
-  });
   it('should return 404 if user does not exist', async () => {
     const response = await request(app)
         .post(`/users/invalidId/ban`)
@@ -907,9 +900,9 @@ describe('GET /users/banned/list', () => {
   beforeEach(async () => {
       await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
       for(const user of testUsers) {
-          const userRef = db.collection('users').doc(user.id);
-          await userRef.set(user);
+          await db.collection('users').doc(user.id).set(user);
       }
+    await db.collection('bannedUsers').doc('useridTest1').set(testUsers[0]);
   });
   it('should return 200 and list of banned users', async () => {
       const response = await request(app)
@@ -934,7 +927,7 @@ describe('GET /users/banned/list', () => {
   });
 });
 
-describe('POST /users/:id/unban', () => {
+describe('DELETE /users/:id/unban', () => {
   const testUsers = [
     usertes1 = {
         id: 'useridTest1',
@@ -960,24 +953,25 @@ beforeEach(async () => {
         const userRef = db.collection('users').doc(user.id);
         await userRef.set(user);
     }
+    db.collection('bannedUser').doc(testUsers[0].id).set(testUsers[0]);
   });
   it('should return 200 and unban a user', async () => {
     const response = await request(app)
-        .post(`/users/${testUsers[0].id}/unban`)
+        .delete(`/users/${testUsers[0].id}/unban`)
         .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
     expect(response.status).toBe(200);
     expect(response.text).toBe('User unbanned');
   });
   it('should return 401 if token is invalid', async () => {
     const response = await request(app)
-        .post(`/users/${testUsers[0].id}/unban`)
+        .delete(`/users/${testUsers[0].id}/unban`)
         .set('Authorization', 'Bearer invalidToken');
     expect(response.status).toBe(401);
     expect(response.text).toBe('Token inválido');
   });
   it('should return 404 if user does not exist', async () => {
     const response = await request(app)
-        .post(`/users/invalidId/unban`)
+        .delete(`/users/invalidId/unban`)
         .set('Authorization', `Bearer ${encrypt('invalidId').encryptedData}`);
     expect(response.status).toBe(404);
     expect(response.text).toBe('Admin no encontrado');
