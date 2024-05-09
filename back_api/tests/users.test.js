@@ -387,8 +387,6 @@ describe('GET /users/:id', () => {
       expect(response.text).toBe('Admin no encontrado');
   });
 });
-
-/*
 describe('GET /users/infoToken', () => {
     const testUsers = [
         usertes1 = {
@@ -523,10 +521,9 @@ describe('GET /users/read/users', () => {
           .get(`/users/read/users`)
           .set('Authorization', `Bearer ${encrypt('invaldId').encryptedData}`);
       expect(response.status).toBe(404);
-      expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+      expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
   });
 });
-*/
 
 
 describe('GET /users/:id/activitats', () => {
@@ -829,5 +826,217 @@ describe('GET /users/data/:data', () => {
           .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`);
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
+  });
+});
+describe('POST /users/:id/ban', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+    }
+  ]
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+
+beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for(const user of testUsers) {
+        const userRef = db.collection('users').doc(user.id);
+        await userRef.set(user);
+    }
+  });
+  it('should return 200 and ban a user', async () => {
+    const response = await request(app)
+        .post(`/users/${testUsers[0].id}/ban`)
+        .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(response.status).toBe(200);
+    expect(response.text).toBe('User banned');
+  });
+  it('should return 401 if token is invalid', async () => {
+    const response = await request(app)
+        .post(`/users/${testUsers[0].id}/ban`)
+        .set('Authorization', 'Bearer invalidToken');
+    expect(response.status).toBe(401);
+    expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+    const response = await request(app)
+        .post(`/users/invalidId/ban`)
+        .set('Authorization', `Bearer ${encrypt('invalidId').encryptedData}`);
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Admin no encontrado');
+  });
+});
+
+describe('GET /users/banned/list', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+    }
+  ]
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+  beforeEach(async () => {
+      await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+      for(const user of testUsers) {
+          await db.collection('users').doc(user.id).set(user);
+      }
+    await db.collection('bannedUsers').doc('useridTest1').set(testUsers[0]);
+  });
+  it('should return 200 and list of banned users', async () => {
+      const response = await request(app)
+          .get(`/users/banned/list`)
+          .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([testUsers[0]]);
+  });
+  it('should return 401 if token is invalid', async () => {
+      const response = await request(app)
+          .get(`/users/banned/list`)
+          .set('Authorization', 'Bearer invalidToken');
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+      const response = await request(app)
+          .get(`/users/banned/list`)
+          .set('Authorization', `Bearer ${encrypt('invalidId').encryptedData}`);
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Admin no encontrado');
+  });
+});
+
+describe('DELETE /users/:id/unban', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+    }
+  ]
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+
+beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for(const user of testUsers) {
+        const userRef = db.collection('users').doc(user.id);
+        await userRef.set(user);
+    }
+    db.collection('bannedUser').doc(testUsers[0].id).set(testUsers[0]);
+  });
+  it('should return 200 and unban a user', async () => {
+    const response = await request(app)
+        .delete(`/users/${testUsers[0].id}/unban`)
+        .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`);
+    expect(response.status).toBe(200);
+    expect(response.text).toBe('User unbanned');
+  });
+  it('should return 401 if token is invalid', async () => {
+    const response = await request(app)
+        .delete(`/users/${testUsers[0].id}/unban`)
+        .set('Authorization', 'Bearer invalidToken');
+    expect(response.status).toBe(401);
+    expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+    const response = await request(app)
+        .delete(`/users/invalidId/unban`)
+        .set('Authorization', `Bearer ${encrypt('invalidId').encryptedData}`);
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Admin no encontrado');
+  });
+});
+describe('DELETE /users/:id/treureRol', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+    }
+  ]
+  const adminUser = {
+    uid: 'adminUid',
+    username: 'adminUsername',
+  };
+
+beforeEach(async () => {
+    await db.collection('administradors').doc(adminUser.uid).set({'username': adminUser.username});
+    for(const user of testUsers) {
+        const userRef = db.collection('users').doc(user.id);
+        await userRef.set(user);
+    }
+    await db.collection('organitzadors').add({
+      'user': 'useridTest1',
+      'activitat': 1,
+      'email': 'email'
+    });
+  });
+  it('should return 200 and remove a role', async () => {
+    const response = await request(app)
+        .delete(`/users/${testUsers[0].id}/treureRol`)
+        .set('Authorization', `Bearer ${encrypt('adminUid').encryptedData}`)
+        .send({
+          activitatID: 1
+        });
+    expect(response.status).toBe(200);
+    expect(response.text).toBe('Rol eliminado');
+  });
+  it('should return 401 if token is invalid', async () => {
+    const response = await request(app)
+        .delete(`/users/${testUsers[0].id}/treureRol`)
+        .set('Authorization', 'Bearer invalidToken')
+        .send({
+          activitatID: 1
+        });
+    expect(response.status).toBe(401);
+    expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+    const response = await request(app)
+        .delete(`/users/invalidId/treureRol`)
+        .set('Authorization', `Bearer ${encrypt('invalidId').encryptedData}`)
+        .send({
+          activitatID: 1
+        });
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Admin no encontrado');
   });
 });

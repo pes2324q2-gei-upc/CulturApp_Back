@@ -485,7 +485,7 @@ router.post('/solicitudOrganitzador/:id/acceptar', checkAdmin, async(req, res) =
         await organitzadorRef.add({
             'user': doc.data().userSolicitant,
             'email': userDoc.data().email,
-            'activitats': doc.data().idActivitat,
+            'activitat': doc.data().idActivitat,
         });
         await solicitudRef.update({
             'atorgat': true,

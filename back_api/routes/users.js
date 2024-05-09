@@ -5,7 +5,7 @@ const router = express.Router()
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-const { checkUserAndFetchData, checkAdmin, checkPerson } = require('./middleware');
+const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -282,7 +282,7 @@ router.get('/categories/:categories', checkUserAndFetchData, async (req, res) =>
     try {
         var categories = req.params.categories.split(",");
         let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
-            const activityRef = db.collection("actividades").doc(activity)//.where('tags_categor_es', 'array-contains-any', categories);
+            const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
             if(!responseAct.exists) return  null;
             else if(responseAct.data().tags_categor_es.some(r=> categories.includes(r))){
@@ -346,7 +346,6 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
         const { uid, username, favcategories } = req.body;
 
         userDoc = await req.userDocument;
-
         const categories = JSON.parse(favcategories);
 
         const usersCollection = db.collection('users');
@@ -354,12 +353,54 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
         const activities = [];
 
         if (userDoc.exists && userDoc.id == uid) {
+            const usernameAnt = userDoc.data().username;
             await usersCollection.doc(uid).update({
                 'username': username,
                 'favcategories': categories,
               });
-      
-              res.status(200).send('OK');
+             followingRef = await db.collection('following').where('friend', '==',usernameAnt).get();
+             if(!followingRef.empty) {
+                followingRef.forEach(doc => { 
+                    db.collection('following').doc(doc.id).update({
+                        'friend': username
+                    });
+                });
+             }
+             followingRef = await db.collection('following').where('user', '==', usernameAnt).get();
+             if(!followingRef.empty) {
+                followingRef.forEach(doc => {
+                    db.collection('following').doc(doc.id).update({
+                        'user': username
+                    });
+                });
+            }
+                xatsRef = await db.collection('xats').where('snederId', '==', usernameAnt).get();
+                if(!xatsRef.empty) {
+                    xatsRef.forEach(doc => {
+                    db.collection('xats').doc(doc.id).update({
+                        'senderId': username
+                        });
+                    });
+                }
+                xatsRef = await db.collection('xats').where('receiverId', '==',usernameAnt).get();
+                if(!xatsRef.empty) {
+                    xatsRef.forEach(doc => {
+                        db.collection('xats').doc(doc.id).update({
+                            'receiverId': username
+                        });
+                    });     
+                }
+                grupsRef = await db.collection('grups').where('participants','array-contains', usernameAnt).get();
+                if(!grupsRef.empty) {
+                    grupsRef.forEach(doc => {
+                    let arr = doc.data().participants;
+                    arr = arr.map(participant => participant === usernameAnt ? username : participant);
+                        db.collection('grups').doc(doc.id).update({
+                            'participants': arr
+                        });
+                    });
+                }
+            res.status(200).send('OK');
         }
         else {
             res.status(401).send('Forbidden');
@@ -371,29 +412,29 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
-    router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
-        try {
-            const { uid, activityId } = req.body; 
-            userDoc = await req.userDocument;
 
-            const usersCollection = db.collection('users');
+router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
+    try {
+        const { uid, activityId } = req.body; 
+        userDoc = await req.userDocument;
 
-            if (userDoc.exists && userDoc.id == uid) {
-                await usersCollection.doc(uid).update({
-                    valoradas: admin.firestore.FieldValue.arrayUnion(activityId)
-                });
+        const usersCollection = db.collection('users');
 
-                res.status(200).send('OK');
-            }
-            else {
-                res.status(401).send('Forbidden');
-            }
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                valoradas: admin.firestore.FieldValue.arrayUnion(activityId)
+            });
+
+            res.status(200).send('OK');
         }
-        catch (error){
-            res.send(error);
+        else {
+            res.status(401).send('Forbidden');
         }
-    });
-
+    }
+    catch (error){
+        res.send(error);
+    }
+});
 
 router.get('/activitats/isuserin', checkUserAndFetchData, async (req, res) => {
     try {
@@ -447,5 +488,70 @@ router.post('/activitats/signup', checkUserAndFetchData, async(req, res) => {
         res.send(error);
     }
 });
+
+router.post('/:id/ban', checkAdmin, async (req, res) => {
+   try{
+        id = req.params.id;
+        userRef = db.collection('bannedUsers');
+        userRef.doc(id).set({
+            'id': id
+        });
+        res.status(200).send('User banned');
+
+   }
+   catch(error) {
+       res.send(error);
+}
+});
+
+router.delete('/:id/unban', checkAdmin, async (req, res) => {
+    try{
+        id = req.params.id;
+        userRef = db.collection('bannedUsers');
+        userRef.doc(id).delete();
+        res.status(200).send('User unbanned');
+    }
+    catch(error) {
+        res.send(error);
+    }
+});
+
+router.get('/banned/list', checkAdmin, async (req, res) => {
+    try {
+        const bannedUsersSnapshot = await db.collection('bannedUsers').get();
+        const userRef = db.collection('users');
+        let responseArr = [];
+
+        for (let doc of bannedUsersSnapshot.docs) {
+            let bannedUser = doc.data();
+            let userSnapshot = await userRef.doc(bannedUser.id).get();
+            let user = userSnapshot.data();
+            responseArr.push(user);
+        }
+
+        res.status(200).send(responseArr);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+
+router.delete('/:id/treureRol', checkAdmin, async (req, res) => {
+    try{
+        id = req.params.id;
+        const {activitatID} = req.body;
+        let userRef = db.collection('organitzadors').where('user', '==', id).where('activitat', '==', activitatID);
+        let snapshot = await userRef.get();
+        snapshot.forEach(doc => {
+            doc.ref.delete();
+        });
+        res.status(200).send('Rol eliminado');
+    }
+    catch(error) {
+        res.send(error);
+    }
+});
+
+
 
 module.exports = router
