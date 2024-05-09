@@ -133,12 +133,15 @@ router.post('/create', async(req, res) => {
         
         const activities = [];
 
+        const valoradas = [];
+
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
           'favcategories': categories,
           'activities': activities,
           'id': uid,
+          'valoradas': valoradas,
         });
         res.status(200).send('OK');
     }
@@ -214,6 +217,17 @@ router.get('/:uid/favcategories', checkUserAndFetchData, async (req, res) => { /
         res.status(200).json(favCategories);
     } catch (error) {
         console.error('Error al obtener las categorías favoritas del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
+router.get('/:uid/valoradas', checkUserAndFetchData, async (req, res) => { //MODIFICADA
+    try {
+
+        const valoradas = req.userDocument.data().valoradas;
+        res.status(200).json(valoradas);
+    } catch (error) {
+        console.error('Error al obtener las actividades valoradas  del usuario:', error);
         res.status(500).send('Error interno del servidor');
     }
 });
@@ -392,6 +406,30 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
             res.status(401).send('Forbidden');
         }
 
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+
+router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
+    try {
+        const { uid, activityId } = req.body; 
+        userDoc = await req.userDocument;
+
+        const usersCollection = db.collection('users');
+
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                valoradas: admin.firestore.FieldValue.arrayUnion(activityId)
+            });
+
+            res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
     }
     catch (error){
         res.send(error);
