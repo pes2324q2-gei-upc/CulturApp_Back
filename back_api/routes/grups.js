@@ -12,6 +12,15 @@ const { db, bucket } = require('../firebaseConfig');
 const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 const checkUsername = require('./middleware').checkUsername;
 
+//funcio per afegir imatges al bucket
+async function createImage(file){
+    const uuid = uuidv4();
+    const name = uuid + '_' + file.originalname;
+    const fileName = 'grups/' + name;
+    await bucket.file(fileName).createWriteStream().end(file.buffer);
+    return fileName;
+}
+
 //crear grup
 router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, res) => {
     try {
@@ -55,14 +64,6 @@ router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, 
         res.status(500).send("Error interno del servidor");
     }
 });
-
-async function createImage(file){
-    const uuid = uuidv4();
-    const name = uuid + '_' + file.originalname;
-    const fileName = 'grups/' + name;
-    await bucket.file(fileName).createWriteStream().end(file.buffer);
-    return fileName;
-}
 
 //get grup info 
 router.get('/:grupId', async (req, res) => {
@@ -108,7 +109,7 @@ router.get('/users/all', checkUserAndFetchData, async (req, res) => {
 });
 
 //update info del grup
-router.put('/:grupId/update', async (req, res) => {
+router.put('/:grupId/update', upload.single('file'), async (req, res) => {
     try {
         const grupId = req.params.grupId;
         const { name, descr, imatge, members } = req.body;
@@ -117,10 +118,16 @@ router.put('/:grupId/update', async (req, res) => {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
         }
 
+        filename = imatge;
+
+        if (req.file !== undefined) {
+            filename = await createImage(req.file);
+        }
+
         await db.collection('grups').doc(grupId).update({
             'nom': name,
             'descripcio': descr,
-            'imatge': imatge,
+            'imatge': filename,
             'participants': members
         });
 
