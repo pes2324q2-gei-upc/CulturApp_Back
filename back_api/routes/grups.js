@@ -27,15 +27,21 @@ router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, 
 
         const { name, descr, members } = req.body;
 
+        const membersId = [];
 
         for (const member of members) {
-            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado')));
+            const idmember =  db.collection('users').where('username', '==', member);
+            const datam = await idmember.get();
+            if (!datam.empty) {
+                membersId.push(datam.docs[0].id);
+            }
         }
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id; 
 
         //me añado a mi mismo como un participante
-        members.push(username);
+        membersId.push(username);
         
         filename = '';
 
@@ -48,7 +54,7 @@ router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, 
             'nom': name,
             'descripcio': descr,
             'imatge': filename,
-            'participants': members,
+            'participants': membersId,
             'last_msg': ' ',
             'last_time': ' '
         });
@@ -79,6 +85,17 @@ router.get('/:grupId', async (req, res) => {
         }
 
         const infoGrup = doc.data();
+
+        const membersWithUsernames = [];
+        for (const memberId of infoGrup.participants) {
+            const userRef = db.collection('users').doc(memberId);
+            const userDoc = await userRef.get();
+            const userData = userDoc.data();
+            membersWithUsernames.push(userData.username);
+        }
+
+        infoGrup.participants = membersWithUsernames;
+
         return res.status(200).json(infoGrup);
 
     } catch (error) {
@@ -86,21 +103,32 @@ router.get('/:grupId', async (req, res) => {
     }
 });
 
-
 //get dels grups on es troba l'usuari
 router.get('/users/all', checkUserAndFetchData, async (req, res) => {
     try {
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         const querySnapshot = await db.collection('grups').where('participants', 'array-contains', username).get();
 
         const userGroups = [];
     
-        querySnapshot.forEach(doc => {
+        for (const doc of querySnapshot.docs) {
             const groupData = doc.data();
+
+            const memberUsernames = [];
+
+            // Fetch usernames for each member ID in the group
+            for (const memberId of groupData.participants) {
+                const userRef = db.collection('users').doc(memberId);
+                const userDoc = await userRef.get();
+                const userData = userDoc.data();
+                memberUsernames.push(userData.username);
+            }
+
+            groupData.participants = memberUsernames;
             userGroups.push(groupData);
-        });
+        }
     
         return res.status(200).json(userGroups);
     } catch (error) {
@@ -114,8 +142,15 @@ router.put('/:grupId/update', upload.single('file'), async (req, res) => {
         const grupId = req.params.grupId;
         const { name, descr, imatge, members } = req.body;
 
+        const membersId = [];
+
         for (const member of members) {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+            const idmember =  db.collection('users').where('username', '==', member);
+            const datam = await idmember.get();
+            if (!datam.empty) {
+                membersId.push(datam.docs[0].id);
+            }
         }
 
         filename = imatge;
@@ -128,7 +163,7 @@ router.put('/:grupId/update', upload.single('file'), async (req, res) => {
             'nom': name,
             'descripcio': descr,
             'imatge': filename,
-            'participants': members
+            'participants': membersId
         });
 
         res.status(200).send({ message: "Grupo actualizado exitosamente" });
@@ -144,7 +179,7 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
         const { mensaje, fecha } = req.body;
         const grupId = req.params.grupId;
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         // Verificar si el xat existe
         const grupRef = db.collection('grups').doc(grupId);
@@ -174,7 +209,6 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-
 //get mensajes
 router.get('/:grupId/mensajes', async (req, res) => {
     try {
@@ -190,9 +224,13 @@ router.get('/:grupId/mensajes', async (req, res) => {
         }
 
         let mensajes = [];
-        snapshot.forEach(doc => {
-            mensajes.push(doc.data());
-        });
+        for (const doc of snapshot.docs) {
+            const messageData = doc.data();
+            const userRef = db.collection('users').doc(messageData.senderId);
+            const userDoc = await userRef.get();
+            messageData.senderId = userDoc.data().username;
+            mensajes.push(messageData);
+        }
 
         res.status(200).json(mensajes);
     } catch (error) {
