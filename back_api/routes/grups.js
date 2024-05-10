@@ -1,18 +1,23 @@
 const express = require('express')
 const router = express.Router()
 
+const { v4: uuidv4 } = require("uuid");
+const multer=require('multer')
+const upload=multer({storage: multer.memoryStorage()})
+
 router.use(express.json());
 
-const { db } = require('../firebaseConfig');
+const { db, bucket } = require('../firebaseConfig');
 
 const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 const checkUsername = require('./middleware').checkUsername;
 
 //crear grup
-router.post('/create', checkUserAndFetchData, async(req, res) => {
+router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, res) => {
     try {
 
-        const { name, descr, imatge, members } = req.body;
+        const { name, descr, members } = req.body;
+
 
         for (const member of members) {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
@@ -23,11 +28,17 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         //me añado a mi mismo como un participante
         members.push(username);
         
+        filename = '';
+
+        if (req.file !== undefined) {
+            filename = await createImage(req.file);
+        }
+
         const docRef = await db.collection('grups').add({
             'id': " ",
             'nom': name,
             'descripcio': descr,
-            'imatge': imatge,
+            'imatge': filename,
             'participants': members,
             'last_msg': ' ',
             'last_time': ' '
@@ -38,11 +49,20 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         await docRef.update({
             id: docRef.id
         });
+        
     }
     catch (error){
         res.status(500).send("Error interno del servidor");
     }
 });
+
+async function createImage(file){
+    const uuid = uuidv4();
+    const name = uuid + '_' + file.originalname;
+    const fileName = 'grups/' + name;
+    await bucket.file(fileName).createWriteStream().end(file.buffer);
+    return fileName;
+}
 
 //get grup info 
 router.get('/:grupId', async (req, res) => {

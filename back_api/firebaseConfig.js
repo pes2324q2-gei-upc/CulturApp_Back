@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 require('dotenv').config();
 
-let db, auth;
+let db, auth, bucket;
 
 if(process.env.NODE_ENV !== 'test') { //Si no estamos en modo test, inicializamos Firebase Admin. Si estamos en modo test ya el setup.js inicializará una Test App
 
@@ -18,11 +18,14 @@ if(process.env.NODE_ENV !== 'test') { //Si no estamos en modo test, inicializamo
             token_uri: process.env.TOKEN_URI,
             auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
             client_x509_cert_url: process.env.CLIENT_X509_CERT_URL
-        })
+        }),
+        storageBucket: process.env.STORAGE_BUCKET
     });
 
     db =  admin.firestore(); 
     auth = admin.auth();
+    bucket = admin.storage().bucket()
+    
 } else {
     // Estamos en un entorno de test, por lo que db debería ser la instancia de test
     const firebase = require('@firebase/testing');
@@ -30,7 +33,7 @@ if(process.env.NODE_ENV !== 'test') { //Si no estamos en modo test, inicializamo
     db = app.firestore();
 }
 
-module.exports = { db, auth };
+module.exports = { db, auth, bucket };
 
 /*
 const db = process.env.NODE_ENV === 'development'
