@@ -165,20 +165,32 @@ router.post('/create', async(req, res) => {
     }
 });*/
 
-router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
+router.get('/:username/activitats', checkUserAndFetchData, async (req, res) => {
     try {
-            let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
-                const activityRef = db.collection("actividades").doc(activity);
-                const responseAct = await activityRef.get();
-                if(responseAct.exists) {
-                    return responseAct.data();
-                }
-                else return null;
-            }));
+        const username = req.params.username;
+        const userRef = db.collection('users').where('username', '==', username); 
+        const userQuerySnapshot = await userRef.get();
+        
+        if (userQuerySnapshot.empty) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        // Tomamos el primer documento de la consulta (suponiendo que haya un solo usuario con ese nombre de usuario)
+        const userDoc = userQuerySnapshot.docs[0];
+
+        let responseArr = await Promise.all(userDoc.data().activities.map(async activity => {
+            const activityRef = db.collection("actividades").doc(activity);
+            const responseAct = await activityRef.get();
+            if(responseAct.exists) {
+                return responseAct.data();
+            }
+            else return null;
+        }));
+        
         const filteredActivities = responseArr.filter(activity => activity !== null);
         res.status(200).send(filteredActivities);
         
-    } catch (error){
+    } catch (error) {
         res.send(error);
     }
 });
