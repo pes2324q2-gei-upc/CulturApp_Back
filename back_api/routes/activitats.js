@@ -10,7 +10,7 @@ const checkPerson = require('./middleware').checkPerson;
 
 router.get('/read/all', checkPerson, async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(20);
+        const activityRef = db.collection("actividades").limit(100);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -21,6 +21,57 @@ router.get('/read/all', checkPerson, async (req, res) => {
         res.send(404).send(error);
     }
 });
+
+router.get('/read/vencidas', checkPerson, async (req, res) => {
+    try {
+        const activityRef = db.collection("vencidas").limit(100);
+        const response = await activityRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.status(200).send(responseArr);
+    } catch (error){
+        res.send(404).send(error);
+    }
+});
+
+router.post('/create/valoracion', async (req, res) => {
+    try {
+        const { idActividad, puntuacion, comentario } = req.body;
+
+        const valoracionesRef = db.collection('valoraciones').doc(idActividad);
+
+        const valoracionDoc = await valoracionesRef.get();
+        let comentarios = valoracionDoc.exists && valoracionDoc.data().comentarios ? valoracionDoc.data().comentarios : [];
+        let puntuacionActual = valoracionDoc.exists && valoracionDoc.data().puntuacion ? valoracionDoc.data().puntuacion : 0;
+        let cantidad = valoracionDoc.exists && valoracionDoc.data().cantidad ? valoracionDoc.data().cantidad : 0;
+        
+        if (comentario) {
+            comentarios.push(comentario);
+        }
+
+        let valoracionData = {};
+        if (puntuacion !== -1) {
+            let nuevaPuntuacion = ((puntuacionActual * cantidad) + puntuacion) / (cantidad + 1);
+            valoracionData.puntuacion = nuevaPuntuacion;
+        }
+        valoracionData.comentarios = comentarios;
+        valoracionData.cantidad = cantidad + 1;
+
+        if (!valoracionDoc.exists) {
+            await valoracionesRef.set(valoracionData);
+        } else {
+            await valoracionesRef.set(valoracionData, { merge: true });
+        }
+
+        res.status(200).send('Valoración creada o actualizada con éxito');
+    }
+    catch (error){
+        res.status(500).send(error);
+    }
+});
+
 
 router.get('/categoria/:categoria', checkPerson, async (req, res) => {
     try {

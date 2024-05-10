@@ -655,6 +655,99 @@ describe('DELETE /amics/delete/:id', () => {
     });
     
 });
+
+describe('DELETE /amics/deleteFollowing/:id', () => {
+    const testUsers = [
+      {
+        uid: 'testUid1',
+        username: 'testUsername1',
+      },
+      {
+        uid: 'testUid2',
+        username: 'testUsername2',
+      },
+      {
+        uid: 'testUid3',
+        username: 'testUsername3',
+      }
+    ];
+
+    const following = [
+      {
+        'user': 'testUsername1',
+        'friend': 'testUsername2',
+        'data_follow': new Date().toISOString(),
+        'acceptat': false,
+        'pendent': true,
+      },
+    ];
+
+    beforeEach(async () => {
+        for (const usuari of testUsers) {
+            await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+        }
+
+        for (const follow of following) {
+            await db.collection('following').add(follow);
+        }
+    });
+
+    it('debería eliminar el following', async () => {
+      const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername2')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.text).toBe('OK');
+    });
+
+    it('debería enviar 401 porque el token no es válido', async () => {
+        const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername2')
+        .set('Authorization', 'Bearer testUid1');
+
+        expect(res.statusCode).toEqual(401);
+        expect(res.text).toBe('Token inválido');
+    });
+
+    it('debería enviar 404 porque el usuario indicado no existe', async () => {
+        const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername4')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario no encontrado');
+    });
+
+    it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
+        const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername2')
+        .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`);
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+    });
+
+    it('debería enviar 404 porque no se ha encontrado el following', async () => {
+        const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername3')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.text).toBe('No se ha encontrado la solicitud de amistad');
+    });
+
+    it('debería enviar 400 porque no puedes eliminarte a ti mismo', async () => {
+        const res = await request(app)
+        .delete('/amics/deleteFollowing/testUsername1')
+        .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+        expect(res.statusCode).toEqual(400);
+        expect(res.text).toBe('No puedes eliminarte a ti mismo');
+    });
+
+});
+
 describe('GET /amics/followingRequests' , () => {
   const testUsers = [
     {

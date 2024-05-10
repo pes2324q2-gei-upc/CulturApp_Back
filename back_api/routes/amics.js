@@ -125,6 +125,39 @@ router.delete('/delete/:id', checkUserAndFetchData, async(req, res) =>{
     }
 });
 
+
+router.delete('/deleteFollowing/:id', checkUserAndFetchData, async(req, res) =>{
+    try {
+
+        const username_delete = req.params.id;
+
+        if (!(await checkUsername(username_delete, res, 'Usuario no encontrado'))) return;
+
+        const username_request = req.userDocument.data().username;
+
+        if(username_delete == username_request){
+            res.status(400).send('No puedes eliminarte a ti mismo');
+            return;
+        }
+
+        const followingRef = db.collection('following');
+        const existingRequest = await followingRef.where('user', '==', username_request).where('friend', '==', username_delete).get();
+
+        if (existingRequest.empty) {
+            res.status(404).send('No se ha encontrado la solicitud de amistad');
+            return;
+        }
+
+        const requestDoc = existingRequest.docs[0];
+
+        await followingRef.doc(requestDoc.id).delete();
+
+        res.status(200).send('OK');
+    } catch (error) {
+        res.status(404).send(error);
+    }
+});
+
 async function isHisFriend(friend, username){
     const docRef = db.collection('following').where('user', '==', username).where('friend', '==', friend).where('acceptat', '==', true);
     const response = await docRef.get();
