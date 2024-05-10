@@ -580,6 +580,14 @@ describe('GET /users/:id/activitats', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual(testActivitats);
   });
+  it('should return 200 and user data for another user', async () => {
+    const user = testUsers[0];
+    const response = await request(app)
+        .get(`/users/${user.id}/activitats`)
+        .set('Authorization', `Bearer ${encrypt(testUsers[1].id).encryptedData}`);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(testActivitats);
+  });
   it('should return 401 if token is invalid', async () => {
       const response = await request(app)
           .get(`/users/${testUsers[0].id}/activitats`)

@@ -145,7 +145,11 @@ router.post('/create', async(req, res) => {
 
 router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     try {
-            let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
+            const id = req.params.id;
+            const userRef = db.collection('users').doc(id);
+            const userDoc = await userRef.get();
+            
+            let responseArr = await Promise.all(userDoc.data().activities.map(async activity => {
                 const activityRef = db.collection("actividades").doc(activity);
                 const responseAct = await activityRef.get();
                 if(responseAct.exists) {
