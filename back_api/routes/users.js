@@ -165,6 +165,30 @@ router.post('/create', async(req, res) => {
     }
 });*/
 
+
+router.get('/:id/actividadesorganizadas', checkUserAndFetchData, async (req, res) => {
+    try {
+        console.log('ENTRE');
+        const uid = req.params.id;
+        const organitzadorsRef = db.collection('organitzadors');
+        const snapshot = await organitzadorsRef.where('user', '==', uid).get();
+
+        let actividades = [];
+        console.log(snapshot);
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            console.log(data);
+            if (data.activitat) {
+                actividades.push(data.activitat);
+            }
+        });
+
+        res.status(200).send(actividades);
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.get('/:id/activitats', checkUserAndFetchData, async (req, res) => {
     try {
             let responseArr = await Promise.all(req.userDocument.data().activities.map(async activity => {
@@ -371,28 +395,28 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
-    router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
-        try {
-            const { uid, activityId } = req.body; 
-            userDoc = await req.userDocument;
+router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
+    try {
+        const { uid, activityId } = req.body; 
+        userDoc = await req.userDocument;
 
-            const usersCollection = db.collection('users');
+        const usersCollection = db.collection('users');
 
-            if (userDoc.exists && userDoc.id == uid) {
-                await usersCollection.doc(uid).update({
-                    valoradas: admin.firestore.FieldValue.arrayUnion(activityId)
-                });
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                valoradas: admin.firestore.FieldValue.arrayUnion(activityId)
+            });
 
-                res.status(200).send('OK');
-            }
-            else {
-                res.status(401).send('Forbidden');
-            }
+            res.status(200).send('OK');
         }
-        catch (error){
-            res.send(error);
+        else {
+            res.status(401).send('Forbidden');
         }
-    });
+    }
+    catch (error){
+        res.send(error);
+    }
+});
 
 
 router.get('/activitats/isuserin', checkUserAndFetchData, async (req, res) => {
