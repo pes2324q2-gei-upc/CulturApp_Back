@@ -57,6 +57,7 @@ describe('POST /tickets/reportUsuari/create', () => {
           titol: 'tittoltest',
           usuariReportat: 'testUsername2',
           report: 'testReport',
+          placeReport: 'testPlace no hi ha'
         });
   
       expect(res.statusCode).toEqual(200);
@@ -122,6 +123,7 @@ describe('GET /tickets/reportsUsuari/all', () => {
       solucionat: false,
       administrador: '',
       data_report: new Date().toISOString(),
+      placeReport: 'testPlace no hi ha',
     },
     {
       id: 'testUid2',
@@ -131,6 +133,7 @@ describe('GET /tickets/reportsUsuari/all', () => {
       solucionat: false,
       administrador: '',
       data_report: new Date().toISOString(),
+      placeReport: 'testPlace no hi ha',
     },
   ];
   beforeEach(async () => {
@@ -148,6 +151,7 @@ describe('GET /tickets/reportsUsuari/all', () => {
         'solucionat': report.solucionat,
         'administrador': report.administrador,
         'data_report': report.data_report,
+        'placeReport': report.placeReport,
       });
     }
   });
@@ -186,6 +190,7 @@ describe('GET /tickets/reportsUsuari/:id', () => {
       solucionat: false,
       administrador: '',
       data_report: new Date().toISOString(),
+      placeReport: 'testPlace no hi ha',
     },
     {
       id: 'testUid2',
@@ -195,6 +200,7 @@ describe('GET /tickets/reportsUsuari/:id', () => {
       solucionat: false,
       administrador: '',
       data_report: new Date().toISOString(),
+      placeReport: 'testPlace no hi ha',
     },
   ];
   beforeEach(async () => {
@@ -212,6 +218,7 @@ describe('GET /tickets/reportsUsuari/:id', () => {
         'solucionat': report.solucionat,
         'administrador': report.administrador,
         'data_report': report.data_report,
+        'placeReport': report.placeReport,
       });
     }
   });

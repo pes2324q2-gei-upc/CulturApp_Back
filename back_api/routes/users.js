@@ -107,11 +107,9 @@ router.get('/:username/info', async (req, res) => {
     try {
         const username = req.params.username;
         const docRef = db.collection('users').where('username', '==', username);
-
         docRef.get()
         .then(snapshot => {
             if (!snapshot.empty) {
-                // Si existe al menos un documento 
                 const data = snapshot.docs[0].data();
                 res.status(200).json(data);
             } else {
