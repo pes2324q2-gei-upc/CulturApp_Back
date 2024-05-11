@@ -532,13 +532,13 @@ describe('GET /users/:id/activitats', () => {
           id: 'useridTest1',
           username: 'username',
           email: 'email',
-          activities: ['1', '2', '3'],
+          activities: ['1', '2'],
       },
       usertest2 = {
           id: 'useridTest2',
           username: 'username2',
           email: 'email2',
-          activities: ['1', '2', '3'],
+          activities: ['1', '2'],
       }
   ]
   const testActivitats = [
@@ -572,8 +572,8 @@ describe('GET /users/:id/activitats', () => {
   it('should return 200 and user data', async () => {
       const user = testUsers[0];
       const response = await request(app)
-          .get(`/users/${user.id}/activitats`)
-          .set('Authorization', `Bearer ${encrypt(user.id).encryptedData}`);
+          .get(`/users/username2/activitats`)
+          .set('Authorization', `Bearer ${encrypt("useridTest2").encryptedData}`);
       expect(response.status).toBe(200);
       expect(response.body).toEqual(testActivitats);
   });
