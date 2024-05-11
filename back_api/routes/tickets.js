@@ -14,7 +14,7 @@ const checkAdmin = require('./middleware').checkAdmin;
 //Operacions de reports d'usuaris
 router.post('/reportUsuari/create', checkUserAndFetchData, async(req, res) => {
     try {
-        const { titol, usuariReportat, report } = req.body;
+        const { titol, usuariReportat, report, placeReport } = req.body;
 
 
         if (!report || !usuariReportat || !titol) {
@@ -40,7 +40,8 @@ router.post('/reportUsuari/create', checkUserAndFetchData, async(req, res) => {
             'solucionat': false,
             'administrador': '',
             'data_report': new Date().toISOString(),
-            'titol': titol
+            'titol': titol,
+            'placeReport': placeReport
         })
         res.status(200).send('report afegit')
     } catch (error){
@@ -114,6 +115,17 @@ router.get('/reportsUsuari/:id', checkAdmin, async(req, res) => {
         }
         const resultdata = doc.data();
         resultdata.id = doc.id;
+        let place = doc.data().placeReport.split(' ')[0];
+        if (place == "forum") {
+            const forumRef = db.collection('foros').doc(doc.data().placeReport.split(' ')[1]).collection('posts').doc(doc.data().placeReport.split(' ')[2]);
+            
+            const forumDoc = await forumRef.get();
+            if (!forumDoc.exists) {
+                res.status(404).send('Forum not found');
+                return;
+            }
+            resultdata.forumMessage = forumDoc.data();
+        }
         res.status(200).send(resultdata);
     } catch (error){
         res.send(error);
