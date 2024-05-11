@@ -165,6 +165,30 @@ router.post('/create', async(req, res) => {
     }
 });*/
 
+router.get('/:id/actividadesorganizadas', checkUserAndFetchData, async (req, res) => {
+    try {
+        console.log('ENTRE');
+        const uid = req.params.id;
+        const organitzadorsRef = db.collection('organitzadors');
+        const snapshot = await organitzadorsRef.where('user', '==', uid).get();
+
+        let actividades = [];
+        console.log(snapshot);
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            console.log(data);
+            if (data.activitat) {
+                actividades.push(data.activitat);
+            }
+        });
+
+        res.status(200).send(actividades);
+    } catch (error){
+        res.send(error);
+    }
+});
+
+
 router.get('/:username/activitats', checkUserAndFetchData, async (req, res) => {
     try {
         const username = req.params.username;
@@ -423,6 +447,7 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
         res.send(error);
     }
 });
+
 
 
 router.post('/addValorada', checkUserAndFetchData, async (req, res) => {
