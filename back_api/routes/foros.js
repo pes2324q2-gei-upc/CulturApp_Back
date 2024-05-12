@@ -87,8 +87,6 @@ router.post('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
         const { mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
 
-        const username = req.userDocument.data().username;
-
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
         const foroSnapshot = await foroRef.get();

@@ -11,20 +11,26 @@ const checkUsername = require('./middleware').checkUsername;
 //mirar si existeix el xat
 router.get('/exists', checkUserAndFetchData, async (req, res) => {
     try {
-        var receiverId = req.query.receiverId;
+        //pillar id del receiver, me pasan username
+        var receiver = req.query.receiver;
 
-        const username = req.userDocument.data().username;
+        const collectionReceiver =  db.collection('users').where('username', '==', receiver);
+        const receiverSnapshot  = await collectionReceiver.get();
 
-        const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', username).limit(1);
+        const receiverId = receiverSnapshot.docs[0].id;
+
+        const userId = req.userDocument.data().id;
+
+        const docRef = db.collection('xats').where('receiverId', '==', receiverId).where('senderId', '==', userId).limit(1);
         const snapshot = await docRef.get();
         
         if(!snapshot.empty) {
             const data = snapshot.docs[0].data();
             res.status(200).json({ "exists": true, "data": data });
-            return; // Return to prevent further execution
+            return; 
         }
 
-        const xatRef = db.collection('xats').where('receiverId', '==', username).where('senderId', '==', receiverId).limit(1);
+        const xatRef = db.collection('xats').where('receiverId', '==', userId).where('senderId', '==', receiverId).limit(1);
         const xatSnapshot = await xatRef.get();
 
         if (!xatSnapshot.empty) {
@@ -41,11 +47,16 @@ router.get('/exists', checkUserAndFetchData, async (req, res) => {
 //crear xat
 router.post('/create', checkUserAndFetchData, async(req, res) => {
     try {
-        const { receiverId } = req.body;
+        const { receiver } = req.body;
 
-        if (!(await checkUsername(receiverId, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+        if (!(await checkUsername(receiver, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
 
-        const username = req.userDocument.data().username;
+        const collectionReceiver =  db.collection('users').where('username', '==', receiver);
+        const receiverSnapshot  = await collectionReceiver.get();
+
+        const receiverId = receiverSnapshot.docs[0].id;
+
+        const username = req.userDocument.data().id;
  
         const docRef = await db.collection('xats').add({
             'senderId': username,
@@ -67,7 +78,7 @@ router.post('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
         const { mensaje, fecha } = req.body;
         const xatId = req.params.xatId;
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         // Verificar si el xat existe
         const xatRef = db.collection('xats').doc(xatId);
@@ -115,9 +126,13 @@ router.get('/:xatId/mensajes', async (req, res) => {
         }
 
         let mensajes = [];
-        snapshot.forEach(doc => {
-            mensajes.push(doc.data());
-        });
+        for (const doc of snapshot.docs) {
+            const messageData = doc.data();
+            const userRef = db.collection('users').doc(messageData.senderId);
+            const userDoc = await userRef.get();
+            messageData.senderId = userDoc.data().username;
+            mensajes.push(messageData);
+        }
 
         res.status(200).json(mensajes);
     } catch (error) {
