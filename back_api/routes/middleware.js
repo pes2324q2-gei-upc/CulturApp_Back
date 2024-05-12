@@ -55,7 +55,7 @@ async function checkUsername(username, res, message) {
         res.status(404).send(message);
         return false;
     }
-    return true;
+    return userSnapshot;
 }
 
 async function checkPerson(req, res, next) {
