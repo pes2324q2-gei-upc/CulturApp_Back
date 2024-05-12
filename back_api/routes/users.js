@@ -133,6 +133,8 @@ router.post('/create', async(req, res) => {
 
         const valoradas = [];
 
+        const blockedUsers = [];
+
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
@@ -140,6 +142,7 @@ router.post('/create', async(req, res) => {
           'activities': activities,
           'id': uid,
           'valoradas': valoradas,
+          'blockedUsers': blockedUsers
         });
         res.status(200).send('OK');
     }
@@ -584,6 +587,77 @@ router.delete('/:id/treureRol', checkAdmin, async (req, res) => {
     }
     catch(error) {
         res.send(error);
+    }
+});
+
+router.put('/:username/blockuser', checkUserAndFetchData, async (req, res) => {
+    try {
+        const { blockedUser } = req.body;
+        const blocedUserRef = db.collection('users').where('username', '==', blockedUser);
+        const blockedUserSnapshot = await blocedUserRef.get();
+        if (!blockedUserSnapshot.empty) {
+            let blockedArray = req.userDocument.data().blockedUsers;
+            if (blockedArray.includes(blockedUserSnapshot.docs[0].id)) {
+                res.status(200).send('User already blocked');
+            }
+            else
+                blockedArray.push(blockedUserSnapshot.docs[0].id);
+            const usersCollection = db.collection('users');
+            await usersCollection.doc(req.userDocument.id).update({
+                'blockedUsers': blockedArray
+            });
+
+            res.status(200).send('User blocked');
+        }
+        else {
+            res.status(404).send('Blocked user not found');
+        }
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.put('/:username/unblockuser', checkUserAndFetchData, async (req, res) => {
+    try {
+        const { blockedUser } = req.body;
+        const blocedUserRef = db.collection('users').where('username', '==', blockedUser);
+        const blockedUserSnapshot = await blocedUserRef.get();
+
+        if (!blockedUserSnapshot.empty) {
+            let blockedArray = req.userDocument.data().blockedUsers;
+            if (!blockedArray.includes(blockedUserSnapshot.docs[0].id)) {
+                res.status(200).send('User not blocked');
+            }
+            blockedArray = blockedArray.filter(user => user !== blockedUserSnapshot.docs[0].id);
+            const usersCollection = db.collection('users');
+            await usersCollection.doc(req.userDocument.id).update({
+                'blockedUsers': blockedArray
+            });
+
+            res.status(200).send('User unblocked');
+        }
+        else {
+            res.status(404).send('Blocked user not found');
+        }
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+router.get('/:username/blockedusers', checkUserAndFetchData, async (req, res) => {
+    try {
+        const blockedUsers = req.userDocument.data().blockedUsers;
+        let blockedUsersUsername = [];
+        await Promise.all(blockedUsers.map(async (blockedUser) => {
+            const blockedUserRef = db.collection('users').doc(blockedUser);
+            const blockedUserSnapshot = await blockedUserRef.get();
+            blockedUsersUsername.push(blockedUserSnapshot.data().username);
+        }));
+        res.status(200).json(blockedUsersUsername);
+    } catch (error) {
+        res.status(500).send('Server error');
     }
 });
 

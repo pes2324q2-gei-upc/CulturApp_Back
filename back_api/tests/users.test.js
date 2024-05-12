@@ -1040,3 +1040,161 @@ beforeEach(async () => {
     expect(response.text).toBe('Admin no encontrado');
   });
 });
+
+describe('PUT /users/:username/blockuser', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+        blockedUsers: [],
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+        blockedUsers: [],
+    }
+  ]
+  beforeEach(async () => {
+      for(const user of testUsers) {
+          const userRef = db.collection('users').doc(user.id);
+          await userRef.set(user);
+      }
+  });
+  it('should return 200 and block a user', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/blockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(200);
+      expect(response.text).toBe('User blocked');
+  });
+  it('should return 401 if token is invalid', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/blockuser`)
+          .set('Authorization', 'Bearer invalidToken')
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+      const response = await request(app)
+          .put(`/users/username/blockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest12').encryptedData}`)
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+  it('should return 404 if blocked user does not exist', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/blockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ blockedUser: 'invalidUsername' });
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Blocked user not found');
+  });
+})
+describe('PUT /users/:username/unblockuser', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2']
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2'],
+    }
+  ]
+  beforeEach(async () => {
+      for(const user of testUsers) {
+          const userRef = db.collection('users').doc(user.id);
+          await userRef.set(user);
+      }
+  });
+  it('should return 200 and unblock a user', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/unblockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(200);
+      expect(response.text).toBe('User unblocked');
+  });
+  it('should return 401 if token is invalid', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/unblockuser`)
+          .set('Authorization', 'Bearer invalidToken')
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+      const response = await request(app)
+          .put(`/users/uername/unblockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest12').encryptedData}`)
+          .send({ blockedUser: 'username2' });
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+  it('should return 404 if blocked user does not exist', async () => {
+      const response = await request(app)
+          .put(`/users/${testUsers[0].username}/unblockuser`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ blockedUser: 'invalidUsername' });
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Blocked user not found');
+  });
+});
+describe('GET /users/:username/blockedusers', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2']
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2'],
+    }
+  ]
+  beforeEach(async () => {
+      for(const user of testUsers) {
+          const userRef = db.collection('users').doc(user.id);
+          await userRef.set(user);
+      }
+  });
+  it('should return 200 and list of blocked users', async () => {
+      const response = await request(app)
+          .get(`/users/${testUsers[0].username}/blockedusers`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(["username2"]);
+  });
+  it('should return 401 if token is invalid', async () => {
+      const response = await request(app)
+          .get(`/users/${testUsers[0].username}/blockedusers`)
+          .set('Authorization', 'Bearer invalidToken');
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+      const response = await request(app)
+          .get(`/users/username/blockedusers`)
+          .set('Authorization', `Bearer ${encrypt('useridTest13').encryptedData}`);
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+});
