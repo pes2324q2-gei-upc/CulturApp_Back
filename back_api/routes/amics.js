@@ -19,17 +19,20 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
             return;
         }
 
-        if(!(await checkUsername(friend, res, 'Usuario que recibe la solicitud no encontrado'))) return;
+        let idreq = await checkUsername(friend, res, 'Usuario que recibe la solicitud no encontrado');
+        if(!idreq) return;
+
+        const friendid = idreq.docs[0].id
         
-        const username_solicitador = req.userDocument.data().username;
+        const userid = req.userDocument.id;
         
-        if(username_solicitador == friend){
+        if(userid == friendid){
             res.status(400).send('No puedes seguirte a ti mismo');
             return;
         }
 
         const followingCollection = db.collection('following');
-        const existingRequest = await followingCollection.where('user', '==', username_solicitador).where('friend', '==', friend).get();
+        const existingRequest = await followingCollection.where('user', '==', userid).where('friend', '==', friendid).get();
 
         if (!existingRequest.empty) {
             res.status(409).send('La solicitud ya ha sido enviada');
@@ -37,8 +40,8 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         }
 
         await followingCollection.add({
-            'user': username_solicitador,
-            'friend': friend,
+            'user': userid,
+            'friend': friendid,
             'data_follow': new Date().toISOString(),
             'acceptat': false,
             'pendent': true
@@ -56,18 +59,22 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
 router.put('/accept/:id', checkUserAndFetchData, async (req, res) => {
     try {
         const username_acceptance = req.params.id;
+        
+        const userid = req.userDocument.id;
 
-        if (!(await checkUsername(username_acceptance, res, 'Usuario no encontrado'))) return;
+        let idreq = await checkUsername(username_acceptance, res, 'Usuario no encontrado');
+        if(!idreq) return;
 
-        const username_request = req.userDocument.data().username;
+        const requesterid = idreq.docs[0].id
 
-        if(username_acceptance == username_request){
+        if(requesterid == userid){
             res.status(400).send('No puedes aceptarte a ti mismo');
             return;
         }
+        
 
         const followingRef = db.collection('following');
-        const existingRequest = await followingRef.where('user', '==', username_acceptance).where('friend', '==', username_request).get();
+        const existingRequest = await followingRef.where('user', '==', requesterid).where('friend', '==', userid).get();
 
         if (existingRequest.empty) {
             res.status(404).send('No se ha encontrado la solicitud de amistad');
@@ -98,17 +105,21 @@ router.delete('/delete/:id', checkUserAndFetchData, async(req, res) =>{
 
         const username_delete = req.params.id;
 
-        if (!(await checkUsername(username_delete, res, 'Usuario no encontrado'))) return;
+       
+        let idreq = await checkUsername(username_delete, res, 'Usuario no encontrado');
+        if(!idreq) return;
 
-        const username_request = req.userDocument.data().username;
+        const requesterid = idreq.docs[0].id
+        const userid = req.userDocument.id;
 
-        if(username_delete == username_request){
+
+        if(requesterid == userid){
             res.status(400).send('No puedes rechazarte a ti mismo');
             return;
         }
 
         const followingRef = db.collection('following');
-        const existingRequest = await followingRef.where('user', '==', username_delete).where('friend', '==', username_request).get();
+        const existingRequest = await followingRef.where('user', '==', requesterid).where('friend', '==', userid).get();
 
         if (existingRequest.empty) {
             res.status(404).send('No se ha encontrado la solicitud de amistad');
@@ -131,17 +142,20 @@ router.delete('/deleteFollowing/:id', checkUserAndFetchData, async(req, res) =>{
 
         const username_delete = req.params.id;
 
-        if (!(await checkUsername(username_delete, res, 'Usuario no encontrado'))) return;
+        let idreq = await checkUsername(username_delete, res, 'Usuario no encontrado');
+        if(!idreq) return;
 
-        const username_request = req.userDocument.data().username;
+        const username_deleteid = idreq.docs[0].id
+        const userid = req.userDocument.id;
 
-        if(username_delete == username_request){
+
+        if(username_deleteid == userid){
             res.status(400).send('No puedes eliminarte a ti mismo');
             return;
         }
 
         const followingRef = db.collection('following');
-        const existingRequest = await followingRef.where('user', '==', username_request).where('friend', '==', username_delete).get();
+        const existingRequest = await followingRef.where('user', '==', userid).where('friend', '==', username_deleteid).get();
 
         if (existingRequest.empty) {
             res.status(404).send('No se ha encontrado la solicitud de amistad');
@@ -168,10 +182,13 @@ async function fetchUsers(username, field_user, type, value) {
     const docRef = db.collection('following').where(field_user, '==', username).where(type, '==', true).orderBy('data_follow', 'desc');
     const response = await docRef.get();
     let responseArr = [];
-    
-    response.forEach(doc => {
-        responseArr.push(doc.data());
-    });
+
+    await Promise.all(response.docs.map(async doc => {
+        let userData = {};
+        userData.user = (await db.collection('users').doc(doc.data().user).get()).data().username;
+        userData.friend = (await db.collection('users').doc(doc.data().friend).get()).data().username;
+        responseArr.push(userData);
+    }));
 
     return responseArr;
 }
@@ -180,12 +197,14 @@ router.get('/:id/following', checkUserAndFetchData, async (req, res) => {
     try {
         const username_followings = req.params.id;
 
-        if(!(await checkUsername(username_followings, res, 'Usuario no encontrado'))) return;
+        let idreq = await checkUsername(username_followings, res, 'Usuario no encontrado');
+        if(!idreq) return;
 
-        const username_request = req.userDocument.data().username;
+        const username_followingsid = idreq.docs[0].id
+        const userid = req.userDocument.id;
 
-        if((username_followings == username_request) || (await isHisFriend(username_request, username_followings ))){
-            const responseArr = await fetchUsers(username_followings, 'user', 'acceptat', 'friend');
+        if((username_followingsid == userid) || (await isHisFriend(userid, username_followingsid ))){
+            const responseArr = await fetchUsers(username_followingsid, 'user', 'acceptat', 'friend');
             res.status(200).send(responseArr);
         } else {
             res.status(401).send('No tienes permiso para ver a los seguidos de este usuario');
@@ -200,12 +219,13 @@ router.get('/:id/followers', checkUserAndFetchData, async (req, res) => {
     try {
         const username_followers = req.params.id;
 
-        if(!(await checkUsername(username_followers, res, 'Usuario no encontrado'))) return;
+        let idreq = await checkUsername(username_followers, res, 'Usuario no encontrado');
+        if(!idreq) return;
+        const username_followersid = idreq.docs[0].id
+        const userid = req.userDocument.id;
 
-        const username_request = req.userDocument.data().username;
-
-        if((username_followers == username_request) || (await isHisFriend(username_request, username_followers ))){
-            const responseArr = await fetchUsers(username_followers, 'friend', 'acceptat', 'user');
+        if((userid == username_followersid) || (await isHisFriend(userid, username_followersid ))){
+            const responseArr = await fetchUsers(username_followersid, 'friend', 'acceptat', 'user');
             res.status(200).send(responseArr);
         } else {
             res.status(401).send('No tienes permiso para ver a los seguidores de este usuario');
@@ -220,12 +240,15 @@ router.get('/:id/pendents', checkUserAndFetchData, async(req, res) => {
     try {
         const username_pendents = req.params.id;
 
-        if(!(await checkUsername(username_pendents, res, 'Usuario no encontrado'))) return;
+        let idreq = await checkUsername(username_pendents, res, 'Usuario no encontrado');
+        if(!idreq) return;
 
-        const username_request = req.userDocument.data().username;
+        const username_pendentsid = idreq.docs[0].id
 
-        if(username_pendents == username_request){
-            const responseArr = await fetchUsers(username_pendents, 'friend', 'pendent', 'user');
+        const userid = req.userDocument.id;
+
+        if(username_pendentsid == userid){
+            const responseArr = await fetchUsers(username_pendentsid, 'friend', 'pendent', 'user');
             res.status(200).send(responseArr);
         } else {
             res.status(401).send('No tienes permiso para ver los pendientes a aceptar de este usuario');
@@ -238,13 +261,16 @@ router.get('/:id/pendents', checkUserAndFetchData, async(req, res) => {
 
 router.get('/followingRequests', checkUserAndFetchData, async(req, res) => {
     try {
-        const username = req.userDocument.data().username;
-        const followingRef = db.collection('following').where('user', '==', username).where('pendent', '==', true);
+        const userid = req.userDocument.id;
+        const followingRef = db.collection('following').where('user', '==', userid).where('pendent', '==', true);
         const response = await followingRef.get();
         let responseArr = [];
-        response.forEach(doc => {
-            responseArr.push(doc.data());
-        });
+        await Promise.all(response.docs.map(async doc => {
+            let userData = {};
+            userData.user = (await db.collection('users').doc(doc.data().user).get()).data().username;
+            userData.friend = (await db.collection('users').doc(doc.data().friend).get()).data().username;
+            responseArr.push(userData);
+        }));
 
         res.status(200).send(responseArr);
     } catch (error) {
