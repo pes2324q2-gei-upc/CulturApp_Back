@@ -16,7 +16,7 @@ const checkUsername = require('./middleware').checkUsername;
 async function createImage(file){
     const uuid = uuidv4();
     const name = uuid + '_' + file.originalname;
-    const fileName = 'grups/' + name;
+    const fileName = 'grups/' + name + '.jpg';
     await bucket.file(fileName).createWriteStream().end(file.buffer);
     return fileName;
 }
@@ -29,7 +29,9 @@ router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, 
 
         const membersId = [];
 
-        for (const member of members) {
+        const parsedMembers = Array.isArray(members) ? members : JSON.parse(members);
+
+        for (const member of parsedMembers) {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado')));
             const idmember =  db.collection('users').where('username', '==', member);
             const datam = await idmember.get();
