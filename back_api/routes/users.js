@@ -387,56 +387,12 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
 
         const usersCollection = db.collection('users');
         
-        const activities = [];
 
         if (userDoc.exists && userDoc.id == uid) {
-            const usernameAnt = userDoc.data().username;
             await usersCollection.doc(uid).update({
                 'username': username,
                 'favcategories': categories,
               });
-             followingRef = await db.collection('following').where('friend', '==',usernameAnt).get();
-             if(!followingRef.empty) {
-                followingRef.forEach(doc => { 
-                    db.collection('following').doc(doc.id).update({
-                        'friend': username
-                    });
-                });
-             }
-             followingRef = await db.collection('following').where('user', '==', usernameAnt).get();
-             if(!followingRef.empty) {
-                followingRef.forEach(doc => {
-                    db.collection('following').doc(doc.id).update({
-                        'user': username
-                    });
-                });
-            }
-                xatsRef = await db.collection('xats').where('snederId', '==', usernameAnt).get();
-                if(!xatsRef.empty) {
-                    xatsRef.forEach(doc => {
-                    db.collection('xats').doc(doc.id).update({
-                        'senderId': username
-                        });
-                    });
-                }
-                xatsRef = await db.collection('xats').where('receiverId', '==',usernameAnt).get();
-                if(!xatsRef.empty) {
-                    xatsRef.forEach(doc => {
-                        db.collection('xats').doc(doc.id).update({
-                            'receiverId': username
-                        });
-                    });     
-                }
-                grupsRef = await db.collection('grups').where('participants','array-contains', usernameAnt).get();
-                if(!grupsRef.empty) {
-                    grupsRef.forEach(doc => {
-                    let arr = doc.data().participants;
-                    arr = arr.map(participant => participant === usernameAnt ? username : participant);
-                        db.collection('grups').doc(doc.id).update({
-                            'participants': arr
-                        });
-                    });
-                }
             res.status(200).send('OK');
         }
         else {
