@@ -577,3 +577,82 @@ describe('GET /activitats/mediambient', () => {
             expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
     });
   });
+describe('POST /activitats/toVencidas', () => {
+    const actsTest = [ 
+      act1 = {
+      denominaci: "testNom1",
+      descripcio: "testDescripcio1",
+      data_inici: "2024-02-02T00:00:00.000",
+      data_fi: "2024-02-02T00:00:00.000",
+      tags_categor_es: ["testTag1", "testTag2"],
+      ubicacio: "testUbicacio1",
+      aforament: 100,
+      aforament_actual: 50,
+      assistents: ["testUid1"],
+      assistents_actuals: 1
+    },
+    act2 = {
+      denominaci: "testNom1",
+      descripcio: "testDescripcio1",
+      data_inici: "2024-02-02T00:00:00.000",
+      data_fi: "2024-07-07T00:00:00.000",
+      tags_categor_es: ["testTag1", "testTag2"],
+      ubicacio: "testUbicacio1",
+      aforament: 100,
+      aforament_actual: 50,
+      assistents: ["testUid1"],
+      assistents_actuals: 1
+    },
+    act3 = {
+      denominaci: "testNom1",
+      descripcio: "testDescripcio1",
+      data_inici: "2024-07-07T00:00:00.000",
+      data_fi: "2024-07-07T00:00:00.000",
+      tags_categor_es: ["testTag1", "testTag2"],
+      ubicacio: "testUbicacio1",
+      aforament: 100,
+      aforament_actual: 50,
+      assistents: ["testUid1"],
+      assistents_actuals: 1
+    }
+  ]
+  const testClients = [ 
+    {
+    uid: 'testUid2',
+    username: 'testUsername2',
+    },
+];
+  beforeEach(async () => {
+    for (const act of actsTest) {
+      await db.collection('actividades').doc().set(act);
+    } 
+    for (const client of testClients) {
+      await db.collection('clients').doc(client.uid).set({"username": client.username});
+    }
+  });
+  it('debería enviar 200 porque se han actualizado las actividades', async () => {
+      const response = await request(app)
+      .post('/activitats/toVencidas')
+      .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`);
+      expect(response.statusCode).toBe(200);
+      expect(response.text).toBe('Actividades pasadas a vencidas');
+      const vencidas = await db.collection('vencidas').get();
+      expect(vencidas.docs[0].data()).toEqual(act1);
+  });
+  it('debería enviar 401 porque el token no es válido', async () => {
+      
+          const response = await request(app)
+          .post('/activitats/toVencidas')
+          .set('Authorization', `Bearer testUid1`);
+          expect(response.statusCode).toBe(401);
+          expect(response.text).toBe('Token inválido');
+    });
+    it('debería enviar 404 porque el usuario o cliente no existe', async () => {
+                
+            const response = await request(app)
+                .post('/activitats/toVencidas')
+                .set('Authorization', `Bearer ${encrypt('testUid3').encryptedData}`);
+            expect(response.statusCode).toBe(404);
+            expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
+    });
+});

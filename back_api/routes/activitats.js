@@ -162,5 +162,29 @@ router.get('/mediambient', checkPerson, async (req, res) => {
 
 });
 
+router.post('/toVencidas', checkPerson, async (req, res) => {
+    try {
+        var date = new Date().toISOString();
+        date = date.replace('Z', '');
+        const activityRef = db.collection("actividades").where('data_inici', '<', date);
+        const response = await activityRef.get();
+        response.forEach(async doc => {
+            if(doc.data().data_fi < date) {
+                await db.collection('vencidas').doc(doc.id).set(doc.data());
+                await db.collection('actividades').doc(doc.id).delete();
+            }
+            else if(doc.data().data_fi > "No disponible") {
+                await db.collection('vencidas').doc(doc.id).set(doc.data());
+                await db.collection('actividades').doc(doc.id).delete();
+            }
+        });
+        res.status(200).send('Actividades pasadas a vencidas');
+
+    }
+    catch(error){
+        res.status(404).send
+    }
+});
+
 
 module.exports = router
