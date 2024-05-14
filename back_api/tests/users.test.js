@@ -249,14 +249,6 @@ describe('GET /users/:uid/privacy', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('true');
 
-
-    res = await request(app)
-      .get('/users/testUid1/privacy')
-      .set('Authorization',  `Bearer ${encrypt('testUid2').encryptedData}`);
-
-    expect(res.statusCode).toEqual(401);
-    expect(res.text).toBe('Forbidden');
-
     res = await request(app)
       .get('/users/testUid3/privacy')
       .set('Authorization',  `Bearer ${encrypt('testUid3').encryptedData}`);

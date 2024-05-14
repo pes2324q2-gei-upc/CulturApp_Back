@@ -295,9 +295,10 @@ router.get('/:uid/username', checkUserAndFetchData, async (req, res) => {
 router.get('/:uid/privacy', checkUserAndFetchData, async (req, res) => {
     try {
         const uid = req.params.uid;
-        const userDoc = await req.userDocument;
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
 
-        if (userDoc.exists && userDoc.id == uid) {
+        if (userDoc.exists) {
             const userData = userDoc.data();
             const privacyStatus = userData.private;
             res.status(200).json(privacyStatus);
