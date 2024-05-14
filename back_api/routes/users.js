@@ -142,7 +142,8 @@ router.post('/create', async(req, res) => {
           'activities': activities,
           'id': uid,
           'valoradas': valoradas,
-          'blockedUsers': blockedUsers
+          'blockedUsers': blockedUsers,
+          'private': false
         });
         res.status(200).send('OK');
     }
@@ -291,6 +292,27 @@ router.get('/:uid/username', checkUserAndFetchData, async (req, res) => {
     }
 });
 
+router.get('/:uid/privacy', checkUserAndFetchData, async (req, res) => {
+    try {
+        const uid = req.params.uid;
+        const userDoc = await req.userDocument;
+
+        if (userDoc.exists && userDoc.id == uid) {
+            const userData = userDoc.data();
+            const privacyStatus = userData.private;
+            res.status(200).json(privacyStatus);
+        }
+        else if (userDoc.exists) {
+            return res.status(401).send('Forbidden');
+        }
+        else {
+            return res.status(404).send('Not found');
+        }
+    } catch (error) {
+        console.error('Error al obtener username del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
 
 router.get('/activitats/search/:name', checkUserAndFetchData, async (req, res) => {
     try {
@@ -405,6 +427,30 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
+router.post('/changePrivacy', checkUserAndFetchData, async(req, res) => {
+    try {
+
+        const { uid, privacyStatus } = req.body;
+
+        userDoc = await req.userDocument;
+
+        const usersCollection = db.collection('users');
+
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                'private': privacyStatus,
+              });
+            res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
+
+    }
+    catch (error){
+        res.send(error);
+    }
+});
 
 
 router.post('/addValorada', checkUserAndFetchData, async (req, res) => {

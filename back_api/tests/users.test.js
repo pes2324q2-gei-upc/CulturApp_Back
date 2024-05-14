@@ -214,6 +214,58 @@ describe('GET /users/:uid/username', () => {
   });
 });
 
+describe('GET /users/:uid/privacy', () => {
+  it('should return the privacy of a user', async () => {
+    const users = [
+      {
+        uid: 'testUid1',
+        username: 'testUsername1',
+        activitats: ['1', '2', '3'],
+        private: false
+      },
+      {
+        uid: 'testUid2',
+        username: 'testUsername2',
+        activitats: ['1', '2', '3'],
+        private: true
+      }
+    ];
+
+    for (const user of users) {
+      await db.collection('users').doc(user.uid).set(user);
+    }
+
+    res = await request(app)
+      .get('/users/testUid1/privacy')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('false');
+
+    res = await request(app)
+      .get('/users/testUid2/privacy')
+      .set('Authorization',  `Bearer ${encrypt('testUid2').encryptedData}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('true');
+
+
+    res = await request(app)
+      .get('/users/testUid1/privacy')
+      .set('Authorization',  `Bearer ${encrypt('testUid2').encryptedData}`);
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.text).toBe('Forbidden');
+
+    res = await request(app)
+      .get('/users/testUid3/privacy')
+      .set('Authorization',  `Bearer ${encrypt('testUid3').encryptedData}`);
+
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+});
+
 //OK
 describe('GET /users/exists', () => {
   it('should return if a user exists', async () => {
@@ -334,6 +386,37 @@ describe('PUT /users/edit', () => {
   });
 });
 
+describe('PUT /users/changePrivacy', () => {
+  it('should change the privacy of a user', async () => {
+    const res = await request(app)
+      .post('/users/create')
+      .send({
+        uid: 'testUid1',
+        username: 'testUser',
+        email: 'testEmail',
+        favcategories: JSON.stringify(['circ', 'cinema']),
+        privacy: false
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('OK');
+
+    const res2 = await request(app)
+      .post('/users/changePrivacy')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
+      .send({
+        uid: 'testUid1',
+        privacyStatus: true
+      });
+
+    expect(res2.statusCode).toEqual(200);
+    expect(res2.text).toBe('OK');
+
+    const doc = await db.collection('users').doc('testUid1').get();
+    expect(doc.exists).toBeTruthy();
+    expect(doc.data().private).toBe(true);
+  });
+});
 
 describe('GET /users/:id', () => {
   const testUsers = [
