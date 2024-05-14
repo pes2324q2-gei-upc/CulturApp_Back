@@ -664,6 +664,22 @@ router.get('/:username/blockedusers', checkUserAndFetchData, async (req, res) =>
     }
 });
 
-
+router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
+    try {
+        let activitatID = req.body.activitatID;
+        let activitats =  req.userDocument.data().activities;
+        if (!activitats.includes(activitatID)) {
+            activitats.push(activitatID);
+            let userRef = db.collection('users').doc(req.userDocument.id);
+            await userRef.update({
+                activities: activitats
+            });
+        }
+        res.status(200).send('QR scanned');
+    }
+    catch (error) {
+        res.status(500).send('Server error');
+    }
+});
 
 module.exports = router

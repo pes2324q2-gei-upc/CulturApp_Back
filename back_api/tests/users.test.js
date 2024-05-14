@@ -1273,3 +1273,59 @@ describe('GET /users/:username/blockedusers', () => {
       expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
   });
 });
+describe('PUT /users/escanearQR', () => {
+  const testUsers = [
+    usertes1 = {
+        id: 'useridTest1',
+        username: 'username',
+        email: 'email',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2']
+    },
+    usertest2 = {
+        id: 'useridTest2',
+        username: 'username2',
+        email: 'email2',
+        activities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2'],
+    }
+  ]
+  beforeEach(async () => {
+      for(const user of testUsers) {
+          const userRef = db.collection('users').doc(user.id);
+          await userRef.set(user);
+      }
+  });
+  it('should return 200 and add the activity to user activities', async () => {
+      const response = await request(app)
+          .put(`/users/escanearQR`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ activitatID: '4' });
+      expect(response.status).toBe(200);
+      expect(response.text).toBe('QR scanned');
+  });
+  it('should return 200 and not add the user to activity', async () => {
+      const response = await request(app)
+          .put(`/users/escanearQR`)
+          .set('Authorization', `Bearer ${encrypt('useridTest1').encryptedData}`)
+          .send({ activitatID: '3' });
+      expect(response.status).toBe(200);
+      expect(response.text).toBe('QR scanned');
+  });
+  it('should return 401 if token is invalid', async () => {
+      const response = await request(app)
+          .put(`/users/escanearQR`)
+          .set('Authorization', 'Bearer invalidToken')
+          .send({ activitatID: '4' });
+      expect(response.status).toBe(401);
+      expect(response.text).toBe('Token inválido');
+  });
+  it('should return 404 if user does not exist', async () => {
+      const response = await request(app)
+          .put(`/users/escanearQR`)
+          .set('Authorization', `Bearer ${encrypt('useridTest13').encryptedData}`)
+          .send({ activitatID: '4' });
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+});
