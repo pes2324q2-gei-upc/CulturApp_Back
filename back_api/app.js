@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/admin')
 const forosRoutes = require('./routes/foros')
 const xatsRoutes = require('./routes/xats')
 const grupsRoutes = require('./routes/grups')
+const organitzadorsRoutes = require('./routes/organitzadors')
 
 global.callCount = 0;
 
@@ -26,6 +27,6 @@ app.use('/admin', adminRoutes)
 app.use('/foros', forosRoutes)
 app.use('/xats', xatsRoutes)
 app.use('/grups', grupsRoutes)
-
+app.use('/organitzadors', organitzadorsRoutes)
 
 module.exports = app
