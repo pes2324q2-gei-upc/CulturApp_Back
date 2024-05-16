@@ -16,7 +16,6 @@ router.get('/llistarActivitats', checkAdmin, async (req, res) => {
         let intermediateArr = [];
         await Promise.all(response.docs.map(async doc => {
             if (!intermediateArr.includes(doc.data().activitat)) {
-            console.log(doc.data().activitat);
             intermediateArr.push(doc.data().activitat);
             let actdoc
             actdoc = await db.collection("actividades").doc(doc.data().activitat).get();
@@ -26,7 +25,6 @@ router.get('/llistarActivitats', checkAdmin, async (req, res) => {
             responseArr.push(actdoc.data());
             }
         }));
-        console.log(responseArr);
         res.status(200).send(responseArr);
     } catch (error){
         res.status(404).send(error);
@@ -35,13 +33,10 @@ router.get('/llistarActivitats', checkAdmin, async (req, res) => {
 
 router.get('/activitat/:id/organitzadors', checkAdmin, async(req, res) => {
     try {
-        console.log(0);
         const organitzadorsDocs = await db.collection('organitzadors').where('activitat', '==', req.params.id).get();
-        console.log(organitzadorsDocs.docs.map(doc => doc.data())); // Access the data of each document
         let responseArr = [];
         await Promise.all(organitzadorsDocs.docs.map(async doc => {
             let userdoc = await db.collection("users").doc(doc.data().user).get();
-            console.log(userdoc.data());
             responseArr.push(userdoc.data());
         }));
         res.status(200).send(responseArr);
