@@ -53,7 +53,8 @@ describe('GET /organitzadors/llistarActivitats', () => {
   ];
   beforeEach(async () => {
     for (let i = 0; i < organitzadors.length; i++) {
-      await db.collection('organitzadors').doc(`user${i}`).set(organitzadors[i]);
+      let orgid = organitzadors[i].user;
+      await db.collection('organitzadors').doc(orgid).set(organitzadors[i]);
     }
     for (let i = 0; i < acts.length; i++) {
       doc_id = organitzadors[i].activitat;
@@ -113,7 +114,7 @@ describe('GET /organitzadors/activitat/:id/organitzadors', () => {
       doc_id = organitzadors[i].user;
       await db.collection('users').doc(doc_id).set(users[i]);
     }
-    db.collection('administradors').doc('admin').set({ user: 'admin' });
+    await db.collection('administradors').doc('admin').set({ user: 'admin' });
   });
   it('should return all the organizers of the activity', async () => {
     const res = await request(app)
