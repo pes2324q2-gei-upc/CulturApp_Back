@@ -39,8 +39,7 @@ router.get('/activitat/:id/organitzadors', checkAdmin, async(req, res) => {
         await Promise.all(organitzadorsDocs.docs.map(async doc => {
             if(!intermediateArr.includes(doc.data().user)) {
                 intermediateArr.push(doc.data().user);
-                let userdoc = await db.collection("users").doc(doc.data().user).get();
-                responseArr.push(userdoc.data());
+                responseArr.push(doc.data());
             }
         }));
         res.status(200).send(responseArr);

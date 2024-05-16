@@ -121,7 +121,7 @@ describe('GET /organitzadors/activitat/:id/organitzadors', () => {
       .get('/organitzadors/activitat/activitat1/organitzadors')
       .set('Authorization', `Bearer ${encrypt('admin').encryptedData}`);
     expect(res.statusCode).toEqual(200);
-    expect(res.body).toEqual(users);
+    expect(res.body).toEqual(organitzadors);
   });
   it('should return 404 if the user is not an admin', async () => {
     const res = await request(app)
