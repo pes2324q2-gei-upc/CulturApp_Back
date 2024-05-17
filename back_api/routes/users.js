@@ -135,6 +135,8 @@ router.post('/create', async(req, res) => {
 
         const blockedUsers = [];
 
+        const AssitedActivities = [];
+
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
@@ -143,6 +145,7 @@ router.post('/create', async(req, res) => {
           'id': uid,
           'valoradas': valoradas,
           'blockedUsers': blockedUsers,
+          'AssitedActivities': AssitedActivities,
           'private': false
         });
         res.status(200).send('OK');
@@ -664,16 +667,22 @@ router.get('/:username/blockedusers', checkUserAndFetchData, async (req, res) =>
     }
 });
 
+function Puntuacio(activityID) {
+
+}
+
 router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
     try {
         let activitatID = req.body.activitatID;
-        let activitats =  req.userDocument.data().activities;
+        let activitats =  req.userDocument.data().AssitedActivities;
         if (!activitats.includes(activitatID)) {
             activitats.push(activitatID);
             let userRef = db.collection('users').doc(req.userDocument.id);
             await userRef.update({
-                activities: activitats
+                AssitedActivities: activitats
             });
+            Puntuacio(activitatID);
+            
         }
         res.status(200).send('QR scanned');
     }
