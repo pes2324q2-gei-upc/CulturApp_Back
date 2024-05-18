@@ -567,6 +567,7 @@ router.get('/banned/list', checkAdmin, async (req, res) => {
             let bannedUser = doc.data();
             let userSnapshot = await userRef.doc(bannedUser.id).get();
             let user = userSnapshot.data();
+            user.id = userSnapshot.id;
             responseArr.push(user);
         }
 
