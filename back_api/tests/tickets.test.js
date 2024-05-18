@@ -57,7 +57,7 @@ describe('POST /tickets/reportUsuari/create', () => {
           titol: 'tittoltest',
           usuariReportat: 'testUsername2',
           report: 'testReport',
-          placeReport: 'testPlace no hi ha'
+          placeReport: 'forum no hi ha'
         });
   
       expect(res.statusCode).toEqual(200);
