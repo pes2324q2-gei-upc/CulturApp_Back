@@ -21,6 +21,10 @@ router.post('/reportUsuari/create', checkUserAndFetchData, async(req, res) => {
             res.status(400).send('Faltan atributos');
             return;
         }
+        if (placeReport && (placeReport.split(' ')[0] !== "forum" && placeReport.split(' ')[0] !== "chat" && placeReport.split(' ')[0] !== "group")) {
+            res.status(400).send('Reporte no válido');
+            return;
+        }
         //checkUsername(usuariReportat, res, 'Usuario reportado no encontrado');
         const userSnapshot = await db.collection('users').where('username', '==', usuariReportat).get();
 
