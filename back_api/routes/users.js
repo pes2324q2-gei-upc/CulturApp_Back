@@ -610,7 +610,18 @@ router.put('/:username/blockuser', checkUserAndFetchData, async (req, res) => {
             await usersCollection.doc(req.userDocument.id).update({
                 'blockedUsers': blockedArray
             });
-
+            const friendRef = db.collection('following').where('user', '==', req.userDocument.id).where('friend', '==', blockedUserSnapshot.docs[0].id);
+            await friendRef.get().then((snapshot) => {
+                snapshot.forEach((doc) => {
+                    doc.ref.delete();
+                });
+            });
+            const friendRef2 = db.collection('following').where('user', '==', blockedUserSnapshot.docs[0].id).where('friend', '==', req.userDocument.id);
+            await friendRef2.get().then((snapshot) => {
+                snapshot.forEach((doc) => {
+                    doc.ref.delete();
+                });
+            });
             res.status(200).send('User blocked');
         }
         else {
