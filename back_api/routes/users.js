@@ -6,6 +6,7 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
+const { Puntuacio } = require('./insignies');
 
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
@@ -678,10 +679,6 @@ router.get('/:username/blockedusers', checkUserAndFetchData, async (req, res) =>
         res.status(500).send('Server error');
     }
 });
-
-function Puntuacio(activityID) {
-
-}
 
 router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
     try {
