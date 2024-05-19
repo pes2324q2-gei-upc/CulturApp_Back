@@ -242,6 +242,24 @@ router.get('/:id/pendents', checkUserAndFetchData, async(req, res) => {
     }
 });
 
+router.get('/user/:username/isFriend', checkUserAndFetchData, async(req, res) => {
+    try {
+        const friend = await db.collection('users').where('username', '==', req.params.username).get();
+        if (friend.empty) {
+            res.status(404).send('Usuario no encontrado');
+            return;
+        }
+        let friendid = friend.docs[0].id;
+        const userid = req.userDocument.id;
+        const docRef = db.collection('following').where('user', '==', userid).where('friend', '==', friendid).where('acceptat', '==', true);
+        const response = await docRef.get();
+        return res.status(200).send(!response.empty);
+    }
+    catch(error) {
+        res.status(500).send(error);
+    }
+});
+
 router.get('/followingRequests', checkUserAndFetchData, async(req, res) => {
     try {
         const userid = req.userDocument.id;
