@@ -146,7 +146,9 @@ router.put('/:grupId/update', upload.single('file'), async (req, res) => {
 
         const membersId = [];
 
-        for (const member of members) {
+        const parsedMembers = Array.isArray(members) ? members : JSON.parse(members);
+
+        for (const member of parsedMembers) {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
             const idmember =  db.collection('users').where('username', '==', member);
             const datam = await idmember.get();

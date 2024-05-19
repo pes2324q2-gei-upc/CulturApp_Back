@@ -59,6 +59,7 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         const username = req.userDocument.data().id;
  
         const docRef = await db.collection('xats').add({
+            'id': " ",
             'senderId': username,
             'receiverId': receiverId,
             'last_msg': ' ',
@@ -66,6 +67,10 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
         });
 
         res.status(201).send({ message: "Xat creado exitosamente", id: docRef.id });
+
+        await docRef.update({
+            id: docRef.id
+        });
     }
     catch (error){
         res.status(500).send("Error interno del servidor");
