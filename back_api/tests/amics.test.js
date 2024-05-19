@@ -813,3 +813,74 @@ describe('GET /amics/followingRequests' , () => {
       expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
   });
 });
+describe('GET /user/:id/isFriend', () =>{
+  const testUsers = [
+    {
+      uid: 'testUid1',
+      username: 'testUsername1',
+    },
+    {
+      uid: 'testUid2',
+      username: 'testUsername2',
+    },
+    {
+      uid: 'testUid3',
+      username: 'testUsername3',
+    }  
+  ];
+
+  const requests = [
+    {
+      'user': 'testUid1',
+      'friend': 'testUid2',
+      'data_follow': new Date().toISOString(),
+      'acceptat': true,
+      'pendent': false,
+    },
+    {
+      'user': 'testUid1',
+      'friend': 'testUid3',
+      'data_follow': new Date().toISOString(),
+      'acceptat': false,
+      'pendent': true,
+    }
+  ];
+  beforeEach(async () => {
+      for (const usuari of testUsers) {
+          await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+      }
+      
+      for (const request of requests) {
+          await db.collection('following').add(request);
+      }
+  });
+
+  it('debería enviar 200 y true porque son amigos', async () => {
+    const res = await request(app)
+    .get('/amics/user/testUsername2/isFriend')
+    .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toBe(true);
+  });
+  it('debería enviar 200 y false porque no son amigos', async () => {
+    const res = await request(app)
+    .get('/amics/user/testUsername3/isFriend')
+    .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toBe(false);
+  });
+  it('debería enviar 401 porque el token no es válido', async () => {
+    const res = await request(app)
+    .get('/amics/user/testUsername2/isFriend')
+    .set('Authorization', 'Bearer testUid1')
+    expect(res.statusCode).toEqual(401);
+    expect(res.text).toBe('Token inválido');
+  });
+  it('debería enviar 404 porque el usuario que ha hecho la solicitud no existe', async () => {
+    const res = await request(app)
+    .get('/amics/user/testUsername2/isFriend')
+    .set('Authorization', `Bearer ${encrypt('testUid4').encryptedData}`)
+    expect(res.statusCode).toEqual(404);
+    expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
+  });
+});
