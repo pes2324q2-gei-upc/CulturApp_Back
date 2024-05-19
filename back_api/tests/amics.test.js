@@ -230,16 +230,6 @@ describe('GET /amics/:id/following/', () => {
         expect(res.statusCode).toEqual(404);
         expect(res.text).toBe('Usuario no encontrado');
     });
-
-    it('debería enviar 401 porque el usuario solicitador no tiene permiso para ver los seguidos del usuario indicado', async () => {
-        
-          const res = await request(app)
-          .get('/amics/testUsername1/following/')
-          .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
-          
-          expect(res.statusCode).toEqual(401);
-          expect(res.text).toBe('No tienes permiso para ver a los seguidos de este usuario');
-    }); 
     
 });
 
@@ -359,16 +349,6 @@ describe('GET /amics/:id/followers/', () => {
         expect(res.statusCode).toEqual(404);
         expect(res.text).toBe('Usuario que envió la solicitud no encontrado');
     });
-
-    it('debería enviar 401 porque el usuario solicitador no tiene permiso para ver los seguidores del usuario indicado', async () => {
-        
-          const res = await request(app)
-          .get('/amics/testUsername1/followers/')
-          .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
-          
-          expect(res.statusCode).toEqual(401);
-          expect(res.text).toBe('No tienes permiso para ver a los seguidores de este usuario');
-    }); 
     
 });
 

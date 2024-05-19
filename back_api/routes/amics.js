@@ -172,12 +172,6 @@ router.delete('/deleteFollowing/:id', checkUserAndFetchData, async(req, res) =>{
     }
 });
 
-async function isHisFriend(friend, username){
-    const docRef = db.collection('following').where('user', '==', username).where('friend', '==', friend).where('acceptat', '==', true);
-    const response = await docRef.get();
-    return !response.empty;
-}
-
 async function fetchUsers(username, field_user, type, value) {
     const docRef = db.collection('following').where(field_user, '==', username).where(type, '==', true).orderBy('data_follow', 'desc');
     const response = await docRef.get();
@@ -201,14 +195,9 @@ router.get('/:id/following', checkUserAndFetchData, async (req, res) => {
         if(!idreq) return;
 
         const username_followingsid = idreq.docs[0].id
-        const userid = req.userDocument.id;
-
-        if((username_followingsid == userid) || (await isHisFriend(userid, username_followingsid ))){
-            const responseArr = await fetchUsers(username_followingsid, 'user', 'acceptat', 'friend');
-            res.status(200).send(responseArr);
-        } else {
-            res.status(401).send('No tienes permiso para ver a los seguidos de este usuario');
-        }
+        const responseArr = await fetchUsers(username_followingsid, 'user', 'acceptat', 'friend');
+        res.status(200).send(responseArr);
+        
 
     } catch (error){
         res.status(404).send(error);
@@ -222,14 +211,8 @@ router.get('/:id/followers', checkUserAndFetchData, async (req, res) => {
         let idreq = await checkUsername(username_followers, res, 'Usuario no encontrado');
         if(!idreq) return;
         const username_followersid = idreq.docs[0].id
-        const userid = req.userDocument.id;
-
-        if((userid == username_followersid) || (await isHisFriend(userid, username_followersid ))){
-            const responseArr = await fetchUsers(username_followersid, 'friend', 'acceptat', 'user');
-            res.status(200).send(responseArr);
-        } else {
-            res.status(401).send('No tienes permiso para ver a los seguidores de este usuario');
-        }
+        const responseArr = await fetchUsers(username_followersid, 'friend', 'acceptat', 'user');
+        res.status(200).send(responseArr);
 
     } catch (error){
         res.status(404).send(error);
