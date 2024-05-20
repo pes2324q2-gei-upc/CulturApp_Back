@@ -65,9 +65,15 @@ router.get('/:foroId/posts', async (req, res) => {
         }
 
         let posts = [];
-        snapshot.forEach(doc => {
-            posts.push(doc.data());
-        });
+
+        for (const doc of snapshot.docs) {
+            const postData = doc.data();
+            const userRef = db.collection('users').doc(postData.username);
+            const userDoc = await userRef.get();
+            postData.username = userDoc.data().username;
+            posts.push(postData);
+        }
+
 
         res.status(200).json(posts);
     } catch (error) {
@@ -81,8 +87,6 @@ router.post('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
         const { mensaje, fecha, numero_likes } = req.body;
         const foroId = req.params.foroId;
 
-        const username = req.userDocument.data().username;
-
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
         const foroSnapshot = await foroRef.get();
@@ -94,7 +98,7 @@ router.post('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
 
         // Agregar el nuevo post al foro
         await foroRef.collection('posts').add({
-            username: username,
+            username: req.userDocument.id,
             mensaje: mensaje,
             fecha: fecha,
             numero_likes: numero_likes
@@ -121,7 +125,7 @@ router.delete('/:foroId/posts/:postId', checkUserAndFetchData, async(req, res) =
             return;
         }
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         const postSnapshot = await foroRef.collection('posts').doc(postId).get();
 
@@ -150,7 +154,7 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
         const foroId = req.params.foroId;
         const postId = req.params.postId;
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
@@ -200,9 +204,13 @@ router.get('/:foroId/posts/:postId/reply', async (req, res) => {
         }
 
         let posts = [];
-        snapshot.forEach(doc => {
-            posts.push(doc.data());
-        });
+        for (const doc of snapshot.docs) {
+            const postData = doc.data();
+            const userRef = db.collection('users').doc(postData.username);
+            const userDoc = await userRef.get();
+            postData.username = userDoc.data().username;
+            posts.push(postData);
+        }
 
         res.status(200).json(posts);
     } catch (error) {
@@ -226,7 +234,7 @@ router.delete('/:foroId/posts/:postId/reply/:replyId', checkUserAndFetchData, as
             return;
         }
 
-        const username = req.userDocument.data().username;
+        const username = req.userDocument.data().id;
 
         const replySnapshot = await postRef.collection('reply').doc(replyId).get();
 
