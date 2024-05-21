@@ -121,37 +121,6 @@ router.get('/:username/info', async (req, res) => {
     }
 });
 
-router.post('/create', async(req, res) => {
-    try {
-        const { uid, username, email, favcategories } = req.body;
-
-        const categories = favcategories;
-
-        const usersCollection = db.collection('users');
-        
-        const activities = [];
-
-        const valoradas = [];
-
-        const blockedUsers = [];
-
-        await usersCollection.doc(uid).set({
-          'email': email,
-          'username': username,
-          'favcategories': categories,
-          'activities': activities,
-          'id': uid,
-          'valoradas': valoradas,
-          'blockedUsers': blockedUsers,
-          'private': false
-        });
-        res.status(200).send('OK');
-    }
-    catch (error){
-        res.send(error);
-    }
-});
-
 /*router.get('/:id', checkPerson, async (req, res) => {
     try {
         var id = req.params.id;
@@ -409,7 +378,6 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
         const categories = JSON.parse(favcategories);
 
         const usersCollection = db.collection('users');
-        
 
         if (userDoc.exists && userDoc.id == uid) {
             await usersCollection.doc(uid).update({
@@ -429,8 +397,8 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
 });
 
 router.post('/changePrivacy', checkUserAndFetchData, async(req, res) => {
+    
     try {
-
         const { uid, privacyStatus } = req.body;
 
         userDoc = await req.userDocument;
@@ -679,13 +647,14 @@ router.get('/:username/blockedusers', checkUserAndFetchData, async (req, res) =>
 router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
     try {
         let activitatID = req.body.activitatID;
-        let activitats =  req.userDocument.data().activities;
+        let activitats =  req.userDocument.data().AssitedActivities;
         if (!activitats.includes(activitatID)) {
             activitats.push(activitatID);
             let userRef = db.collection('users').doc(req.userDocument.id);
             await userRef.update({
-                activities: activitats
+                AssitedActivities: activitats
             });
+            await Puntuacio(activitatID, req.userDocument);
         }
         res.status(200).send('QR scanned');
     }
@@ -693,5 +662,242 @@ router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+router.post('/create', async(req, res) => {
+    try {
+        const { uid, username, email, favcategories } = req.body;
+
+        const categories = favcategories;
+
+        const usersCollection = db.collection('users');
+        
+        const activities = [];
+
+        const valoradas = [];
+
+        const blockedUsers = [];
+
+        const AssitedActivities = [];
+        await usersCollection.doc(uid).set({
+          'email': email,
+          'username': username,
+          'favcategories': categories,
+          'activities': activities,
+          'id': uid,
+          'valoradas': valoradas,
+          'blockedUsers': blockedUsers,
+          'AssitedActivities': AssitedActivities,
+          'private': false
+        });
+        await crearInsignies(uid);
+        res.status(200).send('OK');
+    }
+    catch (error){
+        res.send(error);
+    }
+});
+
+const catsAMB = [
+    "Residus",
+    "territori.espai_public_platges",
+    "Sostenibilitat",
+    "Aigua",
+    "territori.espai_public_parcs",
+    "Espai públic - Rius",
+    "Espai públic - Parcs",
+    "Portal de transparència",
+    "Mobilitat sostenible",
+    "Internacional",
+    "Activitat econòmica",
+    "Polítiques socials",
+    "territori.espai_public_rius",
+    "Espai públic - Platges"
+]
+
+function calculNivells(nivell, punts) {
+    if(nivell == 'None') {
+        if(punts >= 10) {
+            nivell = 'Bronze';
+            punts = 0;
+        }
+    }
+    else if(nivell == 'Bronze') {
+        if(punts >= 50) {
+            nivell = 'Plata';
+            punts = 0;
+        }
+    }
+    else if(nivell == 'Plata') {
+        if(punts >= 100) {
+            nivell = 'Or';
+            punts = 0;
+        }
+    }
+    return nivell, punts;
+}
+
+async function Puntuacio(activitatID, user) {
+    try {
+        const actRef = db.collection('actividades').doc(activitatID);
+        const actDoc = await actRef.get();
+        if (!actDoc.exists) {
+            res.status(404).send('Actividad no encontrada');
+            return;
+        }
+        const actData = actDoc.data();
+        actData.tags_categor_es.forEach(async categoria => {
+            const insigniesRef = db.collection('insignies').doc(user.id);
+            const insigniesDoc = await insigniesRef.get();
+            if (!insigniesDoc.exists) {
+                return res.status(404).send('Insignies not found');
+            }
+            if (catsAMB.includes(categoria)) {
+                let nivell = insigniesDoc.data().reciclar[0];
+                let punts = insigniesDoc.data().reciclar[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                insigniesRef.update({
+                    'reciclar': [nivell, punts]
+                });
+            }
+            else if(categoria == 'carnavals') {
+                let nivell = insigniesDoc.data().carnaval[0];
+                let punts = insigniesDoc.data().carnaval[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'carnaval': [nivell, punts]
+                });
+            }
+            else if (categoria == 'concerts') {
+                let nivell = insigniesDoc.data().concert[0];
+                let punts = insigniesDoc.data().concert[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'concert': [nivell, punts]
+                });
+            }
+            else if (categoria == 'exposicions') {
+                let nivell = insigniesDoc.data().arte[0];
+                let punts = insigniesDoc.data().arte[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'arte': [nivell, punts]
+                });
+            }
+            else if (categoria == 'conferencies') {
+                let nivell = insigniesDoc.data().confe[0];
+                let punts = insigniesDoc.data().confe[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'confe': [nivell, punts]
+                });
+            }
+            else if (categoria == 'commemoracions') {
+                let nivell = insigniesDoc.data().commemoracio[0];
+                let punts = insigniesDoc.data().commemoracio[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'commemoracio': [nivell, punts]
+                });
+            }
+            else if (categoria == 'rutes-i-visites') {
+                let nivell = insigniesDoc.data().rutes[0];
+                let punts = insigniesDoc.data().rutes[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'rutes': [nivell, punts]
+                });
+            }
+            else if (categoria == 'cicles' || categoria == 'cursos') {
+                let nivell = insigniesDoc.data().expo[0];
+                let punts = insigniesDoc.data().expo[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'expo': [nivell, punts]
+                });
+            }
+            else if (categoria == 'activitats-virtuals' || categoria == 'cultura-digital') {
+                let nivell = insigniesDoc.data().virtual[0];
+                let punts = insigniesDoc.data().virtual[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'virtual': [nivell, punts]
+                });
+            }
+            else if (categoria == 'infantil' || categoria == 'fires-i-mercats') {
+                let nivell = insigniesDoc.data().infantil[0];
+                let punts = insigniesDoc.data().infantil[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'infantil': [nivell, punts]
+                });
+            }
+            else if (categoria == 'circ') {
+                let nivell = insigniesDoc.data().circ[0];
+                let punts = insigniesDoc.data().circ[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'circ': [nivell, punts]
+                });
+            }
+            else if (categoria == 'festes' || categoria == 'festivals-i-mostres'
+             || categoria == 'dansa' || categoria == 'gegants') {
+                let nivell = insigniesDoc.data().festa[0];
+                let punts = insigniesDoc.data().festa[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'festa': [nivell, punts]
+                });
+            }
+            else if (categoria == 'teatre') {
+                let nivell = insigniesDoc.data().teatre[0];
+                let punts = insigniesDoc.data().teatre[1];
+                punts += 1;
+                nivell, punts = calculNivells(nivell, punts);
+                await insigniesRef.update({
+                    'teatre': [nivell, punts]
+                }); 
+            }       
+        });
+        return
+    } 
+    catch (error) {
+        res.status(500).send(error);
+    }
+}
+
+async function crearInsignies(uid) {
+    try {
+        await db.collection('insignies').doc(uid).set({
+            'circ': ['None', 0], //circ
+            'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
+            'teatre': ['None', 0], //teatre
+            'reciclar': ['None', 0], // catsAMB
+            'carnaval': ['None', 0], //carnavals
+            'concert': ['None', 0], //concerts
+            'arte': ['None', 0], //exposicions
+            'confe': ['None', 0], //conferencies
+            'commemoracio': ['None', 0], //commemoracions
+            'rutes': ['None', 0], //rutes-i-visites
+            'expo': ['None', 0], //cicles, cursos
+            'virtual': ['None', 0], //activitats-virtuals, cultura-digital
+            'infantil': ['None', 0], //infantil, fires-i-mercats
+        });
+        return;
+    } catch (error) {
+        res.status(500).send(error);
+    }
+}
 
 module.exports = router

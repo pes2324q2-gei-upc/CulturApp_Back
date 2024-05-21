@@ -345,7 +345,7 @@ describe('GET /users/uniqueUsername', () => {
   });
 });
 
-describe('PUT /users/edit', () => {
+describe('POST /users/edit', () => {
   it('should edit a user', async () => {
     const res = await request(app)
       .post('/users/create')
@@ -378,7 +378,7 @@ describe('PUT /users/edit', () => {
   });
 });
 
-describe('PUT /users/changePrivacy', () => {
+describe('POST /users/changePrivacy', () => {
   it('should change the privacy of a user', async () => {
     const res = await request(app)
       .post('/users/create')
@@ -1279,21 +1279,63 @@ describe('PUT /users/escanearQR', () => {
         id: 'useridTest1',
         username: 'username',
         email: 'email',
-        activities: ['1', '2', '3'],
-        blockedUsers: ['useridTest2']
+        AssitedActivities: ['1', '2', '3'],
+        blockedUsers: ['useridTest2'],
+        
     },
     usertest2 = {
         id: 'useridTest2',
         username: 'username2',
         email: 'email2',
-        activities: ['1', '2', '3'],
+        AssitedActivities: ['1', '2', '3'],
         blockedUsers: ['useridTest2'],
     }
   ]
+  const testActivitats = [
+    activitat1 = {
+        id: '4',
+        denominaci: 'name',
+        descripcio: 'description',
+        data_inici: 'date',
+        ubicacio: 'location',
+        tags_categor_es: ['circ', 'teatre'],
+        aforament: 100,
+        aforament_actual: 50
+    },
+    activitat2 = {
+        id: '3',
+        denominaci: 'name2',
+        descripcio: 'description2',
+        data_inici: 'date2',
+        ubicacio: 'location2',
+        tags_categor_es: ['circ', 'teatre'],
+        aforament: 100,
+        aforament_actual: 50
+      }
+    ]
   beforeEach(async () => {
       for(const user of testUsers) {
           const userRef = db.collection('users').doc(user.id);
           await userRef.set(user);
+          await db.collection('insignies').doc(user.id).set({
+            'circ': ['None', 0], //circ
+            'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
+            'teatre': ['None', 0], //teatre
+            'reciclar': ['None', 0], // catsAMB
+            'carnaval': ['None', 0], //carnavals
+            'concert': ['None', 0], //concerts
+            'arte': ['None', 0], //exposicions
+            'confe': ['None', 0], //conferencies
+            'commemoracio': ['None', 0], //commemoracions
+            'rutes': ['None', 0], //rutes-i-visites
+            'expo': ['None', 0], //cicles, cursos
+            'virtual': ['None', 0], //activitats-virtuals, cultura-digital
+            'infantil': ['None', 0], //infantil, fires-i-mercats
+        });
+      }
+      for(const activitat of testActivitats) {
+          const activitatRef = db.collection('actividades').doc(activitat.id);
+          await activitatRef.set(activitat);
       }
   });
   it('should return 200 and add the activity to user activities', async () => {
