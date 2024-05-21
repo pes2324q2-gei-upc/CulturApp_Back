@@ -7,26 +7,33 @@ router.use(express.json());
 const { db } = require('../firebaseConfig');
 const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
 
-
-async function Puntuacio(activitatID, res) {
+router.get('/user/:username', checkUserAndFetchData, async (req, res) => {
     try {
-        const actRef = db.collection('actividades').doc(activitatID);
-        const actDoc = await actRef.get();
-        if (!actDoc.exists) {
-            res.status(404).send('Actividad no encontrada');
+        const username = req.params.username;
+        const user = req.userDocument;
+        let userid;
+        if(username == user.data().username) {
+            userid = user.id;
+        }
+        else {
+            const userRef = db.collection('users').where('username', '==', username);
+            const userDoc = await userRef.get();
+            if (!userDoc.exists) {
+                res.status(404).send('Usuario no encontrado');
+                return;
+            }
+            userid = userDoc.docs[0].id;
+        }
+        const insigniesRef = db.collection('insignies').doc(userid);
+        const insigniesDoc = await insigniesRef.get();
+        if (!insigniesDoc.exists) {
+            res.status(404).send('Insignies not found');
             return;
         }
-        const actData = actDoc.data();
-        actData.tags_categor_es.array.forEach(element => {
-            
-        });
-        const actPunts = actData.puntuacio;
-        res.status(200).send(actPunts);
+        res.status(200).send(insigniesDoc.data());
     } catch (error) {
         res.status(500).send(error);
     }
-}
-
-
+});
 
 module.exports = router;
