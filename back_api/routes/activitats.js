@@ -186,5 +186,49 @@ router.post('/toVencidas', checkPerson, async (req, res) => {
     }
 });
 
+router.get('/reward/:id', checkPerson, async (req, res) => {
+    try {
+        const idAct = req.params.id;
+        const activityRef = db.collection("actividades").doc(idAct);
+        const doc = await activityRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).send('Actividad no encontrada');
+        }
+
+        const activityData = doc.data();
+        const reward = activityData.reward;
+        if (reward == null) {
+            return res.status(200).send("null");
+        } else {
+            return res.status(200).send("cubata");
+        }
+
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+});
+
+router.post('/reward/:id', checkPerson, async (req, res) => {
+    try {
+        const idAct = req.params.id;
+        const activityRef = db.collection("actividades").doc(idAct);
+        const doc = await activityRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).send('Actividad no encontrada');
+        }
+
+        const { reward } = req.body;
+
+        await activityRef.update({
+            'reward': reward,
+        });
+        res.status(200).send('OK');
+
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+});
 
 module.exports = router

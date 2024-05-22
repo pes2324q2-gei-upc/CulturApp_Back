@@ -656,3 +656,178 @@ describe('POST /activitats/toVencidas', () => {
             expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
     });
 });
+
+describe('GET /activitats/reward/:id', () => {
+
+  const testUsers = [
+    {
+      uid: 'testUid1',
+      username: 'testUsername1',
+    },
+  ];
+
+  const testClients = [ 
+      {
+      uid: 'testUid2',
+      username: 'testUsername2',
+      },
+  ];
+  const act = {
+    denominaci: "testNom1",
+    descripcio: "testDescripcio1",
+    data_inici: "2024-02-02T00:00:00.000",
+    data_fi: "testDataFi1",
+    tags_categor_es: ["testTag1", "testTag2"],
+    ubicacio: "testUbicacio1",
+    aforament: 100,
+    aforament_actual: 50,
+    assistents: ["testUid1"],
+    assistents_actuals: 1,
+    reward: "cubata"
+  }
+  const act2 = {
+    denominaci: "testNom2",
+    descripcio: "testDescripcio2",
+    data_inici: "2024-02-02T00:00:00.000",
+    data_fi: "testDataFi1",
+    tags_categor_es: ["testTag1", "testTag2"],
+    ubicacio: "testUbicacio1",
+    aforament: 100,
+    aforament_actual: 50,
+    assistents: ["testUid1"],
+    assistents_actuals: 1
+  }
+
+  beforeEach(async () => {
+      for (const usuari of testUsers) {
+          await db.collection('users').doc(usuari.uid).set({"username": usuari.username});
+      } 
+      
+      for (const client of testClients) {
+          await db.collection('clients').doc(client.uid).set({"username": client.username});
+      } 
+      
+      
+      await db.collection('actividades').doc('testAct1').set({
+          'id': 'testAct1',
+          'denominaci': act.denominaci,
+          'descripcio': act.descripcio,
+          'data_inici': act.data_inici,
+          'data_fi': act.data_fi,
+          'tags_categor_es': act.tags_categor_es,
+          'ubicacio': act.ubicacio,
+          'aforament': act.aforament,
+          'aforament_actual': act.aforament_actual,
+          'assistents': act.assistents,
+          'assistents_actuals': act.assistents_actuals,
+          'reward': act.reward
+      });
+
+      await db.collection('actividades').doc('testAct2').set({
+        'id': 'testAct1',
+        'denominaci': act2.denominaci,
+        'descripcio': act2.descripcio,
+        'data_inici': act2.data_inici,
+        'data_fi': act2.data_fi,
+        'tags_categor_es': act2.tags_categor_es,
+        'ubicacio': act2.ubicacio,
+        'aforament': act2.aforament,
+        'aforament_actual': act2.aforament_actual,
+        'assistents': act2.assistents,
+        'assistents_actuals': act2.assistents_actuals
+    });
+      
+  });
+
+  it('debería obtener 404', async () => {
+
+      const response = await request(app)
+      .get('/activitats/reward/testAct3')
+      .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+      expect(response.statusCode).toBe(404);
+  });
+
+  it('debería obtener cubata', async () => {
+
+    const response = await request(app)
+    .get('/activitats/reward/testAct1')
+    .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toEqual("cubata");
+});
+
+it('debería obtener null', async () => {
+
+  const response = await request(app)
+  .get('/activitats/reward/testAct2')
+  .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`);
+
+  expect(response.statusCode).toBe(200);
+  expect(response.text).toEqual("null");
+});
+    
+});
+
+describe('POST /activitats/reward/:id', () => {
+
+  const testUsers = [
+    { uid: 'testUid1', username: 'testUsername1' },
+  ];
+
+  const testClients = [
+    { uid: 'testUid2', username: 'testUsername2' },
+  ];
+
+  const act = {
+    id: 'testAct1',
+    denominaci: "testNom1",
+    descripcio: "testDescripcio1",
+    data_inici: "2024-02-02T00:00:00.000",
+    data_fi: "testDataFi1",
+    tags_categor_es: ["testTag1", "testTag2"],
+    ubicacio: "testUbicacio1",
+    aforament: 100,
+    aforament_actual: 50,
+    assistents: ["testUid1"],
+    assistents_actuals: 1,
+    reward: "cubata"
+  };
+
+  beforeEach(async () => {
+    for (const usuari of testUsers) {
+      await db.collection('users').doc(usuari.uid).set({ "username": usuari.username });
+    }
+
+    for (const client of testClients) {
+      await db.collection('clients').doc(client.uid).set({ "username": client.username });
+    }
+
+    await db.collection('actividades').doc('testAct1').set(act);
+  });
+
+  it('debería actualizar la recompensa correctamente', async () => {
+    const newReward = 'cerveza';
+    const response = await request(app)
+      .post('/activitats/reward/testAct1')
+      .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+      .send({ reward: newReward });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe('OK');
+
+    const updatedDoc = await db.collection('actividades').doc('testAct1').get();
+    expect(updatedDoc.data().reward).toBe(newReward);
+  });
+
+  it('debería devolver 404 si la actividad no se encuentra', async () => {
+    const response = await request(app)
+      .post('/activitats/reward/nonExistentAct')
+      .set('Authorization', `Bearer ${encrypt('testUid1').encryptedData}`)
+      .send({ reward: 'cerveza' });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.text).toBe('Actividad no encontrada');
+  });
+});
