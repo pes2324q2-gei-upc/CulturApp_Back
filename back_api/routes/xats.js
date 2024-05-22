@@ -117,14 +117,13 @@ router.post('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
 
         const otherUserDoc = await db.collection('users').doc(otherUser).get();
         if((!req.userDocument.data().blockedUsers.includes(otherUserDoc.data().id))  &&
-         (!req.otherUserDoc.data().blockedUsers.includes(req.userDocument.data().id))) {
+         (!otherUserDoc.data().blockedUsers.includes(req.userDocument.data().id))) {
             // Agregar el nuevo mensaje al xat
             await xatRef.collection('mensajes').add({
                 senderId: username,
                 mensaje: mensaje,
                 fecha: fecha
             });
-        
 
         // Actualitzar l'ultim missatge i data al xat
             await xatRef.update({
@@ -133,6 +132,7 @@ router.post('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
             });
         
             res.status(201).send("Mensaje agregado exitosamente al xat");
+            return;
         }
         else {
             res.status(200).send("Usuario bloqueado");
@@ -158,20 +158,22 @@ router.get('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
             res.status(404).send('No hay mensajes encontrados para el xat');
             return;
         }
-
+        const xatDoc = await db.collection('xats').doc(xatId).get();
+        const otherUser = xatDoc.data().receiverId == req.userDocument.id ? xatDoc.data().senderId : xatDoc.data().receiverId;
+        const otherUserDoc = await db.collection('users').doc(otherUser).get();
+        if(req.userDocument.data().blockedUsers.includes(otherUserDoc.data().id)
+             || otherUserDoc.data().blockedUsers.includes(req.userDocument.id)) {
+            res.status(200).send("Usuario bloqueado");
+            return;
+        }
         let mensajes = [];
         for (const doc of snapshot.docs) {
-            const messageData = doc.data();
-            if(req.userDocument.data().blockedUsers.includes(messageData.senderId)) {
-               res.status(200).send("Usuario bloqueado")
-               return;
-            }
+            let messageData = doc.data();
             const userRef = db.collection('users').doc(messageData.senderId);
             const userDoc = await userRef.get();
             messageData.senderId = userDoc.data().username;
             mensajes.push(messageData);
         }
-
         res.status(200).json(mensajes);
     } catch (error) {
         //console.error('Error al obtener los mensajes del xat:', error);

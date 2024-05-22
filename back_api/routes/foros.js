@@ -68,7 +68,7 @@ router.get('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
 
         for (const doc of snapshot.docs) {
             const postData = doc.data();
-            if(!userDocument.data().blockedUsers.includes(postData.username)) {
+            if(!req.userDocument.data().blockedUsers.includes(postData.username)) {
                 const userRef = db.collection('users').doc(postData.username);
                 const userDoc = await userRef.get();
                 postData.username = userDoc.data().username;
@@ -175,6 +175,15 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
             res.status(404).send("Post no encontrado");
             return;
         }
+        const userDoc = await db.collection('users').doc(postSnapshot.data().username).get();
+        if(userDoc.data().blockedUsers.includes(req.userDocument.id)) {
+            res.status(200).send("Usuario bloqueado");
+            return;
+        }
+        else if(req.userDocument.data().blockedUsers.includes(userDoc.id)) {
+            res.status(200).send("Usuario bloqueado");
+            return;
+        }
 
         // Agregar el nuevo post al foro
         await postRef.collection('reply').add({
@@ -208,7 +217,7 @@ router.get('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, re
         let posts = [];
         for (const doc of snapshot.docs) {
             const postData = doc.data();
-            if(!userDocument.data().blockedUsers.includes(postData.username)) {
+            if(!req.userDocument.data().blockedUsers.includes(postData.username)) {
                 const userRef = db.collection('users').doc(postData.username);
                 const userDoc = await userRef.get();
                 postData.username = userDoc.data().username;
