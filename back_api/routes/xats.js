@@ -67,11 +67,11 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
             return;
         }
 
-        /*const xataux = await db.collection('xats').where('senderId', '==', receiverId).where('receiverId', '==', username).limit(1).get();
+        const xataux = await db.collection('xats').where('senderId', '==', receiverId).where('receiverId', '==', username).limit(1).get();
         if(!xataux.empty) {
             res.status(201).send({message: "Xat ya existe", id: xataux.docs[0].id});
             return;
-        }*/
+        }
 
         const docRef = await db.collection('xats').add({
             'id': " ",
