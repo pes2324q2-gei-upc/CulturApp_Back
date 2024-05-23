@@ -771,13 +771,13 @@ it('debería obtener null', async () => {
 });
 
 describe('POST /activitats/reward/:id', () => {
-
   const testUsers = [
     { uid: 'testUid1', username: 'testUsername1' },
+    { uid: 'testUid2', username: 'testUsername2' },
   ];
 
   const testClients = [
-    { uid: 'testUid2', username: 'testUsername2' },
+    { uid: 'testUid3', username: 'testUsername3' },
   ];
 
   const act = {
@@ -795,6 +795,10 @@ describe('POST /activitats/reward/:id', () => {
     reward: "cubata"
   };
 
+  const organitzadors = [
+    { user: 'testUid1', activitat: 'testAct1' },
+  ];
+
   beforeEach(async () => {
     for (const usuari of testUsers) {
       await db.collection('users').doc(usuari.uid).set({ "username": usuari.username });
@@ -802,6 +806,10 @@ describe('POST /activitats/reward/:id', () => {
 
     for (const client of testClients) {
       await db.collection('clients').doc(client.uid).set({ "username": client.username });
+    }
+
+    for (let i = 0; i < organitzadors.length; i++) {
+      await db.collection('organitzadors').doc(`user${i}`).set(organitzadors[i]);
     }
 
     await db.collection('actividades').doc('testAct1').set(act);
@@ -830,4 +838,16 @@ describe('POST /activitats/reward/:id', () => {
     expect(response.statusCode).toBe(404);
     expect(response.text).toBe('Actividad no encontrada');
   });
+
+  it('debería no permitir actualizar la recompensa', async () => {
+    const newReward = 'cerveza';
+    const response = await request(app)
+      .post('/activitats/reward/testAct1')
+      .set('Authorization', `Bearer ${encrypt('testUid2').encryptedData}`)
+      .send({ reward: newReward });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.text).toBe('Unauthorized');
+  });
 });
+

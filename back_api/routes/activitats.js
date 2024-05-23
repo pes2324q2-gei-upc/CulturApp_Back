@@ -1,12 +1,11 @@
 const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
+const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
 
 router.use(express.json());
 
 const { db } = require('../firebaseConfig');
-
-const checkPerson = require('./middleware').checkPerson;
 
 router.get('/read/all', checkPerson, async (req, res) => {
     try {
@@ -209,26 +208,49 @@ router.get('/reward/:id', checkPerson, async (req, res) => {
     }
 });
 
-router.post('/reward/:id', checkPerson, async (req, res) => {
+router.post('/reward/:id', checkUserAndFetchData, async (req, res) => {
     try {
+        userDoc = await req.userDocument;
+        
         const idAct = req.params.id;
         const activityRef = db.collection("actividades").doc(idAct);
-        const doc = await activityRef.get();
+        const activityDoc = await activityRef.get();
 
-        if (!doc.exists) {
+        if (!activityDoc.exists) {
             return res.status(404).send('Actividad no encontrada');
         }
-
-        const { reward } = req.body;
-
-        await activityRef.update({
-            'reward': reward,
-        });
-        res.status(200).send('OK');
-
+        const isOwner = await userIsOwner(userDoc.id, idAct);
+        if (isOwner){
+            const { reward } = req.body;
+            await activityRef.update({
+                'reward': reward,
+            });
+            res.status(200).send('OK');
+        }
+        else {
+            return res.status(401).send('Unauthorized');
+        }
     } catch (error) {
         return res.status(500).send(error.message);
     }
 });
+
+async function userIsOwner(uid, idAct) {
+    try {
+        const organitzadorsRef = db.collection('organitzadors');
+        const snapshot = await organitzadorsRef.where('user', '==', uid).get();
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (data.activitat && data.activitat == idAct) {
+                return true;
+            }
+        }
+
+        return false;
+    } catch (error) {
+        return false;
+    }
+}
 
 module.exports = router
