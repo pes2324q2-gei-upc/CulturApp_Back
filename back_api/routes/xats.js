@@ -66,7 +66,6 @@ router.post('/create', checkUserAndFetchData, async(req, res) => {
             res.status(200).send("Usuario bloqueado")
             return;
         }
-
         const xataux = await db.collection('xats').where('senderId', '==', receiverId).where('receiverId', '==', username).limit(1).get();
         if(!xataux.empty) {
             res.status(201).send({message: "Xat ya existe", id: xataux.docs[0].id});
@@ -112,8 +111,12 @@ router.post('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
         let otherUser;
         if( req.userDocument.id == xatSnapshot.data().receiverId)
             otherUser = xatSnapshot.data().senderId;
-        else
+        else if(req.userDocument.id == xatSnapshot.data().senderId)
             otherUser = xatSnapshot.data().receiverId;
+        else {
+            res.status(403).send("Forbidden");
+            return;
+        }
 
         const otherUserDoc = await db.collection('users').doc(otherUser).get();
         if((!req.userDocument.data().blockedUsers.includes(otherUserDoc.data().id))  &&
@@ -159,7 +162,15 @@ router.get('/:xatId/mensajes', checkUserAndFetchData, async (req, res) => {
             return;
         }
         const xatDoc = await db.collection('xats').doc(xatId).get();
-        const otherUser = xatDoc.data().receiverId == req.userDocument.id ? xatDoc.data().senderId : xatDoc.data().receiverId;
+        let otherUser
+        if(xatDoc.data().receiverId == req.userDocument.id) 
+            otherUser = xatDoc.data().senderId
+        else if (xatDoc.data().senderId == req.userDocument.id)
+            otherUser = xatDoc.data().receiverId;
+        else {
+            res.status(403).send("Forbidden");
+            return;
+        }
         const otherUserDoc = await db.collection('users').doc(otherUser).get();
         if(req.userDocument.data().blockedUsers.includes(otherUserDoc.data().id)
              || otherUserDoc.data().blockedUsers.includes(req.userDocument.id)) {

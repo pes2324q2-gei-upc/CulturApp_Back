@@ -74,7 +74,7 @@ router.post('/create', checkUserAndFetchData, upload.single('file'), async(req, 
 });
 
 //get grup info 
-router.get('/:grupId', async (req, res) => {
+router.get('/:grupId', checkUserAndFetchData, async (req, res) => {
     try {
         const grupId = req.params.grupId;
 
@@ -87,6 +87,9 @@ router.get('/:grupId', async (req, res) => {
         }
 
         const infoGrup = doc.data();
+        if(!infoGrup.participants.includes(req.userDocument.data().id)){
+            return res.status(403).send('Forbidden');
+        }
 
         const membersWithUsernames = [];
         for (const memberId of infoGrup.participants) {
@@ -139,7 +142,7 @@ router.get('/users/all', checkUserAndFetchData, async (req, res) => {
 });
 
 //update info del grup
-router.put('/:grupId/update', upload.single('file'), async (req, res) => {
+router.put('/:grupId/update', upload.single('file'), checkUserAndFetchData, async (req, res) => {
     try {
         const grupId = req.params.grupId;
         const { name, descr, imatge, members } = req.body;
@@ -147,6 +150,13 @@ router.put('/:grupId/update', upload.single('file'), async (req, res) => {
         const membersId = [];
 
         const parsedMembers = Array.isArray(members) ? members : JSON.parse(members);
+
+        const grupRef = db.collection('grups').doc(grupId);
+        const grupSnapshot = await grupRef.get();
+        if (!grupSnapshot.data().participants.includes(req.userDocument.data().id)) {
+            res.status(403).send("Forbidden");
+            return;
+        }
 
         for (const member of parsedMembers) {
             if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
@@ -193,7 +203,11 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
             res.status(404).send("Grup no encontrado");
             return;
         }
-
+        
+        if (!grupSnapshot.data().participants.includes(username)) {
+            res.status(403).send("Forbidden");
+            return;
+        }
         // Agregar el nuevo mensaje al grup
         await grupRef.collection('mensajes').add({
             senderId: username,
@@ -219,7 +233,19 @@ router.get('/:grupId/mensajes', async (req, res) => {
         const grupId = req.params.grupId;
         
         //Obtener los mensajes del xat con el grupId especificado
-        const mensajesRef = db.collection('grups').doc(grupId).collection('mensajes');
+        const grupRef = db.collection('grups').doc(grupId);
+        const grupSnapshot = await grupRef.get();
+        if (!grupSnapshot.exists) {
+            res.status(404).send('Grupo no encontrado');
+            return;
+        }
+        if (!grupSnapshot.data().participants.includes(req.userDocument.data().id)) {
+            res.status(403).send("Forbidden");
+            return;
+        }
+
+
+        const mensajesRef = grupRef.collection('mensajes');
         const snapshot = await mensajesRef.get();
 
         if (snapshot.empty) {

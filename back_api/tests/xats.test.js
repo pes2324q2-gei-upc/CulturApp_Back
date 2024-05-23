@@ -105,6 +105,14 @@ describe('GET /xats/:xatId/mensjaes', () => {
             .get(`/xats/${xatId}/mensajes`)
         expect(response.status).toEqual(401);
     });
+    it('should return 403 because the user is not part of the xat', async () => {
+        const xatId = "2";
+        const response = await request(app)
+            .get(`/xats/${xatId}/mensajes`)
+            .set('Authorization', `Bearer ${encrypt('user2').encryptedData}`)
+        expect(response.status).toEqual(403);
+        expect(response.text).toEqual('Forbidden');
+    });
 });
 describe ('POST /xats/:xatId/mensajes', () => {
     const xats = [
@@ -197,6 +205,17 @@ describe ('POST /xats/:xatId/mensajes', () => {
                 fecha: "2021-06-01T10:00:00Z"
             });
         expect(response.status).toEqual(401);
+    });
+    it('should return 403 because the user is not part of the xat', async () => {
+        const response = await request(app)
+            .post(`/xats/2/mensajes`)
+            .send({
+                mensaje: "hola",
+                fecha: "2021-06-01T10:00:00Z"
+            })
+            .set('Authorization', `Bearer ${encrypt('user2').encryptedData}`);
+        expect(response.status).toEqual(403);
+        expect(response.text).toEqual('Forbidden');
     });
 });
 describe('POST /xats/create', () => {
