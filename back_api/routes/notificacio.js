@@ -4,7 +4,7 @@ const router = express.Router()
 
 router.use(express.json());
 
-const { db } = require('../firebaseConfig');
+const checkUserAndFetchData = require('./middleware').checkUserAndFetchData;
 
 //penjar notificacions
 router.post('/enviar', checkUserAndFetchData, async (req, res) => {
@@ -13,7 +13,7 @@ router.post('/enviar', checkUserAndFetchData, async (req, res) => {
     const message = {
         notification: {
           title: title,
-          mensaje: mensaje,
+          body: mensaje,
         },
         token: token,
     };
@@ -25,6 +25,9 @@ router.post('/enviar', checkUserAndFetchData, async (req, res) => {
     })
     .catch((error) => {
       console.log('Error sending message:', error);
+      res.status(500).send('Error enviant la notificació');
     });
 
 });
+
+module.exports = router;

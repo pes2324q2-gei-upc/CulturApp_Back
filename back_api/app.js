@@ -10,6 +10,7 @@ const xatsRoutes = require('./routes/xats')
 const grupsRoutes = require('./routes/grups')
 const organitzadorsRoutes = require('./routes/organitzadors')
 const insigniesRoutes = require('./routes/insignies')
+const notificacioRoutes = require('./routes/notificacio')
 
 global.callCount = 0;
 
@@ -30,5 +31,6 @@ app.use('/xats', xatsRoutes)
 app.use('/grups', grupsRoutes)
 app.use('/organitzadors', organitzadorsRoutes)
 app.use('/insignies', insigniesRoutes)
+app.use('/notificacio', notificacioRoutes)
 
 module.exports = app
