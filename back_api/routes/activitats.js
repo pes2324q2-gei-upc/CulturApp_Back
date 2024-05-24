@@ -200,7 +200,7 @@ router.get('/reward/:id', checkPerson, async (req, res) => {
         if (reward == null) {
             return res.status(200).send("null");
         } else {
-            return res.status(200).send("cubata");
+            return res.status(200).send(reward);
         }
 
     } catch (error) {
