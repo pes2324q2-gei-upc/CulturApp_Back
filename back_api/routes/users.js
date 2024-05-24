@@ -27,7 +27,7 @@ function encrypt(text) {
 async function createImage(file){
     const uuid = uuidv4();
     const name = uuid + '_' + file.originalname;
-    const fileName = 'grups/' + name + '.jpg';
+    const fileName = 'users/' + name + '.jpg';
     await bucket.file(fileName).createWriteStream().end(file.buffer);
     return fileName;
 }
