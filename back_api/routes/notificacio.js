@@ -20,11 +20,9 @@ router.post('/enviar', checkUserAndFetchData, async (req, res) => {
 
     admin.messaging().send(message)
     .then((response) => {
-      console.log('Successfully sent message:', response);
       res.status(201).send('Notificacio enviada');
     })
     .catch((error) => {
-      console.log('Error sending message:', error);
       res.status(500).send('Error enviant la notificació');
     });
 
