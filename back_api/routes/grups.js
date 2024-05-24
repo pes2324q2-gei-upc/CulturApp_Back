@@ -208,6 +208,7 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
             res.status(403).send("Forbidden");
             return;
         }
+
         // Agregar el nuevo mensaje al grup
         await grupRef.collection('mensajes').add({
             senderId: username,
@@ -227,8 +228,54 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
     }
 });
 
+router.put('/:grupId/members', checkUserAndFetchData, async (req, res) => {
+    try {
+        const grupId = req.params.grupId;
+        const { members } = req.body;
+
+        const membersId = [];
+
+        const username = req.userDocument.data().id;
+        
+        // Verificar si el xat existe
+        const grupRef = db.collection('grups').doc(grupId);
+        const grupSnapshot = await grupRef.get();
+
+        if (!grupSnapshot.exists) {
+            res.status(404).send("Grup no encontrado");
+            return;
+        }
+        
+        if (!grupSnapshot.data().participants.includes(username)) {
+            res.status(403).send("Forbidden");
+            return;
+        }
+
+        const parsedMembers = Array.isArray(members) ? members : JSON.parse(members);
+
+        for (const member of parsedMembers) {
+            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+            const idmember =  db.collection('users').where('username', '==', member);
+            const datam = await idmember.get();
+            if (!datam.empty) {
+                membersId.push(datam.docs[0].id);
+            }
+        }
+
+        await db.collection('grups').doc(grupId).update({
+            'participants': membersId
+        });
+
+        res.status(200).send({ message: "Miembros del grupo actualizado exitosamente" });
+
+    } catch (error) {
+        res.status(500).send("Error interno del servidor");
+    }
+});
+
+
 //get mensajes
-router.get('/:grupId/mensajes', async (req, res) => {
+router.get('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
     try {
         const grupId = req.params.grupId;
         
