@@ -51,7 +51,7 @@ router.post('/create', async(req, res) => {
 });
 
 //get els posts d'un foro
-router.get('/:foroId/posts', async (req, res) => {
+router.get('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
     try {
         const foroId = req.params.foroId;
         
@@ -68,10 +68,12 @@ router.get('/:foroId/posts', async (req, res) => {
 
         for (const doc of snapshot.docs) {
             const postData = doc.data();
-            const userRef = db.collection('users').doc(postData.username);
-            const userDoc = await userRef.get();
-            postData.username = userDoc.data().username;
-            posts.push(postData);
+            if(!req.userDocument.data().blockedUsers.includes(postData.username)) {
+                const userRef = db.collection('users').doc(postData.username);
+                const userDoc = await userRef.get();
+                postData.username = userDoc.data().username;
+                posts.push(postData);
+            }
         }
 
 
@@ -173,6 +175,15 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
             res.status(404).send("Post no encontrado");
             return;
         }
+        const userDoc = await db.collection('users').doc(postSnapshot.data().username).get();
+        if(userDoc.data().blockedUsers.includes(req.userDocument.id)) {
+            res.status(200).send("Usuario bloqueado");
+            return;
+        }
+        else if(req.userDocument.data().blockedUsers.includes(userDoc.id)) {
+            res.status(200).send("Usuario bloqueado");
+            return;
+        }
 
         // Agregar el nuevo post al foro
         await postRef.collection('reply').add({
@@ -189,7 +200,7 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
 });
 
 //get replies
-router.get('/:foroId/posts/:postId/reply', async (req, res) => {
+router.get('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, res) => {
     try {
         const foroId = req.params.foroId;
         const postId = req.params.postId;
@@ -206,10 +217,12 @@ router.get('/:foroId/posts/:postId/reply', async (req, res) => {
         let posts = [];
         for (const doc of snapshot.docs) {
             const postData = doc.data();
-            const userRef = db.collection('users').doc(postData.username);
-            const userDoc = await userRef.get();
-            postData.username = userDoc.data().username;
-            posts.push(postData);
+            if(!req.userDocument.data().blockedUsers.includes(postData.username)) {
+                const userRef = db.collection('users').doc(postData.username);
+                const userDoc = await userRef.get();
+                postData.username = userDoc.data().username;
+                posts.push(postData);
+            }
         }
 
         res.status(200).json(posts);

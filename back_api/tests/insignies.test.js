@@ -31,16 +31,16 @@ describe('GET /insignies/user/:username',() => {
                 'circ': ['None', 0], //circ
                 'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
                 'teatre': ['None', 0], //teatre
-                'reciclar': ['None', 0], // catsAMB
+                'rec': ['None', 0], // catsAMB
                 'carnaval': ['None', 0], //carnavals
                 'concert': ['None', 0], //concerts
                 'arte': ['None', 0], //exposicions
                 'confe': ['None', 0], //conferencies
-                'commemoracio': ['None', 0], //commemoracions
-                'rutes': ['None', 0], //rutes-i-visites
-                'expo': ['None', 0], //cicles, cursos
+                'comem': ['None', 0], //commemoracions
+                'ruta': ['None', 0], //rutes-i-visites
+                'edu': ['None', 0], //cicles, cursos
                 'virtual': ['None', 0], //activitats-virtuals, cultura-digital
-                'infantil': ['None', 0] //infantil, fires-i-mercats
+                'fam': ['None', 0], //infantil, fires-i-mercats
             });
         }
     });
@@ -52,16 +52,16 @@ describe('GET /insignies/user/:username',() => {
         expect(res.body).toHaveProperty('circ');
         expect(res.body).toHaveProperty('festa');
         expect(res.body).toHaveProperty('teatre');
-        expect(res.body).toHaveProperty('reciclar');
+        expect(res.body).toHaveProperty('rec');
         expect(res.body).toHaveProperty('carnaval');
         expect(res.body).toHaveProperty('concert');
         expect(res.body).toHaveProperty('arte');
         expect(res.body).toHaveProperty('confe');
-        expect(res.body).toHaveProperty('commemoracio');
-        expect(res.body).toHaveProperty('rutes');
-        expect(res.body).toHaveProperty('expo');
+        expect(res.body).toHaveProperty('comem');
+        expect(res.body).toHaveProperty('ruta');
+        expect(res.body).toHaveProperty('edu');
         expect(res.body).toHaveProperty('virtual');
-        expect(res.body).toHaveProperty('infantil');
+        expect(res.body).toHaveProperty('fam');
     });
     it('should return 401 if the user is not authenticated', async () => {
         const res = await request(app)
