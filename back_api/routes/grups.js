@@ -187,6 +187,37 @@ router.put('/:grupId/update', upload.single('file'), checkUserAndFetchData, asyn
     }
 });
 
+//update membres del grup
+router.put('/:grupId/members', async (req, res) => {
+    try {
+        const grupId = req.params.grupId;
+        const { members } = req.body;
+
+        const membersId = [];
+
+        const parsedMembers = Array.isArray(members) ? members : JSON.parse(members);
+
+        for (const member of parsedMembers) {
+            if (!(await checkUsername(member, res, 'Usuario que se intenta añadir al grupo no encontrado'))) return;
+            const idmember =  db.collection('users').where('username', '==', member);
+            const datam = await idmember.get();
+            if (!datam.empty) {
+                membersId.push(datam.docs[0].id);
+            }
+        }
+
+        await db.collection('grups').doc(grupId).update({
+            'participants': membersId
+        });
+
+        res.status(200).send({ message: "Miembros del grupo actualizado exitosamente" });
+
+    } catch (error) {
+        res.status(500).send("Error interno del servidor");
+    }
+});
+
+
 //post de mensajes 
 router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
     try {
