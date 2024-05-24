@@ -387,7 +387,8 @@ router.post('/edit', checkUserAndFetchData, upload.single('file'), async(req, re
         const { uid, username, favcategories, imatge } = req.body;
 
         userDoc = await req.userDocument;
-        const categories = JSON.parse(favcategories);
+        const categories = Array.isArray(favcategories) ? favcategories : JSON.parse(favcategories)
+        //const categories = JSON.parse(favcategories);
 
         const usersCollection = db.collection('users');
 
