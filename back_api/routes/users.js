@@ -880,19 +880,19 @@ async function Puntuacio(activitatID, user) {
 async function crearInsignies(uid) {
     try {
         await db.collection('insignies').doc(uid).set({
-            'circ': ['None', 0], //circ
-            'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
-            'teatre': ['None', 0], //teatre
-            'rec': ['None', 0], // catsAMB
-            'carnaval': ['None', 0], //carnavals
-            'concert': ['None', 0], //concerts
-            'arte': ['None', 0], //exposicions
-            'confe': ['None', 0], //conferencies
-            'comem': ['None', 0], //commemoracions
-            'ruta': ['None', 0], //rutes-i-visites
-            'edu': ['None', 0], //cicles, cursos
-            'virtual': ['None', 0], //activitats-virtuals, cultura-digital
-            'fam': ['None', 0], //infantil, fires-i-mercats
+            'circ': ['t', 0], //circ
+            'festa': ['t', 0], // festes, festaivals-i-mostres, dansa, gegants
+            'teatre': ['t', 0], //teatre
+            'rec': ['t', 0], // catsAMB
+            'carnaval': ['t', 0], //carnavals
+            'concert': ['t', 0], //concerts
+            'arte': ['t', 0], //exposicions
+            'confe': ['t', 0], //conferencies
+            'comem': ['t', 0], //commemoracions
+            'ruta': ['t', 0], //rutes-i-visites
+            'edu': ['t', 0], //cicles, cursos
+            'virtual': ['t', 0], //activitats-virtuals, cultura-digital
+            'fam': ['t', 0], //infantil, fires-i-mercats
         });
         return;
     } catch (error) {

@@ -37,7 +37,7 @@ router.get('/user/:username', checkUserAndFetchData, async (req, res) => {
             const aValue = insigniesData[a];
             const bValue = insigniesData[b]
             // Ordenar por la primera componente
-            const order = ['o', 'p', 'b', 'None'];
+            const order = ['o', 'p', 'b', 't'];
             const aIndex = order.indexOf(aValue[0]);
             const bIndex = order.indexOf(bValue[0]);
         
