@@ -683,7 +683,7 @@ router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.post('/create', upload.single('file'), async(req, res) => {
+router.post('/create', /*upload.single('file'),*/ async(req, res) => {
     try {
         const { uid, username, email, favcategories } = req.body;
 
@@ -699,11 +699,14 @@ router.post('/create', upload.single('file'), async(req, res) => {
 
         const AssitedActivities = [];
 
+        /*
+
         filename = '';
 
         if (req.file !== undefined) {
             filename = await createImage(req.file);
         }
+        */
 
         await usersCollection.doc(uid).set({
           'email': email,
@@ -715,7 +718,8 @@ router.post('/create', upload.single('file'), async(req, res) => {
           'blockedUsers': blockedUsers,
           'AssitedActivities': AssitedActivities,
           'private': false,
-          'image': filename
+          //'image': filename
+          'image': ''
         });
         await crearInsignies(uid);
         res.status(200).send('OK');
