@@ -396,6 +396,28 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
+router.post('addDevice', checkUserAndFetchData, async(req, res) => {
+    try {
+        const { uid, devices } = req.body;
+
+        userDoc = await req.userDocument;
+        const devicesNou = JSON.parse(devices);
+
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                'devices': devicesNou,
+              });
+            res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
+
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.post('/changePrivacy', checkUserAndFetchData, async(req, res) => {
     
     try {
