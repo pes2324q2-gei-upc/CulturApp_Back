@@ -709,7 +709,8 @@ router.post('/create', async(req, res) => {
           'valoradas': valoradas,
           'blockedUsers': blockedUsers,
           'AssitedActivities': AssitedActivities,
-          'private': false
+          'private': false,
+          'devices': devices
         });
         await crearInsignies(uid);
         res.status(200).send('OK');
