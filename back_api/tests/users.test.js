@@ -23,7 +23,8 @@ describe('POST /users/create', () => {
         uid: 'testUid',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: JSON.stringify(['festa', 'cinema'])
+        favcategories: JSON.stringify(['festa', 'cinema']),
+        devices: JSON.stringify(['deviceTest'])
       });
 
     expect(res.statusCode).toEqual(200);
@@ -31,6 +32,23 @@ describe('POST /users/create', () => {
 
     const docs = await db.collection('users').doc('testUid').get();
     expect(docs.empty).toBeFalsy();
+  });
+});
+
+describe('POST /users/addDevice', () => {
+  it('should update the list devices', async () => {
+    const res = await request(app)
+    .post('/users/addDevice')
+    .send({
+      devices: JSON.stringify(['deviceTest'])
+    });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('OK');
+
+    const docs = await db.collection('users').doc('testUid').get();
+    expect(docs.empty).toBeFalsy();
+    expect(doc.data().devices).toBe(JSON.stringify(['deviceTest']));
   });
 });
 
