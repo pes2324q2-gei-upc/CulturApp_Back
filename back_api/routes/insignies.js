@@ -17,12 +17,12 @@ router.get('/user/:username', checkUserAndFetchData, async (req, res) => {
         }
         else {
             const userRef = db.collection('users').where('username', '==', username);
-            const userDoc = await userRef.get();
-            if (!userDoc.exists) {
+            const userDocs = await userRef.get();
+            if (userDocs.empty) {
                 res.status(404).send('Usuario no encontrado');
                 return;
             }
-            userid = userDoc.docs[0].id;
+            userid = userDocs.docs[0].id;
         }
         const insigniesRef = db.collection('insignies').doc(userid);
         const insigniesDoc = await insigniesRef.get();
