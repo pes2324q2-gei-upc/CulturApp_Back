@@ -408,7 +408,7 @@ router.post('/addDevice', checkUserAndFetchData, async(req, res) => {
         if (userDoc.exists && userDoc.id == uid) {
             await usersCollection.doc(uid).update({
                 'devices': devicesNou
-              });
+            });
             res.status(200).send('OK');
         }
         else {
