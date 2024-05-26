@@ -396,16 +396,18 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
-router.post('addDevice', checkUserAndFetchData, async(req, res) => {
+router.post('/addDevice', checkUserAndFetchData, async(req, res) => {
     try {
         const { uid, devices } = req.body;
 
         userDoc = await req.userDocument;
         const devicesNou = JSON.parse(devices);
 
+        const usersCollection = db.collection('users');
+
         if (userDoc.exists && userDoc.id == uid) {
             await usersCollection.doc(uid).update({
-                'devices': devicesNou,
+                'devices': devicesNou
               });
             res.status(200).send('OK');
         }
