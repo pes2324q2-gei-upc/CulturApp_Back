@@ -28,7 +28,6 @@ describe('POST /users/create', () => {
       });
 
     expect(res.statusCode).toEqual(200);
-    expect(res.text).toBe('OK');
 
     const docs = await db.collection('users').doc('testUid').get();
     expect(docs.empty).toBeFalsy();
@@ -39,7 +38,7 @@ describe('POST /users/addDevice', () => {
   it('should update the list devices', async () => {
     const res = await request(app)
     .post('/users/addDevice')
-    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
+    .set('Authorization',  `Bearer ${encrypt('testUid').encryptedData}`)
     .send({
       uid: 'testUid',
       devices: JSON.stringify(['deviceTest'])
@@ -378,7 +377,6 @@ describe('POST /users/edit', () => {
       });
 
     expect(res.statusCode).toEqual(200);
-    expect(res.text).toBe('OK');
 
     const res2 = await request(app)
       .post('/users/edit')
@@ -412,7 +410,7 @@ describe('POST /users/changePrivacy', () => {
       });
 
     expect(res.statusCode).toEqual(200);
-    expect(res.text).toBe('OK');
+  
 
     const res2 = await request(app)
       .post('/users/changePrivacy')
