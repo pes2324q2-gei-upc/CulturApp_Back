@@ -7,7 +7,7 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-router.get('/read/all', checkPerson, async (req, res) => {
+router.get('/read/all', async (req, res) => {
     try {
         const activityRef = db.collection("actividades").limit(1);
         const response = await activityRef.get();
