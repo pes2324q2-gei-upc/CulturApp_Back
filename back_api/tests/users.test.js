@@ -41,6 +41,7 @@ describe('POST /users/addDevice', () => {
     .post('/users/addDevice')
     .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
     .send({
+      uid: 'testUid',
       devices: JSON.stringify(['deviceTest'])
     });
 
