@@ -36,6 +36,18 @@ describe('POST /users/create', () => {
 
 describe('POST /users/addDevice', () => {
   it('should update the list devices', async () => {
+    const resA = await request(app)
+      .post('/users/create')
+      .set('Authorization',  `Bearer ${encrypt('testUid').encryptedData}`)
+      .send({
+        uid: 'testUid',
+        username: 'testUser',
+        email: 'testEmail',
+        favcategories: JSON.stringify(['circ'])
+      });
+
+    expect(resA.statusCode).toEqual(200);
+
     const res = await request(app)
     .post('/users/addDevice')
     .set('Authorization',  `Bearer ${encrypt('testUid').encryptedData}`)
