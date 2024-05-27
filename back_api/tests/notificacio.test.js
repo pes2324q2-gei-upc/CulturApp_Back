@@ -13,16 +13,57 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
-describe('POST /notificacio/enviar', () => {
-    it('should create a notification', async () => {
-        const res = await request(app)
-        .post('/notificacio/enviar')
-        .send({
-            title: 'titleTest',
-            mensaje: 'mensajeTest',
-            token: 'tokenTest'
-        });
-  
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const sinon = require('sinon');
+const server = require('../path/to/your/express/app'); // Adjust the path to your Express app
+const admin = require('firebase-admin'); // Assuming you are using Firebase Admin SDK
+
+chai.use(chaiHttp);
+const { expect } = chai;
+
+describe('POST /enviar', () => {
+    let sendStub;
+
+    beforeEach(() => {
+        sendStub = sinon.stub(admin.messaging(), 'send');
     });
-    
+
+    afterEach(() => {
+        sendStub.restore();
+    });
+
+    it('should send a notification and return status 201', (done) => {
+        sendStub.resolves('mockedResponse');
+
+        chai.request(server)
+            .post('/enviar')
+            .send({
+                title: 'Test Title',
+                mensaje: 'Test Message',
+                token: 'mockedToken',
+            })
+            .end((err, res) => {
+                expect(res).to.have.status(201);
+                expect(res.text).to.equal('Notificacio enviada');
+                done();
+            });
+    });
+
+    it('should return status 500 if there is an error sending the notification', (done) => {
+        sendStub.rejects(new Error('mockedError'));
+
+        chai.request(server)
+            .post('/enviar')
+            .send({
+                title: 'Test Title',
+                mensaje: 'Test Message',
+                token: 'mockedToken',
+            })
+            .end((err, res) => {
+                expect(res).to.have.status(500);
+                expect(res.text).to.equal('Error enviant la notificació');
+                done();
+            });
+    });
 });
