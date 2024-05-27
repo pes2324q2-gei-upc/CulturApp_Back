@@ -13,14 +13,11 @@ function encrypt(text) {
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
-const chai = require('chai');
-const chaiHttp = require('chai-http');
+const assert = require('assert');
 const sinon = require('sinon');
+const request = require('supertest');
 const server = require('../path/to/your/express/app'); // Adjust the path to your Express app
 const admin = require('firebase-admin'); // Assuming you are using Firebase Admin SDK
-
-chai.use(chaiHttp);
-const { expect } = chai;
 
 describe('POST /enviar', () => {
     let sendStub;
@@ -36,16 +33,17 @@ describe('POST /enviar', () => {
     it('should send a notification and return status 201', (done) => {
         sendStub.resolves('mockedResponse');
 
-        chai.request(server)
+        request(server)
             .post('/enviar')
             .send({
                 title: 'Test Title',
                 mensaje: 'Test Message',
                 token: 'mockedToken',
             })
+            .expect(201)
             .end((err, res) => {
-                expect(res).to.have.status(201);
-                expect(res.text).to.equal('Notificacio enviada');
+                if (err) return done(err);
+                assert.strictEqual(res.text, 'Notificacio enviada');
                 done();
             });
     });
@@ -53,16 +51,17 @@ describe('POST /enviar', () => {
     it('should return status 500 if there is an error sending the notification', (done) => {
         sendStub.rejects(new Error('mockedError'));
 
-        chai.request(server)
+        request(server)
             .post('/enviar')
             .send({
                 title: 'Test Title',
                 mensaje: 'Test Message',
                 token: 'mockedToken',
             })
+            .expect(500)
             .end((err, res) => {
-                expect(res).to.have.status(500);
-                expect(res.text).to.equal('Error enviant la notificació');
+                if (err) return done(err);
+                assert.strictEqual(res.text, 'Error enviant la notificació');
                 done();
             });
     });
