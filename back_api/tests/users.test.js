@@ -39,8 +39,9 @@ describe('POST /users/addDevice', () => {
   it('should update the list devices', async () => {
     const res = await request(app)
     .post('/users/addDevice')
+    .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
     .send({
-      devices: JSON.stringify("[\"deviceTest\"]")
+      devices: JSON.stringify(['deviceTest'])
     });
 
     expect(res.statusCode).toEqual(201);
@@ -367,12 +368,12 @@ describe('POST /users/edit', () => {
   it('should edit a user', async () => {
     const res = await request(app)
       .post('/users/create')
+      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
       .send({
         uid: 'testUid1',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: JSON.stringify(['circ']),
-        devices: JSON.stringify("[\"deviceTest\"]")
+        favcategories: JSON.stringify(['circ'])
       });
 
     expect(res.statusCode).toEqual(200);
