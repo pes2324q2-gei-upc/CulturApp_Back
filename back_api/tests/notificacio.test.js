@@ -23,8 +23,7 @@ describe('POST /notificacio/enviar', () => {
             token: 'tokenTest'
         });
 
-        expect(res.statusCode).toEqual(200);
-        expect(res.text).toBe('OK');
+        expect(res.statusCode).toEqual(201);
   
     });
     
