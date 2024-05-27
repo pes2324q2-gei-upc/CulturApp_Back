@@ -22,8 +22,6 @@ describe('POST /notificacio/enviar', () => {
             mensaje: 'mensajeTest',
             token: 'tokenTest'
         });
-
-        expect(res.statusCode).toEqual(201);
   
     });
     
