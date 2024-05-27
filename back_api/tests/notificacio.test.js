@@ -24,7 +24,8 @@ describe('POST /notificacio/enviar', () => {
         const res = await request(app)
             .post('/notificacio/enviar')
             .send(encryptedData); 
-  
+        
+        expect(res.statusCode).to.equal(201);
     });
     
 });

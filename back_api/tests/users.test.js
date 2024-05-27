@@ -40,10 +40,10 @@ describe('POST /users/addDevice', () => {
     const res = await request(app)
     .post('/users/addDevice')
     .send({
-      devices: JSON.stringify(['deviceTest'])
+      devices: JSON.stringify("[\"deviceTest\"]")
     });
 
-    expect(res.statusCode).toEqual(200);
+    expect(res.statusCode).toEqual(201);
     expect(res.text).toBe('OK');
 
     const docs = await db.collection('users').doc('testUid').get();
@@ -371,7 +371,8 @@ describe('POST /users/edit', () => {
         uid: 'testUid1',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: JSON.stringify(['circ'])
+        favcategories: JSON.stringify(['circ']),
+        devices: JSON.stringify("[\"deviceTest\"]")
       });
 
     expect(res.statusCode).toEqual(200);
