@@ -2,9 +2,13 @@ const admin = require('firebase-admin')
 const express = require('express')
 const router = express.Router()
 
+const { v4: uuidv4 } = require("uuid");
+const multer=require('multer')
+const upload=multer({storage: multer.memoryStorage()})
+
 router.use(express.json());
 
-const { db } = require('../firebaseConfig');
+const { db, bucket} = require('../firebaseConfig');
 const { checkUserAndFetchData, checkAdmin, checkPerson, decryptToken } = require('./middleware');
 
 const crypto = require('crypto');
@@ -17,6 +21,15 @@ function encrypt(text) {
   let encrypted = cipher.update(text);
   encrypted = Buffer.concat([encrypted, cipher.final()]);
   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
+//funcio per afegir imatges al bucket
+async function createImage(file){
+    const uuid = uuidv4();
+    const name = uuid + '_' + file.originalname;
+    const fileName = 'users/' + name + '.jpg';
+    await bucket.file(fileName).createWriteStream().end(file.buffer);
+    return fileName;
 }
 
 router.get('/exists', async (req, res) => {
@@ -350,7 +363,6 @@ router.get('/data/:data', checkUserAndFetchData, async (req, res) => {
 })
 
 
-
 router.get('/username', async (req, res) => {
     try {
         var uid = req.query.uid;
@@ -369,20 +381,28 @@ router.get('/username', async (req, res) => {
     }
 });
 
-router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PARA USO DE TOKENS
+router.post('/edit', checkUserAndFetchData, upload.single('file'), async(req, res) => { //MODIFICAR PARA USO DE TOKENS
     try {
 
-        const { uid, username, favcategories } = req.body;
+        const { uid, username, favcategories, imatge } = req.body;
 
         userDoc = await req.userDocument;
-        const categories = JSON.parse(favcategories);
+        const categories = Array.isArray(favcategories) ? favcategories : JSON.parse(favcategories)
+        //const categories = JSON.parse(favcategories);
 
         const usersCollection = db.collection('users');
+
+        filename = imatge;
+
+        if (req.file !== undefined) {
+            filename = await createImage(req.file);
+        }
 
         if (userDoc.exists && userDoc.id == uid) {
             await usersCollection.doc(uid).update({
                 'username': username,
                 'favcategories': categories,
+                'image': filename
               });
             res.status(200).send('OK');
         }
@@ -702,6 +722,7 @@ router.post('/create', async(req, res) => {
         const blockedUsers = [];
 
         const AssitedActivities = [];
+
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
@@ -712,6 +733,7 @@ router.post('/create', async(req, res) => {
           'blockedUsers': blockedUsers,
           'AssitedActivities': AssitedActivities,
           'private': false,
+          'image': '',
           'devices': devices
         });
         await crearInsignies(uid);
