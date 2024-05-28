@@ -396,6 +396,30 @@ router.post('/edit', checkUserAndFetchData, async(req, res) => { //MODIFICAR PAR
     }
 });
 
+router.post('/addDevice', checkUserAndFetchData, async(req, res) => {
+    try {
+        const { uid, devices } = req.body;
+
+        userDoc = await req.userDocument;
+        const devicesNou = JSON.parse(devices);
+
+        const usersCollection = db.collection('users');
+
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                'devices': devicesNou
+            });
+            res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
+
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.post('/changePrivacy', checkUserAndFetchData, async(req, res) => {
     
     try {
@@ -665,7 +689,7 @@ router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
 
 router.post('/create', async(req, res) => {
     try {
-        const { uid, username, email, favcategories } = req.body;
+        const { uid, username, email, favcategories, devices } = req.body;
 
         const categories = favcategories;
 
@@ -687,7 +711,8 @@ router.post('/create', async(req, res) => {
           'valoradas': valoradas,
           'blockedUsers': blockedUsers,
           'AssitedActivities': AssitedActivities,
-          'private': false
+          'private': false,
+          'devices': devices
         });
         await crearInsignies(uid);
         res.status(200).send('OK');
