@@ -365,7 +365,8 @@ describe('POST /users/edit', () => {
       .send({
         uid: 'testUid1',
         username: 'newUsername',
-        favcategories: JSON.stringify(['festa', 'cinema'])
+        favcategories: JSON.stringify(['festa', 'cinema']), 
+        imatge: ''
       });
 
     expect(res2.statusCode).toEqual(200);
