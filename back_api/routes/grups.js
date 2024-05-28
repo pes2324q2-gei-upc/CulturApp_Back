@@ -269,6 +269,7 @@ router.post('/:grupId/mensajes', checkUserAndFetchData, async (req, res) => {
         });
 
         res.status(201).send("Mensaje agregado exitosamente al grup");
+
     } catch (error) {
         res.status(500).send("Error interno del servidor");
     }
