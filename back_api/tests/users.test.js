@@ -35,34 +35,34 @@ describe('POST /users/create', () => {
 });
 
 describe('POST /users/addDevice', () => {
-  it('should update the list devices', async () => {
+  it('should add a new device', async () => {
     const resA = await request(app)
-      .post('/users/create')
-      .set('Authorization',  `Bearer ${encrypt('testUid6').encryptedData}`)
-      .send({
-        uid: 'testUid6',
-        username: 'testUser',
-        email: 'testEmail',
-        favcategories: JSON.stringify(['circ']),
-        devices: JSON.stringify(['deviceTest'])
-      });
+    .post('/users/create')
+    .send({
+      uid: 'testUid6',
+      username: 'testUser',
+      email: 'testEmail',
+      favcategories: JSON.stringify(['festa', 'cinema']),
+      devices: JSON.stringify(['deviceTest'])
+    });
 
     expect(resA.statusCode).toEqual(200);
+    expect(resA.text).toBe('OK');
 
     const res = await request(app)
     .post('/users/addDevice')
     .set('Authorization',  `Bearer ${encrypt('testUid6').encryptedData}`)
     .send({
       uid: 'testUid6',
-      devices: JSON.stringify(['deviceTest', 'deviceTest1'])
+      devices: JSON.stringify("[\"deviceTest\",\"deviceTest1\"]")
     });
 
-    expect(res.statusCode).toEqual(201);
+    expect(res.statusCode).toEqual(200);
     expect(res.text).toBe('OK');
 
-    const docs = await db.collection('users').doc('testUid3testUid6').get();
+    const docs = await db.collection('users').doc('testUid6').get();
     expect(docs.empty).toBeFalsy();
-    expect(doc.data().devices).toBe(JSON.stringify(['deviceTest', 'deviceTest1']));
+    expect(docs.data().devices).toBe(JSON.stringify(['deviceTest', 'deviceTest1']));
   });
 });
 
@@ -381,12 +381,12 @@ describe('POST /users/edit', () => {
   it('should edit a user', async () => {
     const res = await request(app)
       .post('/users/create')
-      .set('Authorization',  `Bearer ${encrypt('testUid1').encryptedData}`)
       .send({
         uid: 'testUid1',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: JSON.stringify(['circ'])
+        favcategories: JSON.stringify(['festa', 'cinema']),
+        devices: JSON.stringify(['deviceTest'])
       });
 
     expect(res.statusCode).toEqual(200);
@@ -420,6 +420,7 @@ describe('POST /users/changePrivacy', () => {
         username: 'testUser',
         email: 'testEmail',
         favcategories: JSON.stringify(['circ', 'cinema']),
+        devices: JSON.stringify(['deviceTest']),
         privacy: false
       });
 

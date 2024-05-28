@@ -689,7 +689,7 @@ router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
 
 router.post('/create', async(req, res) => {
     try {
-        const { uid, username, email, favcategories } = req.body;
+        const { uid, username, email, favcategories, devices } = req.body;
 
         const categories = favcategories;
 
