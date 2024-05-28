@@ -92,18 +92,25 @@ router.post('/:foroId/posts', checkUserAndFetchData, async (req, res) => {
         // Verificar si el foro existe
         const foroRef = db.collection('foros').doc(foroId);
         const foroSnapshot = await foroRef.get();
-
         if (!foroSnapshot.exists) {
             res.status(404).send("Foro no encontrado");
             return;
         }
+
+        const acticitat_code = foroSnapshot.data().activitat_code;
+        const organitzadorsRef = db.collection('organitzadors').where('activitat', '==', acticitat_code).where('user', '==', req.userDocument.id);
+        const organitzadorsSnapshot = await organitzadorsRef.get();
+        const esOrganitzador = !organitzadorsSnapshot.empty;
+
+       
 
         // Agregar el nuevo post al foro
         await foroRef.collection('posts').add({
             username: req.userDocument.id,
             mensaje: mensaje,
             fecha: fecha,
-            numero_likes: numero_likes
+            numero_likes: numero_likes,
+            esOrganitzador: esOrganitzador
         });
 
         res.status(201).send("Post agregado exitosamente al foro");
@@ -131,7 +138,8 @@ router.delete('/:foroId/posts/:postId', checkUserAndFetchData, async(req, res) =
 
         const postSnapshot = await foroRef.collection('posts').doc(postId).get();
 
-        if (!postSnapshot.exists) {
+        
+        if (!postSnapshot.exits) {
             res.status(404).send("Post no encontrado");
             return;
         }
@@ -166,11 +174,11 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
             res.status(404).send("Foro no encontrado");
             return;
         }
-
+       
         // Verificar si el post existe
         const postRef = foroRef.collection('posts').doc(postId);
         const postSnapshot = await postRef.get();
-
+        
         if (!postSnapshot.exists) {
             res.status(404).send("Post no encontrado");
             return;
@@ -190,7 +198,7 @@ router.post('/:foroId/posts/:postId/reply', checkUserAndFetchData, async (req, r
             username: username,
             mensaje: mensaje,
             fecha: fecha,
-            numero_likes: numero_likes
+            numero_likes: numero_likes,
         });
 
         res.status(201).send("Reply agregada exitosamente al foro");
