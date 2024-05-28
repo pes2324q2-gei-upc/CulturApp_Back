@@ -38,30 +38,31 @@ describe('POST /users/addDevice', () => {
   it('should update the list devices', async () => {
     const resA = await request(app)
       .post('/users/create')
-      .set('Authorization',  `Bearer ${encrypt('testUid').encryptedData}`)
+      .set('Authorization',  `Bearer ${encrypt('testUid6').encryptedData}`)
       .send({
-        uid: 'testUid',
+        uid: 'testUid6',
         username: 'testUser',
         email: 'testEmail',
-        favcategories: JSON.stringify(['circ'])
+        favcategories: JSON.stringify(['circ']),
+        devices: JSON.stringify(['deviceTest'])
       });
 
     expect(resA.statusCode).toEqual(200);
 
     const res = await request(app)
     .post('/users/addDevice')
-    .set('Authorization',  `Bearer ${encrypt('testUid').encryptedData}`)
+    .set('Authorization',  `Bearer ${encrypt('testUid6').encryptedData}`)
     .send({
-      uid: 'testUid',
-      devices: JSON.stringify(['deviceTest'])
+      uid: 'testUid6',
+      devices: JSON.stringify(['deviceTest', 'deviceTest1'])
     });
 
     expect(res.statusCode).toEqual(201);
     expect(res.text).toBe('OK');
 
-    const docs = await db.collection('users').doc('testUid').get();
+    const docs = await db.collection('users').doc('testUid3testUid6').get();
     expect(docs.empty).toBeFalsy();
-    expect(doc.data().devices).toBe(JSON.stringify(['deviceTest']));
+    expect(doc.data().devices).toBe(JSON.stringify(['deviceTest', 'deviceTest1']));
   });
 });
 
@@ -389,6 +390,7 @@ describe('POST /users/edit', () => {
       });
 
     expect(res.statusCode).toEqual(200);
+    expect(res.text).toBe('OK');
 
     const res2 = await request(app)
       .post('/users/edit')
@@ -422,7 +424,7 @@ describe('POST /users/changePrivacy', () => {
       });
 
     expect(res.statusCode).toEqual(200);
-  
+    expect(res.text).toBe('OK');
 
     const res2 = await request(app)
       .post('/users/changePrivacy')
