@@ -7,9 +7,9 @@ router.use(express.json());
 
 const { db } = require('../firebaseConfig');
 
-router.get('/read/all', checkPerson, async (req, res) => {
+router.get('/read/all', async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(100);
+        const activityRef = db.collection("actividades").limit(1);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -148,7 +148,7 @@ router.get('/mediambient', checkPerson, async (req, res) => {
         const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', ['Residus', 'Sostenibilitat'])
                                                         .where('data_inici', '>=', date)
                                                         .orderBy('data_inici', 'asc');
-        const response = await activityRef.get();
+        const response = await activityRef.limit(5).get();
         let responseArr = [];
         response.forEach(doc => {
             responseArr.push(doc.data());
@@ -200,7 +200,7 @@ router.get('/reward/:id', checkPerson, async (req, res) => {
         if (reward == null) {
             return res.status(200).send("null");
         } else {
-            return res.status(200).send("cubata");
+            return res.status(200).send(reward);
         }
 
     } catch (error) {

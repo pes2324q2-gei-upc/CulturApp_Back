@@ -23,6 +23,21 @@ describe('GET /insignies/user/:username',() => {
             'username': 'user2',
         }
     ]
+    const insignies = [ {
+        'fam': ['o', 0], //infantil, fires-i-mercats
+        'virtual': ['p', 0], //activitats-virtuals, cultura-digital
+        'arte': ['b', 10], //exposicions
+        'comem': ['b', 0], //commemoracions
+        'carnaval': ['None', 0], //carnavals
+        'circ': ['None', 0], //circ
+        'concert': ['None', 0], //concerts
+        'confe': ['None', 0], //conferencies
+        'edu': ['None', 0], //cicles, cursos
+        'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
+        'rec': ['None', 0], // catsAMB
+        'ruta': ['None', 0], //rutes-i-visites
+        'teatre': ['None', 0], //teatre
+    }];
     beforeEach(async () => {
         for (let i = 0; i < users.length; i++) {
             let username = users[i].username;
@@ -34,13 +49,13 @@ describe('GET /insignies/user/:username',() => {
                 'rec': ['None', 0], // catsAMB
                 'carnaval': ['None', 0], //carnavals
                 'concert': ['None', 0], //concerts
-                'arte': ['None', 0], //exposicions
+                'arte': ['b', 10], //exposicions
                 'confe': ['None', 0], //conferencies
-                'comem': ['None', 0], //commemoracions
+                'comem': ['b', 0], //commemoracions
                 'ruta': ['None', 0], //rutes-i-visites
                 'edu': ['None', 0], //cicles, cursos
-                'virtual': ['None', 0], //activitats-virtuals, cultura-digital
-                'fam': ['None', 0], //infantil, fires-i-mercats
+                'virtual': ['p', 0], //activitats-virtuals, cultura-digital
+                'fam': ['o', 0], //infantil, fires-i-mercats
             });
         }
     });
@@ -49,19 +64,7 @@ describe('GET /insignies/user/:username',() => {
         .get('/insignies/user/user1')
         .set('Authorization', 'Bearer ' + encrypt('user1').encryptedData);
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('circ');
-        expect(res.body).toHaveProperty('festa');
-        expect(res.body).toHaveProperty('teatre');
-        expect(res.body).toHaveProperty('rec');
-        expect(res.body).toHaveProperty('carnaval');
-        expect(res.body).toHaveProperty('concert');
-        expect(res.body).toHaveProperty('arte');
-        expect(res.body).toHaveProperty('confe');
-        expect(res.body).toHaveProperty('comem');
-        expect(res.body).toHaveProperty('ruta');
-        expect(res.body).toHaveProperty('edu');
-        expect(res.body).toHaveProperty('virtual');
-        expect(res.body).toHaveProperty('fam');
+        expect(res.body).toEqual(insignies[0]);
     });
     it('should return 401 if the user is not authenticated', async () => {
         const res = await request(app)

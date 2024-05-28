@@ -85,7 +85,7 @@ describe('GET /activitats/read/all', () => {
           );
     });
 
-    it('debería enviar 401 porque el token no es válido', async () => {
+  /*  it('debería enviar 401 porque el token no es válido', async () => {
     
             const response = await request(app)
             .get('/activitats/read/all')
@@ -106,7 +106,7 @@ describe('GET /activitats/read/all', () => {
         expect(response.statusCode).toBe(404);
         expect(response.text).toBe('Usuario o cliente que envió la solicitud no encontrado');
 
-    });
+    });*/
 });
 describe('GET /activitats/categoria/:categoria', () => {
     const testUsers = [

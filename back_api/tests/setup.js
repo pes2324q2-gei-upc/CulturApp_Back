@@ -7,7 +7,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   
-  const collections = ['reportsUsuaris', 'reportsBugs', 'solicitudsOrganitzador', 'administradors', 'users', 'following', 'clients' , 'actividades', 'organitzadors', 'bannedUsers', 'vencidas', 'insignies', 'mensajes', 'xats', 'posts', 'foros']; // Agregar aquí todas las colecciones que se quieran borrar
+  const collections = ['reportsUsuaris', 'reportsBugs', 'solicitudsOrganitzador', 'administradors', 'users', 'following', 'clients' , 'actividades', 'organitzadors', 'bannedUsers', 'vencidas', 'insignies', 'mensajes', 'xats', 'posts', 'foros', 'grups']; // Agregar aquí todas las colecciones que se quieran borrar
   
   for (const collection of collections) {
     const snapshot = await db.collection(collection).get();

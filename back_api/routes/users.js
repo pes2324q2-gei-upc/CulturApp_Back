@@ -416,6 +416,30 @@ router.post('/edit', checkUserAndFetchData, upload.single('file'), async(req, re
     }
 });
 
+router.post('/addDevice', checkUserAndFetchData, async(req, res) => {
+    try {
+        const { uid, devices } = req.body;
+
+        userDoc = await req.userDocument;
+        const devicesNou = JSON.parse(devices);
+
+        const usersCollection = db.collection('users');
+
+        if (userDoc.exists && userDoc.id == uid) {
+            await usersCollection.doc(uid).update({
+                'devices': devicesNou
+            });
+            res.status(200).send('OK');
+        }
+        else {
+            res.status(401).send('Forbidden');
+        }
+
+    } catch (error){
+        res.send(error);
+    }
+});
+
 router.post('/changePrivacy', checkUserAndFetchData, async(req, res) => {
     
     try {
@@ -683,9 +707,9 @@ router.put('/escanearQR', checkUserAndFetchData, async (req, res) => {
     }
 });
 
-router.post('/create', /*upload.single('file'),*/ async(req, res) => {
+router.post('/create', async(req, res) => {
     try {
-        const { uid, username, email, favcategories } = req.body;
+        const { uid, username, email, favcategories, devices } = req.body;
 
         const categories = favcategories;
 
@@ -699,15 +723,6 @@ router.post('/create', /*upload.single('file'),*/ async(req, res) => {
 
         const AssitedActivities = [];
 
-        /*
-
-        filename = '';
-
-        if (req.file !== undefined) {
-            filename = await createImage(req.file);
-        }
-        */
-
         await usersCollection.doc(uid).set({
           'email': email,
           'username': username,
@@ -718,8 +733,8 @@ router.post('/create', /*upload.single('file'),*/ async(req, res) => {
           'blockedUsers': blockedUsers,
           'AssitedActivities': AssitedActivities,
           'private': false,
-          //'image': filename
-          'image': ''
+          'image': '',
+          'devices': devices
         });
         await crearInsignies(uid);
         res.status(200).send('OK');
@@ -912,19 +927,19 @@ async function Puntuacio(activitatID, user) {
 async function crearInsignies(uid) {
     try {
         await db.collection('insignies').doc(uid).set({
-            'circ': ['None', 0], //circ
-            'festa': ['None', 0], // festes, festaivals-i-mostres, dansa, gegants
-            'teatre': ['None', 0], //teatre
-            'rec': ['None', 0], // catsAMB
-            'carnaval': ['None', 0], //carnavals
-            'concert': ['None', 0], //concerts
-            'arte': ['None', 0], //exposicions
-            'confe': ['None', 0], //conferencies
-            'comem': ['None', 0], //commemoracions
-            'ruta': ['None', 0], //rutes-i-visites
-            'edu': ['None', 0], //cicles, cursos
-            'virtual': ['None', 0], //activitats-virtuals, cultura-digital
-            'fam': ['None', 0], //infantil, fires-i-mercats
+            'circ': ['t', 0], //circ
+            'festa': ['t', 0], // festes, festaivals-i-mostres, dansa, gegants
+            'teatre': ['t', 0], //teatre
+            'rec': ['t', 0], // catsAMB
+            'carnaval': ['t', 0], //carnavals
+            'concert': ['t', 0], //concerts
+            'arte': ['t', 0], //exposicions
+            'confe': ['t', 0], //conferencies
+            'comem': ['t', 0], //commemoracions
+            'ruta': ['t', 0], //rutes-i-visites
+            'edu': ['t', 0], //cicles, cursos
+            'virtual': ['t', 0], //activitats-virtuals, cultura-digital
+            'fam': ['t', 0], //infantil, fires-i-mercats
         });
         return;
     } catch (error) {
