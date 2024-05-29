@@ -792,6 +792,7 @@ async function Puntuacio(activitatID, user) {
             return;
         }
         const actData = actDoc.data();
+        console.log(actData.tags_categor_es[0])
         actData.tags_categor_es.forEach(async categoria => {
             const insigniesRef = db.collection('insignies').doc(user.id);
             const insigniesDoc = await insigniesRef.get();
@@ -799,12 +800,12 @@ async function Puntuacio(activitatID, user) {
                 return res.status(404).send('Insignies not found');
             }
             if (catsAMB.includes(categoria)) {
-                let nivell = insigniesDoc.data().reciclar[0];
-                let punts = insigniesDoc.data().reciclar[1];
+                let nivell = insigniesDoc.data().rec[0];
+                let punts = insigniesDoc.data().rec[1];
                 punts += 1;
                 nivell, punts = calculNivells(nivell, punts);
                 insigniesRef.update({
-                    'reciclar': [nivell, punts]
+                    'rec': [nivell, punts]
                 });
             }
             else if(categoria == 'carnavals') {
@@ -844,30 +845,30 @@ async function Puntuacio(activitatID, user) {
                 });
             }
             else if (categoria == 'commemoracions') {
-                let nivell = insigniesDoc.data().commemoracio[0];
-                let punts = insigniesDoc.data().commemoracio[1];
+                let nivell = insigniesDoc.data().comem[0];
+                let punts = insigniesDoc.data().comem[1];
                 punts += 1;
                 nivell, punts = calculNivells(nivell, punts);
                 await insigniesRef.update({
-                    'commemoracio': [nivell, punts]
+                    'comem': [nivell, punts]
                 });
             }
             else if (categoria == 'rutes-i-visites') {
-                let nivell = insigniesDoc.data().rutes[0];
-                let punts = insigniesDoc.data().rutes[1];
+                let nivell = insigniesDoc.data().ruta[0];
+                let punts = insigniesDoc.data().ruta[1];
                 punts += 1;
                 nivell, punts = calculNivells(nivell, punts);
                 await insigniesRef.update({
-                    'rutes': [nivell, punts]
+                    'ruta': [nivell, punts]
                 });
             }
             else if (categoria == 'cicles' || categoria == 'cursos') {
-                let nivell = insigniesDoc.data().expo[0];
-                let punts = insigniesDoc.data().expo[1];
+                let nivell = insigniesDoc.data().edu[0];
+                let punts = insigniesDoc.data().edu[1];
                 punts += 1;
                 nivell, punts = calculNivells(nivell, punts);
                 await insigniesRef.update({
-                    'expo': [nivell, punts]
+                    'edu': [nivell, punts]
                 });
             }
             else if (categoria == 'activitats-virtuals' || categoria == 'cultura-digital') {
@@ -880,12 +881,12 @@ async function Puntuacio(activitatID, user) {
                 });
             }
             else if (categoria == 'infantil' || categoria == 'fires-i-mercats') {
-                let nivell = insigniesDoc.data().infantil[0];
-                let punts = insigniesDoc.data().infantil[1];
+                let nivell = insigniesDoc.data().fam[0];
+                let punts = insigniesDoc.data().fam[1];
                 punts += 1;
                 nivell, punts = calculNivells(nivell, punts);
                 await insigniesRef.update({
-                    'infantil': [nivell, punts]
+                    'fam': [nivell, punts]
                 });
             }
             else if (categoria == 'circ') {
