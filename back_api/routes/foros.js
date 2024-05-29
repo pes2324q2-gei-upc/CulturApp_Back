@@ -139,7 +139,7 @@ router.delete('/:foroId/posts/:postId', checkUserAndFetchData, async(req, res) =
         const postSnapshot = await foroRef.collection('posts').doc(postId).get();
 
         
-        if (!postSnapshot.exits) {
+        if (!postSnapshot.exists) {
             res.status(404).send("Post no encontrado");
             return;
         }
