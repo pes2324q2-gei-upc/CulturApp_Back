@@ -148,7 +148,7 @@ router.get('/mediambient', checkPerson, async (req, res) => {
         const activityRef = db.collection("actividades").where('tags_categor_es', 'array-contains-any', ['Residus', 'Sostenibilitat'])
                                                         .where('data_inici', '>=', date)
                                                         .orderBy('data_inici', 'asc');
-        const response = await activityRef.limit(5).get();
+        const response = await activityRef.limit(40).get();
         let responseArr = [];
         response.forEach(doc => {
             responseArr.push(doc.data());
