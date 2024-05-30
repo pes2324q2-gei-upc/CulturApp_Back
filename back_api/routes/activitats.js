@@ -9,7 +9,7 @@ const { db } = require('../firebaseConfig');
 
 router.get('/read/all', async (req, res) => {
     try {
-        const activityRef = db.collection("actividades").limit(1);
+        const activityRef = db.collection("actividades").limit(500);
         const response = await activityRef.get();
         let responseArr = [];
         response.forEach(doc => {
