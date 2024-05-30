@@ -186,14 +186,25 @@ router.get('/:username/activitats', checkUserAndFetchData, async (req, res) => {
         // Tomamos el primer documento de la consulta (suponiendo que haya un solo usuario con ese nombre de usuario)
         const userDoc = userQuerySnapshot.docs[0];
 
-        let responseArr = await Promise.all(userDoc.data().activities.map(async activity => {
+        let activitiesArr = await Promise.all(userDoc.data().activities.map(async activity => {
             const activityRef = db.collection("actividades").doc(activity);
             const responseAct = await activityRef.get();
             if(responseAct.exists) {
-                return responseAct.data();
+              return responseAct.data();
             }
             else return null;
-        }));
+          }));
+          
+          let expiredActivitiesArr = await Promise.all(userDoc.data().activities.map(async activity => {
+            const activityRef = db.collection("vencidas").doc(activity);
+            const responseAct = await activityRef.get();
+            if(responseAct.exists) {
+              return responseAct.data();
+            }
+            else return null;
+          }));
+          
+          let responseArr = [...activitiesArr, ...expiredActivitiesArr];
         
         const filteredActivities = responseArr.filter(activity => activity !== null);
         res.status(200).send(filteredActivities);
